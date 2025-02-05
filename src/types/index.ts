@@ -1,0 +1,94 @@
+import { ImageStyle, TextStyle, ViewStyle } from "react-native";
+
+export interface Message {
+  id: string;
+  text?: string;
+  image?: string;
+  video?: string;
+  audio?: string;
+  senderId: string;
+  time: string;
+  status: "read" | "delivered" | "sent";
+  senderName?: string;
+  senderAvatar?: string;
+}
+
+export interface ChatScreenProps {
+  // Message handling
+  messages: Message[];
+  currentUserId: string;
+  onSendMessage: (message: Omit<Message, "id" | "time" | "status">) => void;
+  onMessageLongPress?: (message: Message) => void;
+  onAttachmentPress?: () => void;
+  onAudioRecordEnd?: () => void;
+  onAudioRecordStart?: () => void;
+  onCameraPress?: () => void;
+
+  // Typing indicators and input
+  typingUsers?: Array<{ id: string; avatar: string; name: string }>;
+  onTypingStart?: () => void;
+  onTypingEnd?: () => void;
+  placeholder?: string;
+
+  // UI Customization
+  theme?: {
+    colors?: {
+      sentMessageTailColor?: string;
+      receivedMessageTailColor?: string;
+      timestamp?: string;
+      inputsIconsColor?: string;
+      sendIconsColor?: string;
+      placeholderTextColor?: string;
+      audioPlayIconColor?: string;
+      audioPauseIconColor?: string;
+      videoPlayIconColor?: string;
+    };
+    bubbleStyle?: {
+      sent?: ViewStyle;
+      received?: ViewStyle;
+      avatarTextStyle?: TextStyle;
+      userNameStyle?: TextStyle;
+      avatarImageStyle?: ImageStyle;
+      typingContainerStyle?: ViewStyle;
+      additionalTypingUsersContainerStyle?: ViewStyle;
+      additionalTypingUsersTextStyle?: TextStyle;
+    };
+    messageStyle?: {
+      textStyle?: TextStyle;
+      audioPlayButtonStyle?: ViewStyle;
+      audioKnobStyle?: ViewStyle;
+      progressBarStyle?: ViewStyle;
+      activeProgressBarStyle?: ViewStyle;
+      audioDurationStyle?: TextStyle;
+    };
+    inputStyles?: {
+      inputSectionContainerStyle?: ViewStyle;
+      inputContainerStyle?: ViewStyle;
+      sendButtonStyle?: ViewStyle;
+    };
+  };
+
+  // Feature flags
+  showAvatars?: boolean;
+  showUserNames?: boolean;
+  showEmojiButton?: boolean;
+  showAttachmentsButton?: boolean;
+  showCameraButton?: boolean;
+  showVoiceRecordButton?: boolean;
+  showBubbleTail?: boolean;
+  showMessageStatus?: boolean;
+
+  // Custom components
+  renderCustomInput?: () => React.ReactNode;
+  renderCustomVideoBubbleError?: () => React.ReactNode;
+  renderCustomTyping?: () => React.ReactNode;
+
+  // Custom icon props
+  CustomEmojiIcon?: () => React.ReactNode;
+  CustomAttachmentIcon?: () => React.ReactNode;
+  CustomCameraIcon?: () => React.ReactNode;
+  CustomSendIcon?: () => React.ReactNode;
+  CustomMicrophoneIcon?: () => React.ReactNode;
+  CustomPlayIcon?: () => React.ReactNode;
+  CustomPauseIcon?: () => React.ReactNode;
+}
