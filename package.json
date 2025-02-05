@@ -5,8 +5,8 @@
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
   "types": "lib/typescript/index.d.ts",
-  "react-native": "src/index.tsx",
-  "source": "src/index.tsx",
+  "react-native": "src",
+  "source": "src",
   "files": [
     "src",
     "lib",
@@ -41,16 +41,16 @@
   "homepage": "https://github.com/David-Atueyi/Movius-Chats#readme",
   "peerDependencies": {
     "react": ">=16.8.0",
-    "react-native": ">=0.60.0"
+    "react-native": ">=0.60.0",
+    "react-native-reanimated": "^3.16.7"
   },
   "dependencies": {
     "@types/react-native": "^0.73.0",
-    "twrnc": "^4.6.1",
+    "react-native-image-zoom-viewer": "^3.0.1",
+    "react-native-sound": "^0.11.2",
+    "react-native-svg": "15.2.0",
     "react-native-video": "^6.9.1",
-    "react-native-image-zoom-viewer": "^3.0.1", 
-    "react-native-svg": "15.2.0",  
-    "react-native-reanimated": "~3.10.1",
-    "react-native-sound": "^0.11.2"
+    "twrnc": "^4.6.1"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
@@ -71,7 +71,7 @@
     "trailingComma": "es5"
   },
   "react-native-builder-bob": {
-    "source": "src/index.tsx",
+    "source": "src",
     "output": "lib",
     "targets": [
       "commonjs",

@@ -1,4 +1,3 @@
-import { ReactNode } from "react";
 import { Message } from "../../types";
 
 export interface ChatInputProps {

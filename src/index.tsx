@@ -16,7 +16,6 @@ const ChatScreenContent = () => {
     onMessageLongPress,
     mediaUrl,
     setMediaUrl,
-    isVideoPlaying,
     setIsVideoPlaying,
     typingUsers,
     onSendMessage,
