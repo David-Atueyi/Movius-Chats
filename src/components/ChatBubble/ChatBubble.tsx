@@ -62,12 +62,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
           >
             {message.senderAvatar ? (
               <Image
-                source={{ uri: message.senderAvatar }} 
+                source={{ uri: message.senderAvatar }}
                 style={[
-                  tw`w-full h-full rounded-full`, 
+                  tw`w-full h-full rounded-full`,
                   theme?.bubbleStyle?.avatarImageStyle,
                 ]}
-                resizeMode="cover" 
+                resizeMode="cover"
               />
             ) : (
               <Text
@@ -98,9 +98,10 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         <ArrowBack2RoundedIcon
           style={tw.style(
             'absolute -top-1 w-6 h-6',
-            isCurrentUser
-              ? 'rotate-90 -right-3.5'
-              : 'rotate-180 -left-3.5 mt-[1.25px]'
+            isCurrentUser ? '-right-3.5' : '-left-3.5 mt-[1.25px]',
+            {
+              transform: [{ rotate: isCurrentUser ? '90deg' : '180deg' }],
+            }
           )}
           color={
             isCurrentUser
