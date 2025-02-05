@@ -202,9 +202,9 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           onLayout={(e) => {
             const { width } = e.nativeEvent.layout;
             progressWidth.current = width;
-            progressRef.current?.measure((x, y, w, h, pageX) => {
-              progressX.current = pageX;
-            });
+          progressRef.current?.measure((_, __, ___, ____, pageX) => {
+            progressX.current = pageX;
+          });
           }}
           style={[
             tw`relative h-1 bg-zinc-400 rounded overflow-visible w-[75%]`,
