@@ -43,13 +43,19 @@ const MessageStatus: React.FC<MessageStatusProps> = ({
           {isCurrentUser && (
             <View style={tw`ml-1 flex-row items-center`}>
               {status === 'sent' && (
-                <CheckIcon style={tw.style('fill-gray-500/70 h-4 w-4')} />
+                <CheckIcon
+                  style={tw.style('fill-gray-500 h-4 w-4', { opacity: 0.7 })}
+                />
               )}
               {status === 'delivered' && (
-                <CheckAllIcon style={tw.style('fill-gray-500/70 h-4 w-4')} />
+                <CheckAllIcon
+                  style={tw.style('fill-gray-500 h-4 w-4', { opacity: 0.7 })}
+                />
               )}
               {status === 'read' && (
-                <CheckAllIcon style={tw.style('fill-blue-500/90 h-4 w-4')} />
+                <CheckAllIcon
+                  style={tw.style('fill-blue-500 h-4 w-4', { opacity: 0.9 })}
+                />
               )}
             </View>
           )}

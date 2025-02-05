@@ -127,8 +127,9 @@ const MessageContent: React.FC<MessageContentProps> = ({
       {message.text && (
         <Text
           style={[
-            tw`text-gray-800 pt-1 break-words`,
+            tw`text-gray-800 pt-1`,
             showMessageStatus ? tw`pb-0` : tw`pb-2`,
+            { wordBreak: 'break-word', overflowWrap: 'break-word' },
             theme?.messageStyle?.textStyle,
           ]}
         >
