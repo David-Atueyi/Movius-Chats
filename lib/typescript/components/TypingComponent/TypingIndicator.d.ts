@@ -9,4 +9,3 @@ interface TypingIndicatorProps {
 }
 export declare const TypingIndicator: ({ typingUsers, currentUserId, }: TypingIndicatorProps) => import("react/jsx-runtime").JSX.Element | null;
 export {};
-//# sourceMappingURL=TypingIndicator.d.ts.map

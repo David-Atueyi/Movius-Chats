@@ -83,4 +83,3 @@ export interface ChatScreenProps {
     CustomPlayIcon?: () => React.ReactNode;
     CustomPauseIcon?: () => React.ReactNode;
 }
-//# sourceMappingURL=index.d.ts.map

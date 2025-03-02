@@ -17,4 +17,3 @@ export declare const ChatProvider: React.FC<ChatScreenProps & {
 }>;
 export declare const useChatContext: () => ChatContextType;
 export {};
-//# sourceMappingURL=ChatContext.d.ts.map

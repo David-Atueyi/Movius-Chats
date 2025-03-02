@@ -3,4 +3,3 @@ export interface AudioPlayerProps {
     audioId: string;
     isVideoPlaying: boolean;
 }
-//# sourceMappingURL=types.d.ts.map

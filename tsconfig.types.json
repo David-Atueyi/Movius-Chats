@@ -1,9 +1,11 @@
 {
   "extends": "./tsconfig",
   "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
     "noEmit": false,
     "rootDir": "src",
-    "outDir": "lib/commonjs"
+    "outDir": "lib/typescript"
   },
   "include": ["src/**/*"],
   "exclude": [
@@ -13,4 +15,4 @@
     "**/__fixtures__/**",
     "**/__mocks__/**"
   ]
-}
+} 

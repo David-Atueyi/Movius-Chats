@@ -3,4 +3,3 @@ export interface MediaViewerProps {
     videoUrl: string;
     onClose: () => void;
 }
-//# sourceMappingURL=types.d.ts.map

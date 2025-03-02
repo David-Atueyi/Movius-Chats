@@ -3,4 +3,3 @@ export declare const EmojiFunnySquareIcon: ({ style, color }: {
     style?: ViewStyle;
     color?: string;
 }) => import("react/jsx-runtime").JSX.Element;
-//# sourceMappingURL=EmojiFunnySquareIcon.d.ts.map
