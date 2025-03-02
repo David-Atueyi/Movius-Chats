@@ -41,8 +41,8 @@
   "homepage": "https://github.com/David-Atueyi/Movius-Chats#readme",
   "peerDependencies": {
     "react": ">=16.8.0",
-    "react-native": ">=0.60.0",
-    "react-native-reanimated": "^3.0.0"
+    "react-native": "*",
+    "react-native-reanimated": "*"
   },
   "dependencies": {
     "react-native-image-zoom-viewer": "^3.0.1",
