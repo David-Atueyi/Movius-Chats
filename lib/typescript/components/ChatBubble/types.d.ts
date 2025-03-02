@@ -16,4 +16,3 @@ export interface MessageStatusProps {
     hasText: boolean;
     hasAudio: boolean;
 }
-//# sourceMappingURL=types.d.ts.map

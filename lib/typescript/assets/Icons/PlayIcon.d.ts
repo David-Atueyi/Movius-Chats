@@ -3,4 +3,3 @@ export declare const PlayIcon: ({ style, color, }: {
     style?: ViewStyle;
     color?: string;
 }) => import("react/jsx-runtime").JSX.Element;
-//# sourceMappingURL=PlayIcon.d.ts.map

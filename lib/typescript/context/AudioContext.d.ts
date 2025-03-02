@@ -8,4 +8,3 @@ export declare const AudioProvider: React.FC<{
 }>;
 export declare const useAudio: () => AudioContextType;
 export {};
-//# sourceMappingURL=AudioContext.d.ts.map

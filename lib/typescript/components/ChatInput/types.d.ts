@@ -18,4 +18,3 @@ export interface InputHeightState {
     height: number;
     isMultiline: boolean;
 }
-//# sourceMappingURL=types.d.ts.map
