@@ -50,7 +50,8 @@ module.exports = {
 ## Basic Usage
 
 ```typescript
-import { ChatScreen, Message } from 'movius-chats';
+import ChatScreen from 'movius-chats';
+import { Message } from 'movius-chats/lib/typescript/types';
 import { useState } from 'react';
 
 const App = () => {
