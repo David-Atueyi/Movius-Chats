@@ -17,7 +17,7 @@ export interface ChatScreenProps {
   // Message handling
   messages: Message[];
   currentUserId: string;
-  onSendMessage: (message: Omit<Message, "id" | "time" | "status">) => void;
+  onSendMessage: (message: Omit<Message, 'id' | 'time' | 'status'>) => void;
   onMessageLongPress?: (message: Message) => void;
   onAttachmentPress?: () => void;
   onAudioRecordEnd?: () => void;
@@ -54,7 +54,8 @@ export interface ChatScreenProps {
       additionalTypingUsersTextStyle?: TextStyle;
     };
     messageStyle?: {
-      textStyle?: TextStyle;
+      sentTextStyle?: TextStyle;
+      receivedTextStyle?: TextStyle;
       audioPlayButtonStyle?: ViewStyle;
       audioKnobStyle?: ViewStyle;
       progressBarStyle?: ViewStyle;
