@@ -1,6 +1,5 @@
-
-import { ViewStyle } from "react-native";
-import Svg, { Path } from "react-native-svg";
+import { ViewStyle } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 export const ArrowBack2RoundedIcon = ({
   style,
@@ -10,10 +9,11 @@ export const ArrowBack2RoundedIcon = ({
   color?: string;
 }) => {
   return (
-    <Svg style={style} fill={color} viewBox="0 0 48 48">
+    <Svg style={style} viewBox="0 0 48 48">
       <Path
+        fill={color}
         fillRule="evenodd"
-        stroke="currentColor"
+        stroke={color}
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="4"

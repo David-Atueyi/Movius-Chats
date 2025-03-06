@@ -16,6 +16,9 @@ A highly customizable, feature-rich chats interface component for React Native a
 - 💬 Message status indicators (sent, delivered, read)
 - 🎯 Custom component injection
 - 🔧 Comprehensive styling API
+- 🔄 Lazy loading for media messages
+- 📡 Debounced typing indicators
+- 🖼️ Avatar image caching
 
 ## Installation
 
@@ -88,85 +91,61 @@ const App = () => {
 | messages | Message[] | Yes | Array of message objects to display |
 | currentUserId | string | Yes | ID of the current user |
 | onSendMessage | (message: Omit<Message, "id" \| "time" \| "status">) => void | Yes | Callback when a message is sent |
-
-### Message Type
-
-```typescript
-interface Message {
-  id: string;
-  text?: string;
-  image?: string;
-  video?: string;
-  audio?: string;
-  senderId: string;
-  time: string;
-  status: "read" | "delivered" | "sent";
-  senderName?: string;
-  senderAvatar?: string;
-}
-```
-
-### Feature Flags
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| showAvatars | boolean | false | Show user avatars |
-| showUserNames | boolean | false | Display usernames above messages |
-| showEmojiButton | boolean | true | Show emoji picker button |
-| showAttachmentsButton | boolean | true | Show attachments button |
-| showCameraButton | boolean | true | Show camera access button |
-| showVoiceRecordButton | boolean | true | Show voice recording button |
-| showBubbleTail | boolean | true | Show message bubble tails |
-| showMessageStatus | boolean | true | Show message status indicators |
-
-### Event Handlers
-
-| Prop | Type | Description |
-|------|------|-------------|
-| onMessageLongPress | (message: Message) => void | Callback for long-pressing a message |
-| onAttachmentPress | () => void | Callback for attachment button press |
-| onAudioRecordStart | () => void | Callback when audio recording starts |
-| onAudioRecordEnd | () => void | Callback when audio recording ends |
-| onCameraPress | () => void | Callback for camera button press |
-| onTypingStart | () => void | Callback when user starts typing |
-| onTypingEnd | () => void | Callback when user stops typing |
+| onMessageLongPress | (message: Message) => void | No | Callback for long-pressing a message |
+| onAttachmentPress | () => void | No | Callback for attachment button press |
+| onAudioRecordStart | () => void | No | Callback when audio recording starts |
+| onAudioRecordEnd | () => void | No | Callback when audio recording ends |
+| onCameraPress | () => void | No | Callback for camera button press |
+| onTypingStart | () => void | No | Callback when user starts typing |
+| onTypingEnd | () => void | No | Callback when user stops typing |
+| placeholder | string | No | Input placeholder text |
+| typingUsers | Array<{ id: string; avatar: string; name: string }> | No | List of users who are typing |
 
 ### Theming
 
 The component supports extensive theming through the `theme` prop:
 
 ```typescript
-theme?: {
-  colors?: {
-    sentMessageTailColor?: string;
-    receivedMessageTailColor?: string;
-    timestamp?: string;
-    inputsIconsColor?: string;
-    sendIconsColor?: string;
-    placeholderTextColor?: string;
-    audioPlayIconColor?: string;
-    audioPauseIconColor?: string;
-    videoPlayIconColor?: string;
+ theme?: {
+    colors?: {
+      sentMessageTailColor?: string;
+      receivedMessageTailColor?: string;
+      timestamp?: string;
+      inputsIconsColor?: string;
+      sendIconsColor?: string;
+      placeholderTextColor?: string;
+      audioPlayIconColor?: string;
+      audioPauseIconColor?: string;
+      videoPlayIconColor?: string;
+    };
+    bubbleStyle?: {
+      sent?: ViewStyle;
+      received?: ViewStyle;
+      avatarTextStyle?: TextStyle;
+      userNameStyle?: TextStyle;
+      avatarImageStyle?: ImageStyle;
+      typingContainerStyle?: ViewStyle;
+      additionalTypingUsersContainerStyle?: ViewStyle;
+      additionalTypingUsersTextStyle?: TextStyle;
+    };
+    messageStyle?: {
+      sentTextStyle?: TextStyle;
+      receivedTextStyle?: TextStyle;
+      audioPlayButtonStyle?: ViewStyle;
+      audioKnobStyle?: ViewStyle;
+      progressBarStyle?: ViewStyle;
+      activeProgressBarStyle?: ViewStyle;
+      audioDurationStyle?: TextStyle;
+    };
+    inputStyles?: {
+      inputSectionContainerStyle?: ViewStyle;
+      inputContainerStyle?: ViewStyle;
+      sendButtonStyle?: ViewStyle;
+    };
   };
-  bubbleStyle?: {
-    sent?: ViewStyle;
-    received?: ViewStyle;
-    // ... other bubble styles
-  };
-  messageStyle?: {
-    textStyle?: TextStyle;
-    // ... other message styles
-  };
-  inputStyles?: {
-    inputSectionContainerStyle?: ViewStyle;
-    // ... other input styles
-  };
-}
 ```
 
 ### Custom Components
-
-You can provide custom components for various elements:
 
 | Prop | Type | Description |
 |------|------|-------------|
@@ -210,27 +189,7 @@ You can provide custom components for various elements:
 />
 ```
 
-### Custom Input Component
-
-```typescript
-<ChatScreen
-  messages={messages}
-  currentUserId="user123"
-  onSendMessage={handleSendMessage}
-  renderCustomInput={() => (
-    <YourCustomInputComponent
-      onSend={(text) => {
-        handleSendMessage({
-          text,
-          senderId: 'user123',
-        });
-      }}
-    />
-  )}
-/>
-```
-
-## Performance Considerations
+### Performance Considerations
 
 - Messages are rendered using `FlatList` for optimal performance
 - Avatar images are cached automatically
@@ -248,3 +207,4 @@ MIT
 ## Support
 
 For issues and feature requests, please file an issue on the GitHub repository.
+

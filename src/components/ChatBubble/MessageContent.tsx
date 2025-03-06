@@ -13,6 +13,7 @@ const MessageContent: React.FC<MessageContentProps> = ({
   message,
   onMediaPress,
   isVideoPlaying,
+  isCurrentUser,
 }) => {
   const {
     theme,
@@ -127,10 +128,12 @@ const MessageContent: React.FC<MessageContentProps> = ({
       {message.text && (
         <Text
           style={[
-            tw`text-gray-800 pt-1`,
+            tw`pt-1`,
             showMessageStatus ? tw`pb-0` : tw`pb-2`,
             { wordBreak: 'break-word', overflowWrap: 'break-word' },
-            theme?.messageStyle?.textStyle,
+            isCurrentUser
+              ? theme?.messageStyle?.sentTextStyle
+              : theme?.messageStyle?.receivedTextStyle,
           ]}
         >
           {message.text}

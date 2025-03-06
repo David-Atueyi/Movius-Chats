@@ -91,7 +91,7 @@ export const TypingIndicator = ({
       {showBubbleTail && (
         <ArrowBack2RoundedIcon
           style={tw.style(
-            'w-6 h-6 fill-white mt-[1.25px]', 
+            'w-6 h-6 fill-white mt-[1.25px] stroke-transparent', 
             {
               transform: [{ rotate: '180deg' }, { translateX: 6 }],
             }
