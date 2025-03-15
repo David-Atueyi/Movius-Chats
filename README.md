@@ -2,6 +2,19 @@
 
 A highly customizable, feature-rich chats interface component for React Native applications. Built with performance and flexibility in mind, this component provides a complete solution for implementing chats functionality in your mobile applications.
 
+## Screenshots
+
+<div align="center">
+  <img src="./assets/chat-demo.jpeg" alt="Chat Interface Demo" width="300" />
+  <img src="./assets/customization.jpeg" alt="Theme Customization" width="300" />
+</div>
+
+## Demo
+
+<div align="center">
+  <img src="./assets/demo.mov" alt="Chat Interface in Action" width="320" />
+</div>
+
 ## ⚠️ Important Implementation Notes
 
 - **Native Rebuild Required**: This package uses native modules that require rebuilding your application after installation.
