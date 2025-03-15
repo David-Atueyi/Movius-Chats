@@ -2,6 +2,12 @@
 
 A highly customizable, feature-rich chats interface component for React Native applications. Built with performance and flexibility in mind, this component provides a complete solution for implementing chats functionality in your mobile applications.
 
+## ⚠️ Important Implementation Notes
+
+- **Native Rebuild Required**: This package uses native modules that require rebuilding your application after installation.
+- **Expo Go Compatibility**: This package is **not compatible** with Expo Go due to its native dependencies. You must use a development build or eject from Expo Go to use this library.
+- **Development Build**: For Expo users, you'll need to create a [Development Build](https://docs.expo.dev/develop/development-builds/introduction/) to use this package.
+
 ## Features
 
 - 🚀 Full TypeScript support
@@ -49,6 +55,24 @@ module.exports = {
   plugins: ['react-native-reanimated/plugin'],
 };
 ```
+
+### Post-Installation Steps
+
+After installing this package and its dependencies:
+
+1. **For React Native CLI Projects**:
+   ```bash
+   npx pod-install  # For iOS
+   npx react-native run-android  # Rebuild for Android
+   npx react-native run-ios  # Rebuild for iOS
+   ```
+
+2. **For Expo Projects**:
+   ```bash
+   npx expo prebuild  # Generate native code
+   npx expo run:android  # Build and run on Android
+   npx expo run:ios  # Build and run on iOS
+   ```
 
 ## Basic Usage
 
@@ -189,12 +213,41 @@ The component supports extensive theming through the `theme` prop:
 />
 ```
 
+### Expo Usage
+
+If you're using Expo, follow these steps:
+
+1. Create a development build of your app:
+   ```bash
+   npx expo prebuild
+   ```
+
+2. Run on your desired platform:
+   ```bash
+   npx expo run:android
+   # or
+   npx expo run:ios
+   ```
+
+3. For subsequent updates to the native modules, you'll need to rebuild:
+   ```bash
+   npx expo prebuild --clean
+   ```
+
 ### Performance Considerations
 
 - Messages are rendered using `FlatList` for optimal performance
 - Avatar images are cached automatically
 - Media messages use lazy loading
 - Typing indicators are debounced
+
+## Troubleshooting
+
+### Common Issues
+
+- **"Native module not found" error**: Ensure you've rebuilt your app after installing the package.
+- **Crashes in Expo Go**: This package uses native modules that are not compatible with Expo Go. Use a development build instead.
+- **Audio/Video not working**: Check that you've installed all required dependencies and rebuilt the app.
 
 ## Contributing
 
@@ -207,4 +260,3 @@ MIT
 ## Support
 
 For issues and feature requests, please file an issue on the GitHub repository.
-
