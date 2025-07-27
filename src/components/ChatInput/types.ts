@@ -19,6 +19,7 @@ export interface ChatInputProps {
   CustomFileIcon?: React.ComponentType<{ style?: any }>;
   CustomImagePreview?: React.ComponentType<{ uri: string }>;
   CustomVideoPreview?: React.ComponentType<{ uri: string }>;
+  inputHeight?: number;
 }
 
 export interface InputHeightState {
