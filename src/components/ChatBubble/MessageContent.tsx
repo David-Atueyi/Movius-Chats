@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Linking, Pressable, Text, View } from 'react-native';
 import Video, { VideoRef } from 'react-native-video';
 import tw from 'twrnc';
 import { LoadingIcon } from '../../assets/Icons/LoadingIcon';
@@ -8,6 +8,7 @@ import { useChatContext } from '../../context/ChatContext';
 import { formatDuration } from '../../utils/datefunc';
 import AudioPlayer from '../AudioPlayer/AudioPlayer';
 import { MessageContentProps } from './types';
+import ParsedText from 'react-native-parsed-text';
 
 const MessageContent: React.FC<MessageContentProps> = ({
   message,
@@ -125,7 +126,7 @@ const MessageContent: React.FC<MessageContentProps> = ({
       )}
 
       {message.text && (
-        <Text
+        <ParsedText
           style={[
             tw`pt-1`,
             showMessageStatus ? tw`pb-0` : tw`pb-2`,
@@ -134,9 +135,20 @@ const MessageContent: React.FC<MessageContentProps> = ({
               ? theme?.messageStyle?.sentTextStyle
               : theme?.messageStyle?.receivedTextStyle,
           ]}
+          parse={[
+            {
+              type: 'url',
+              style: { color: 'blue', textDecorationLine: 'underline' },
+              onPress: (url) =>
+                Linking.openURL(
+                  url.startsWith('http') ? url : `https://${url}`
+                ),
+            },
+          ]}
+          childrenProps={{ allowFontScaling: false }}
         >
           {message.text}
-        </Text>
+        </ParsedText>
       )}
     </View>
   );
