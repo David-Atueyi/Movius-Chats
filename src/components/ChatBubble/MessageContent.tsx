@@ -35,7 +35,8 @@ const MessageContent: React.FC<MessageContentProps> = ({
         >
           <Image
             source={{ uri: message.image }}
-            style={tw`w-full h-full object-contain rounded-lg`}
+            style={tw`w-full h-full rounded-lg`}
+            resizeMode="contain"
           />
         </Pressable>
       )}
@@ -75,9 +76,7 @@ const MessageContent: React.FC<MessageContentProps> = ({
             <View
               style={tw`absolute inset-0 flex items-center justify-center bg-black/40 rounded-full`}
             >
-              <LoadingIcon
-                style={tw.style('h-12 w-12 fill-white animate-spin')}
-              />
+              <LoadingIcon style={tw.style('h-12 w-12')} spinning />
             </View>
           ) : videoHasError ? (
             renderCustomVideoBubbleError ? (

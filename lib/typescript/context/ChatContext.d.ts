@@ -1,5 +1,5 @@
-import React from "react";
-import { ChatScreenProps } from "../types";
+import React from 'react';
+import { ChatScreenProps } from '../types';
 interface ChatContextType extends ChatScreenProps {
     mediaUrl: {
         imageUrl: string;

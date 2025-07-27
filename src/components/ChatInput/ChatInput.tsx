@@ -1,15 +1,16 @@
-import { CameraIcon } from "../../assets/Icons/CameraIcon";
-import { EmojiFunnySquareIcon } from "../../assets/Icons/EmojiFunnySquareIcon";
-import { MicrophoneIcon } from "../../assets/Icons/MicrophoneIcon";
-import { PaperClipIcon } from "../../assets/Icons/PaperClipIcon";
-import { PaperPlaneIcon } from "../../assets/Icons/PaperPlaneIcon";
-import React, { useCallback, useEffect, useState } from "react";
-import { Platform, Pressable, TextInput, View } from "react-native";
-import { useChatContext } from "../../context/ChatContext";
-import { ChatInputProps, InputHeightState } from "./types";
+import React, { useCallback, useEffect, useState } from 'react';
+import { Platform, Pressable, TextInput, View } from 'react-native';
 import tw from 'twrnc';
+import { CameraIcon } from '../../assets/Icons/CameraIcon';
+import { EmojiFunnySquareIcon } from '../../assets/Icons/EmojiFunnySquareIcon';
+import { MicrophoneIcon } from '../../assets/Icons/MicrophoneIcon';
+import { PaperClipIcon } from '../../assets/Icons/PaperClipIcon';
+import { PaperPlaneIcon } from '../../assets/Icons/PaperPlaneIcon';
+import { useChatContext } from '../../context/ChatContext';
+import FilePreview from './FilePreview';
+import { ChatInputProps, InputHeightState } from './types';
 
-const MIN_INPUT_HEIGHT = Platform.OS === "ios" ? 32 : 30;
+const MIN_INPUT_HEIGHT = Platform.OS === 'ios' ? 32 : 30;
 const MAX_INPUT_HEIGHT = 118;
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -25,8 +26,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
   CustomCameraIcon,
   CustomSendIcon,
   CustomMicrophoneIcon,
+  CustomFileIcon,
+  CustomImagePreview,
+  CustomVideoPreview,
 }) => {
-  const [inputText, setInputText] = useState("");
+  const [inputText, setInputText] = useState('');
   const [inputHeight, setInputHeight] = useState<InputHeightState>({
     height: MIN_INPUT_HEIGHT,
     isMultiline: false,
@@ -39,6 +43,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
     showCameraButton,
     showVoiceRecordButton,
     placeholder,
+    previewData,
+    closePreview,
   } = useChatContext();
 
   const handleContentSizeChange = useCallback(
@@ -56,15 +62,20 @@ const ChatInput: React.FC<ChatInputProps> = ({
   );
 
   const handleSendMessage = useCallback(() => {
-    if (inputText.trim()) {
-      onSendMessage({
-        text: inputText.trim(),
-        senderId: currentUserId,
-      });
-      setInputText("");
-      setInputHeight({ height: MIN_INPUT_HEIGHT, isMultiline: false });
+    const trimmedText = inputText.trim();
+
+    if (!trimmedText && !previewData) {
+      return;
     }
-  }, [inputText, onSendMessage, currentUserId]);
+
+    onSendMessage({
+      text: trimmedText,
+      senderId: currentUserId,
+    });
+
+    setInputText('');
+    setInputHeight({ height: MIN_INPUT_HEIGHT, isMultiline: false });
+  }, [inputText, onSendMessage, currentUserId, previewData]);
 
   useEffect(() => {
     if (inputText.trim()) {
@@ -81,6 +92,16 @@ const ChatInput: React.FC<ChatInputProps> = ({
         theme?.inputStyles?.inputSectionContainerStyle,
       ]}
     >
+      {/* File Preview above the input */}
+      {previewData && (
+        <FilePreview
+          previewData={previewData}
+          closePreview={closePreview}
+          CustomFileIcon={CustomFileIcon}
+          CustomImagePreview={CustomImagePreview}
+          CustomVideoPreview={CustomVideoPreview}
+        />
+      )}
       <View
         style={[
           tw`flex-1 bg-white px-3.5 gap-1 flex-row justify-between`,
@@ -169,7 +190,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
             ...theme?.inputStyles?.sendButtonStyle,
           },
         ]}
-        onPress={inputText.trim() ? handleSendMessage : onAudioRecordStart}
+        onPress={
+          inputText.trim() || previewData
+            ? handleSendMessage
+            : onAudioRecordStart
+        }
         onLongPress={onAudioRecordStart}
         onPressOut={onAudioRecordEnd}
       >
