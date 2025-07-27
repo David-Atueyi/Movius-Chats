@@ -86,12 +86,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   }, [inputText, onTypingStart, onTypingEnd]);
 
   return (
-    <View
-      style={[
-        tw`flex-row gap-2`,
-        theme?.inputStyles?.inputSectionContainerStyle,
-      ]}
-    >
+    <View style={tw`w-full px-2`}>
       {/* File Preview above the input */}
       {previewData && (
         <FilePreview
@@ -100,133 +95,145 @@ const ChatInput: React.FC<ChatInputProps> = ({
           CustomFileIcon={CustomFileIcon}
           CustomImagePreview={CustomImagePreview}
           CustomVideoPreview={CustomVideoPreview}
+          inputHeight={inputHeight.height}
         />
       )}
+
       <View
         style={[
-          tw`flex-1 bg-white px-3.5 gap-1 flex-row justify-between`,
-          inputHeight.isMultiline
-            ? tw`rounded-3xl items-end`
-            : tw`rounded-full items-center`,
-          theme?.inputStyles?.inputContainerStyle,
+          tw`flex-row items-end gap-2`,
+          theme?.inputStyles?.inputSectionContainerStyle,
         ]}
       >
-        {showEmojiButton && (
-          <Pressable>
-            {CustomEmojiIcon ? (
-              <CustomEmojiIcon />
-            ) : (
-              <EmojiFunnySquareIcon
-                style={tw.style(
-                  `${Platform.OS === 'ios' ? 'h-6 w-6' : 'w-7 h-7'}`,
-                  inputHeight.isMultiline ? 'pb-14' : 'pb-0'
-                )}
-                color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
-              />
-            )}
-          </Pressable>
-        )}
-
-        <TextInput
-          value={inputText}
-          onChangeText={setInputText}
-          placeholder={placeholder || 'Message'}
-          style={[
-            tw`bg-transparent flex-1 pl-2 my-3`,
-            Platform.OS === 'ios' ? tw`text-[17px]` : tw`text-[16px]`,
-            { minHeight: MIN_INPUT_HEIGHT, maxHeight: MAX_INPUT_HEIGHT },
-          ]}
-          placeholderTextColor={
-            theme?.colors?.placeholderTextColor || 'rgba(0, 0, 0, 0.4)'
-          }
-          multiline
-          textAlignVertical="center"
-          onContentSizeChange={handleContentSizeChange}
-        />
-
+        {/* LEFT: Input and icons */}
         <View
           style={[
-            tw`gap-4 flex-row`,
-            inputHeight.isMultiline ? tw`pb-4` : tw`pb-0`,
+            tw`flex-1 px-3.5 bg-white gap-1 flex-row justify-between`,
+            inputHeight.isMultiline
+              ? tw`rounded-3xl items-end`
+              : tw`rounded-full items-center`,
+            theme?.inputStyles?.inputContainerStyle,
           ]}
         >
-          {showAttachmentsButton && (
-            <Pressable onPress={onAttachmentPress}>
-              {CustomAttachmentIcon ? (
-                <CustomAttachmentIcon />
+          {showEmojiButton && (
+            <Pressable>
+              {CustomEmojiIcon ? (
+                <CustomEmojiIcon />
               ) : (
-                <PaperClipIcon
+                <EmojiFunnySquareIcon
                   style={tw.style(
-                    Platform.OS === 'ios' ? 'h-6 w-6' : 'w-7 h-7'
+                    `${Platform.OS === 'ios' ? 'h-6 w-6' : 'w-7 h-7'}`,
+                    inputHeight.isMultiline ? 'pb-14' : 'pb-0'
                   )}
                   color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
                 />
               )}
             </Pressable>
           )}
-          {showCameraButton && !inputText.trim() && (
-            <Pressable onPress={onCameraPress}>
-              {CustomCameraIcon ? (
-                <CustomCameraIcon />
-              ) : (
-                <CameraIcon
-                  style={tw.style(
-                    Platform.OS === 'ios' ? 'h-6 w-6' : 'w-7 h-7'
-                  )}
-                  color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
-                />
-              )}
-            </Pressable>
-          )}
-        </View>
-      </View>
 
-      <Pressable
-        style={[
-          tw`p-2 rounded-full bg-green-600 justify-center items-center`,
-          {
-            height: Platform.OS === 'ios' ? 50 : 48,
-            width: Platform.OS === 'ios' ? 50 : 48,
-            ...theme?.inputStyles?.sendButtonStyle,
-          },
-        ]}
-        onPress={
-          inputText.trim() || previewData
-            ? handleSendMessage
-            : onAudioRecordStart
-        }
-        onLongPress={onAudioRecordStart}
-        onPressOut={onAudioRecordEnd}
-      >
-        {inputText.trim() ? (
-          CustomSendIcon ? (
+          <TextInput
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder={placeholder || 'Message'}
+            style={[
+              tw`bg-transparent flex-1 pl-2 my-3`,
+              Platform.OS === 'ios' ? tw`text-[17px]` : tw`text-[16px]`,
+              { minHeight: MIN_INPUT_HEIGHT, maxHeight: MAX_INPUT_HEIGHT },
+            ]}
+            placeholderTextColor={
+              theme?.colors?.placeholderTextColor || 'rgba(0, 0, 0, 0.4)'
+            }
+            multiline
+            textAlignVertical="center"
+            onContentSizeChange={handleContentSizeChange}
+          />
+
+          <View
+            style={[
+              tw`gap-4 flex-row`,
+              inputHeight.isMultiline ? tw`pb-4` : tw`pb-0`,
+            ]}
+          >
+            {showAttachmentsButton && (
+              <Pressable onPress={onAttachmentPress}>
+                {CustomAttachmentIcon ? (
+                  <CustomAttachmentIcon />
+                ) : (
+                  <PaperClipIcon
+                    style={tw.style(
+                      Platform.OS === 'ios' ? 'h-6 w-6' : 'w-7 h-7'
+                    )}
+                    color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
+                  />
+                )}
+              </Pressable>
+            )}
+            {showCameraButton && !inputText.trim() && (
+              <Pressable onPress={onCameraPress}>
+                {CustomCameraIcon ? (
+                  <CustomCameraIcon />
+                ) : (
+                  <CameraIcon
+                    style={tw.style(
+                      Platform.OS === 'ios' ? 'h-6 w-6' : 'w-7 h-7'
+                    )}
+                    color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
+                  />
+                )}
+              </Pressable>
+            )}
+          </View>
+        </View>
+
+        {/* RIGHT: Send / Mic Button always at bottom */}
+        <Pressable
+          style={[
+            tw`p-2 rounded-full bg-green-600 justify-center items-center`,
+            {
+              height: Platform.OS === 'ios' ? 50 : 48,
+              width: Platform.OS === 'ios' ? 50 : 48,
+              ...theme?.inputStyles?.sendButtonStyle,
+            },
+          ]}
+          onPress={
+            inputText.trim() || previewData
+              ? handleSendMessage
+              : onAudioRecordStart
+          }
+          onLongPress={onAudioRecordStart}
+          onPressOut={onAudioRecordEnd}
+        >
+          {inputText.trim() ? (
+            CustomSendIcon ? (
+              <CustomSendIcon />
+            ) : (
+              <PaperPlaneIcon
+                style={tw.style('h-6 w-6')}
+                color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
+              />
+            )
+          ) : showVoiceRecordButton ? (
+            CustomMicrophoneIcon ? (
+              <CustomMicrophoneIcon />
+            ) : (
+              <MicrophoneIcon
+                style={tw.style('h-8 w-8')}
+                color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
+              />
+            )
+          ) : CustomSendIcon ? (
             <CustomSendIcon />
           ) : (
             <PaperPlaneIcon
               style={tw.style('h-6 w-6')}
               color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
             />
-          )
-        ) : showVoiceRecordButton ? (
-          CustomMicrophoneIcon ? (
-            <CustomMicrophoneIcon />
-          ) : (
-            <MicrophoneIcon
-              style={tw.style('h-8 w-8')}
-              color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
-            />
-          )
-        ) : CustomSendIcon ? (
-          <CustomSendIcon />
-        ) : (
-          <PaperPlaneIcon
-            style={tw.style('h-6 w-6')}
-            color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
-          />
-        )}
-      </Pressable>
+          )}
+        </Pressable>
+      </View>
     </View>
   );
+
 };
 
 export default React.memo(ChatInput);

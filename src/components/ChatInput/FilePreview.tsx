@@ -12,6 +12,7 @@ const FilePreview: React.FC<Omit<ChatInputProps, 'onSendMessage'>> = ({
   CustomFileIcon,
   CustomImagePreview,
   CustomVideoPreview,
+  inputHeight,
 }) => {
   const { theme, setMediaUrl, setIsVideoPlaying } = useChatContext();
   if (!previewData) return null;
@@ -24,9 +25,8 @@ const FilePreview: React.FC<Omit<ChatInputProps, 'onSendMessage'>> = ({
         // Default style
         {
           position: 'absolute',
-          bottom: 80,
-          left: 28,
-          zIndex: 10,
+          bottom: (inputHeight ?? 0) + 8, 
+          zIndex: 20,
           borderRadius: 12,
         },
         // Custom style overrides

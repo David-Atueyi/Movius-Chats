@@ -28,6 +28,7 @@ export interface ChatInputProps {
     CustomVideoPreview?: React.ComponentType<{
         uri: string;
     }>;
+    inputHeight?: number;
 }
 export interface InputHeightState {
     height: number;
