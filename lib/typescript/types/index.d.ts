@@ -1,4 +1,4 @@
-import { ImageStyle, TextStyle, ViewStyle } from "react-native";
+import { ImageStyle, TextStyle, ViewStyle } from 'react-native';
 export interface Message {
     id: string;
     text?: string;
@@ -7,7 +7,7 @@ export interface Message {
     audio?: string;
     senderId: string;
     time: string;
-    status: "read" | "delivered" | "sent";
+    status: 'read' | 'delivered' | 'sent';
     senderName?: string;
     senderAvatar?: string;
 }
@@ -28,6 +28,21 @@ export interface ChatScreenProps {
     onTypingStart?: () => void;
     onTypingEnd?: () => void;
     placeholder?: string;
+    previewData?: {
+        uri: string;
+        type: string;
+        name: string;
+    };
+    closePreview?: () => void;
+    CustomFileIcon?: React.ComponentType<{
+        style?: any;
+    }>;
+    CustomImagePreview?: React.ComponentType<{
+        uri: string;
+    }>;
+    CustomVideoPreview?: React.ComponentType<{
+        uri: string;
+    }>;
     theme?: {
         colors?: {
             sentMessageTailColor?: string;
@@ -63,6 +78,13 @@ export interface ChatScreenProps {
             inputSectionContainerStyle?: ViewStyle;
             inputContainerStyle?: ViewStyle;
             sendButtonStyle?: ViewStyle;
+        };
+        filePreviewStyle?: {
+            root?: ViewStyle;
+            container?: ViewStyle;
+            iconContainer?: ViewStyle;
+            nameContainer?: ViewStyle;
+            text?: TextStyle;
         };
     };
     showAvatars?: boolean;

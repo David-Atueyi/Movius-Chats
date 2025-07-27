@@ -1,4 +1,7 @@
-import { ViewStyle } from "react-native";
-export declare const LoadingIcon: ({ style }: {
+import { ViewStyle } from 'react-native';
+type LoadingIconProps = {
     style?: ViewStyle;
-}) => import("react/jsx-runtime").JSX.Element;
+    spinning?: boolean;
+};
+export declare const LoadingIcon: ({ style, spinning }: LoadingIconProps) => import("react/jsx-runtime").JSX.Element;
+export {};

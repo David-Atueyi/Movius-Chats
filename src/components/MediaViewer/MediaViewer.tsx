@@ -1,10 +1,10 @@
-import { LoadingIcon } from '../../assets/Icons/LoadingIcon';
-import { XIcon } from '../../assets/Icons/XIcon';
 import React, { useRef, useState } from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import Video, { VideoRef } from 'react-native-video';
 import tw from 'twrnc';
+import { LoadingIcon } from '../../assets/Icons/LoadingIcon';
+import { XIcon } from '../../assets/Icons/XIcon';
 import { MediaViewerProps } from './types';
 
 const MediaViewer: React.FC<MediaViewerProps> = ({
@@ -27,7 +27,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
           onPress={onClose}
           style={tw`absolute right-4 top-4 p-2 rounded-full bg-slate-100/70 z-10`}
         >
-          <XIcon style={tw`h-8 w-8 stroke-black`} />
+          <XIcon style={tw`h-8 w-8`} />
         </Pressable>
 
         {imageUrl && (
@@ -77,9 +77,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
               <View
                 style={tw`absolute inset-0 flex items-center justify-center bg-black/40 rounded-full`}
               >
-                <LoadingIcon
-                  style={tw.style('h-12 w-12 fill-white animate-spin')}
-                />
+                <LoadingIcon style={tw.style('h-12 w-12')} spinning />
               </View>
             )}
             {videoHasError && (

@@ -31,6 +31,9 @@ const ChatScreenContent = () => {
     CustomCameraIcon,
     CustomMicrophoneIcon,
     CustomSendIcon,
+    CustomFileIcon,
+    CustomImagePreview,
+    CustomVideoPreview,
   } = useChatContext();
 
   return (
@@ -75,6 +78,9 @@ const ChatScreenContent = () => {
           CustomCameraIcon={CustomCameraIcon}
           CustomMicrophoneIcon={CustomMicrophoneIcon}
           CustomSendIcon={CustomSendIcon}
+          CustomFileIcon={CustomFileIcon}
+          CustomImagePreview={CustomImagePreview}
+          CustomVideoPreview={CustomVideoPreview}
         />
       )}
 

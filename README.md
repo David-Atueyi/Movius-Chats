@@ -61,6 +61,7 @@ module.exports = {
 After installing this package and its dependencies:
 
 1. **For React Native CLI Projects**:
+
    ```bash
    npx pod-install  # For iOS
    npx react-native run-android  # Rebuild for Android
@@ -110,20 +111,20 @@ const App = () => {
 
 ### Core Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| messages | Message[] | Yes | Array of message objects to display |
-| currentUserId | string | Yes | ID of the current user |
-| onSendMessage | (message: Omit<Message, "id" \| "time" \| "status">) => void | Yes | Callback when a message is sent |
-| onMessageLongPress | (message: Message) => void | No | Callback for long-pressing a message |
-| onAttachmentPress | () => void | No | Callback for attachment button press |
-| onAudioRecordStart | () => void | No | Callback when audio recording starts |
-| onAudioRecordEnd | () => void | No | Callback when audio recording ends |
-| onCameraPress | () => void | No | Callback for camera button press |
-| onTypingStart | () => void | No | Callback when user starts typing |
-| onTypingEnd | () => void | No | Callback when user stops typing |
-| placeholder | string | No | Input placeholder text |
-| typingUsers | Array<{ id: string; avatar: string; name: string }> | No | List of users who are typing |
+| Prop               | Type                                                         | Required | Description                                                            |
+| ------------------ | ------------------------------------------------------------ | -------- | ---------------------------------------------------------------------- |
+| messages           | Message[]                                                    | Yes      | Array of message objects to display                                    |
+| currentUserId      | string                                                       | Yes      | ID of the current user                                                 |
+| onSendMessage      | (message: Omit<Message, "id" \| "time" \| "status">) => void | Yes      | Callback when a message is sent                                        |
+| onMessageLongPress | (message: Message) => void                                   | No       | Callback for long-pressing a message                                   |
+| onAttachmentPress  | () => void                                                   | No       | Callback for attachment button press                                   |
+| onAudioRecordStart | () => void                                                   | No       | Callback when audio recording starts                                   |
+| onAudioRecordEnd   | () => void                                                   | No       | Callback when audio recording ends                                     |
+| onCameraPress      | () => void                                                   | No       | Callback for camera button press                                       |
+| onTypingStart      | () => void                                                   | No       | Callback when user starts typing                                       |
+| onTypingEnd        | () => void                                                   | No       | Callback when user stops typing                                        |
+| placeholder        | string                                                       | No       | Input placeholder text                                                 |
+| typingUsers        | Array<{ id: string; avatar: string; name: string }>          | No       | List of users who are typing                                           |
 
 ### Theming
 
@@ -166,23 +167,34 @@ The component supports extensive theming through the `theme` prop:
       inputContainerStyle?: ViewStyle;
       sendButtonStyle?: ViewStyle;
     };
+    filePreviewStyle?: {
+      root?: ViewStyle;
+      container?: ViewStyle;
+      iconContainer?: ViewStyle;
+      nameContainer?: ViewStyle;
+      text?: TextStyle;
+    };
   };
 ```
 
 ### Custom Components
 
-| Prop | Type | Description |
-|------|------|-------------|
-| renderCustomInput | () => React.ReactNode | Custom input component |
-| renderCustomVideoBubbleError | () => React.ReactNode | Custom video error display |
-| renderCustomTyping | () => React.ReactNode | Custom typing indicator |
-| CustomEmojiIcon | () => React.ReactNode | Custom emoji picker icon |
-| CustomAttachmentIcon | () => React.ReactNode | Custom attachment icon |
-| CustomCameraIcon | () => React.ReactNode | Custom camera icon |
-| CustomSendIcon | () => React.ReactNode | Custom send button icon |
-| CustomMicrophoneIcon | () => React.ReactNode | Custom microphone icon |
-| CustomPlayIcon | () => React.ReactNode | Custom play icon |
-| CustomPauseIcon | () => React.ReactNode | Custom pause icon |
+| Prop                         | Type                                 | Description                |
+| ---------------------------- | ------------------------------------ | -------------------------- | ------------------------------- |
+| renderCustomInput            | () => React.ReactNode                | Custom input component     |
+| renderCustomVideoBubbleError | () => React.ReactNode                | Custom video error display |
+| renderCustomTyping           | () => React.ReactNode                | Custom typing indicator    |
+| CustomEmojiIcon              | () => React.ReactNode                | Custom emoji picker icon   |
+| CustomAttachmentIcon         | () => React.ReactNode                | Custom attachment icon     |
+| CustomCameraIcon             | () => React.ReactNode                | Custom camera icon         |
+| CustomSendIcon               | () => React.ReactNode                | Custom send button icon    |
+| CustomMicrophoneIcon         | () => React.ReactNode                | Custom microphone icon     |
+| CustomPlayIcon               | () => React.ReactNode                | Custom play icon           |
+| CustomPauseIcon              | () => React.ReactNode                | Custom pause icon          |
+| CustomFileIcon               | React.ComponentType<{ style?: any }> | Custom file icon           |
+| CustomImagePreview           | React.ComponentType<{ uri: string }> | Custom image preview component. |
+| CustomVideoPreview           | React.ComponentType<{ uri: string }> | Custom video preview component. |
+
 
 ## Advanced Usage
 
@@ -209,6 +221,13 @@ The component supports extensive theming through the `theme` prop:
         borderRadius: 20,
       },
     },
+    filePreviewStyle: {
+      root: { top: 10, left: 10 },
+      container: { backgroundColor: '#f0f0f0', borderRadius: 16 },
+      iconContainer: { backgroundColor: '#333' },
+      nameContainer: { backgroundColor: '#eee' },
+      text: { color: 'red', fontWeight: 'bold' },
+    },
   }}
 />
 ```
@@ -218,11 +237,13 @@ The component supports extensive theming through the `theme` prop:
 If you're using Expo, follow these steps:
 
 1. Create a development build of your app:
+
    ```bash
    npx expo prebuild
    ```
 
 2. Run on your desired platform:
+
    ```bash
    npx expo run:android
    # or

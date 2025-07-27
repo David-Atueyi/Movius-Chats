@@ -1,6 +1,6 @@
 {
   "name": "movius-chats",
-  "version": "1.2.0",
+  "version": "1.2.6",
   "description": "A highly customizable, feature-rich chat interface component for React Native applications",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -57,15 +57,16 @@
   },
   "devDependencies": {
     "@babel/core": "^7.23.3",
-    "@babel/preset-env": "^7.23.3",
-    "@babel/preset-react": "^7.23.3",
-    "@babel/preset-typescript": "^7.23.3",
     "@babel/plugin-transform-class-properties": "^7.23.3",
     "@babel/plugin-transform-private-methods": "^7.23.3",
     "@babel/plugin-transform-private-property-in-object": "^7.23.3",
+    "@babel/preset-env": "^7.23.3",
+    "@babel/preset-react": "^7.23.3",
+    "@babel/preset-typescript": "^7.23.3",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-commonjs": "^28.0.2",
     "@rollup/plugin-node-resolve": "^16.0.0",
+    "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/jest": "^29.5.11",
     "@types/react": "18.3.18",
@@ -82,7 +83,6 @@
     "rimraf": "^6.0.1",
     "rollup": "^4.34.9",
     "rollup-plugin-peer-deps-external": "^2.2.4",
-    "@rollup/plugin-terser": "^0.4.4",
     "typescript": "^5.3.3"
   },
   "prettier": {
