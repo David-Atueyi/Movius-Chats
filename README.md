@@ -1,283 +1,616 @@
-# React Native Modern Chats UI
+# movius-chats
 
-A highly customizable, feature-rich chats interface component for React Native applications. Built with performance and flexibility in mind, this component provides a complete solution for implementing chats functionality in your mobile applications.
+A highly customizable, feature-rich chat UI for **React Native**. Drop in a single `ChatScreen` component to get message bubbles, media (images, video, audio), typing indicators, attachment previews, and a full input bar—with deep theming and custom icon/component hooks.
 
-## ⚠️ Important Implementation Notes
+**npm:** [`movius-chats`](https://www.npmjs.com/package/movius-chats)  
+**Repository:** [github.com/David-Atueyi/Movius-Chats](https://github.com/David-Atueyi/Movius-Chats)
 
-- **Native Rebuild Required**: This package uses native modules that require rebuilding your application after installation.
-- **Expo Go Compatibility**: This package is **not compatible** with Expo Go due to its native dependencies. You must use a development build or eject from Expo Go to use this library.
-- **Development Build**: For Expo users, you'll need to create a [Development Build](https://docs.expo.dev/develop/development-builds/introduction/) to use this package.
+---
 
-## Features
+## Table of contents
 
-- 🚀 Full TypeScript support
-- 📱 Native performance optimizations
-- 🎨 Extensive theme customization
-- 🖼️ Multi-media message support (text, images, video, audio)
-- 👤 Avatar and username display options
-- ⌨️ Typing indicators
-- 📎 File attachments
-- 🎥 Camera integration
-- 🎤 Voice messages
-- 💬 Message status indicators (sent, delivered, read)
-- 🎯 Custom component injection
-- 🔧 Comprehensive styling API
-- 🔄 Lazy loading for media messages
-- 📡 Debounced typing indicators
-- 🖼️ Avatar image caching
+- [Requirements](#requirements)
+- [Important: native modules & Expo](#important-native-modules--expo)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Message data model](#message-data-model)
+- [Message list ordering](#message-list-ordering)
+- [ChatScreen API](#chatscreen-api)
+  - [Core props](#core-props)
+  - [Feature flags](#feature-flags)
+  - [Input & typing](#input--typing)
+  - [Attachment preview](#attachment-preview)
+  - [Theming](#theming)
+  - [Custom components & icons](#custom-components--icons)
+- [Usage examples](#usage-examples)
+  - [Text messages](#text-messages)
+  - [Media messages](#media-messages)
+  - [Typing indicators](#typing-indicators)
+  - [Attachments & camera (parent-controlled)](#attachments--camera-parent-controlled)
+  - [Attachment preview before send](#attachment-preview-before-send)
+  - [Custom theme](#custom-theme)
+  - [Custom input bar](#custom-input-bar)
+  - [Long-press actions](#long-press-actions)
+- [TypeScript](#typescript)
+- [Architecture overview](#architecture-overview)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Requirements
+
+| Dependency | Role |
+|------------|------|
+| `react` ≥ 16.8 | Peer dependency |
+| `react-native` | Peer dependency |
+| `react-native-reanimated` | Audio scrubber animations (peer) |
+| `react-native-image-zoom-viewer` | Full-screen image viewer |
+| `react-native-parsed-text` | Clickable URLs in messages |
+| `react-native-sound` | Voice message playback |
+| `react-native-svg` | Built-in icons |
+| `react-native-video` | Video bubbles & preview |
+| `twrnc` | Tailwind-style utility classes |
+
+---
+
+## Important: native modules & Expo
+
+- **Rebuild required** after install. This library uses native modules (`react-native-sound`, `react-native-video`, etc.).
+- **Not compatible with Expo Go.** Use a [development build](https://docs.expo.dev/develop/development-builds/introduction/) or a bare React Native app.
+- **iOS:** run `pod install` in the `ios` folder after adding dependencies.
+
+---
 
 ## Installation
+
+### 1. Install the package
 
 ```bash
 npm install movius-chats
 # or
 yarn add movius-chats
+# or
+bun install movius-chats
 ```
 
-### Required Dependencies
+### 2. Install peer & native dependencies
 
-The following packages are required for movius-chats to function properly. Install them using npm or yarn:
+These are required in **your app** (some are bundled as dependencies of `movius-chats`, but you must still link/native-build them in the host app):
 
 ```bash
-# Using npm
-npm install react-native-image-zoom-viewer react-native-reanimated react-native-sound react-native-svg react-native-video twrnc
-
-# Using yarn
-yarn add react-native-image-zoom-viewer react-native-reanimated react-native-sound react-native-svg react-native-video twrnc
+npm install react-native-reanimated react-native-image-zoom-viewer react-native-sound react-native-svg react-native-video twrnc
+# or
+yarn add react-native-reanimated react-native-image-zoom-viewer react-native-sound react-native-svg react-native-video twrnc
+#or
+bun install react-native-reanimated react-native-image-zoom-viewer react-native-sound react-native-svg react-native-video twrnc
 ```
 
-### Additional Setup
+> `react-native-parsed-text` is pulled in transitively; no extra install step unless your bundler requires it.
 
-For react-native-reanimated, add this line to your `babel.config.js`:
+### 3. Configure Reanimated
+
+Add the Reanimated Babel plugin **last** in `babel.config.js`:
 
 ```javascript
 module.exports = {
-  plugins: ['react-native-reanimated/plugin'],
+  presets: ['module:metro-react-native-babel-preset'],
+  plugins: [
+    // ...other plugins
+    'react-native-reanimated/plugin',
+  ],
 };
 ```
 
-### Post-Installation Steps
+### 4. Configure react-native-sound (recommended)
 
-After installing this package and its dependencies:
+**iOS** — enable playback in silent mode (optional, in `AppDelegate`):
 
-1. **For React Native CLI Projects**:
+```objc
+#import <AVFoundation/AVFoundation.h>
 
-   ```bash
-   npx pod-install  # For iOS
-   npx react-native run-android  # Rebuild for Android
-   npx react-native run-ios  # Rebuild for iOS
-   ```
+// inside didFinishLaunchingWithOptions:
+[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
+```
 
-2. **For Expo Projects**:
-   ```bash
-   npx expo prebuild  # Generate native code
-   npx expo run:android  # Build and run on Android
-   npx expo run:ios  # Build and run on iOS
-   ```
+**Android** — ensure internet permission if loading remote audio URLs in `AndroidManifest.xml`:
 
-## Basic Usage
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+```
 
-```typescript
+### 5. Rebuild the native app
+
+**React Native CLI:**
+
+```bash
+cd ios && pod install && cd ..
+npx react-native run-ios
+npx react-native run-android
+```
+
+**Expo (development build):**
+
+```bash
+npx expo prebuild
+npx expo run:ios
+# or
+npx expo run:android
+```
+
+After native dependency updates:
+
+```bash
+npx expo prebuild --clean
+```
+
+---
+
+## Quick start
+
+```tsx
+import React, { useState } from 'react';
+import { SafeAreaView } from 'react-native';
 import ChatScreen from 'movius-chats';
-import { Message } from 'movius-chats/lib/typescript/types';
-import { useState } from 'react';
+import type { Message } from 'movius-chats/lib/typescript/types';
 
-const App = () => {
+export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
+  const currentUserId = 'user-1';
 
-  const handleSendMessage = (message: Omit<Message, "id" | "time" | "status">) => {
-    // Handle sending message
+  const handleSendMessage = (
+    payload: Omit<Message, 'id' | 'time' | 'status'>
+  ) => {
     const newMessage: Message = {
-      ...message,
-      id: Date.now().toString(),
-      time: new Date().toLocaleTimeString(),
-      status: 'sent'
+      ...payload,
+      id: String(Date.now()),
+      time: new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      status: 'sent',
     };
-    setMessages(prev => [newMessage, ...prev]);
+    // Newest first — see "Message list ordering"
+    setMessages((prev) => [newMessage, ...prev]);
   };
 
   return (
-    <ChatScreen
-      messages={messages}
-      currentUserId="user123"
-      onSendMessage={handleSendMessage}
-      showAvatars
-    />
+    <SafeAreaView style={{ flex: 1 }}>
+      <ChatScreen
+        messages={messages}
+        currentUserId={currentUserId}
+        onSendMessage={handleSendMessage}
+        placeholder="Type a message..."
+        showAvatars
+        showBubbleTail
+        showMessageStatus
+        showEmojiButton
+        showAttachmentsButton
+        showCameraButton
+        showVoiceRecordButton
+      />
+    </SafeAreaView>
   );
+}
+```
+
+---
+
+## Message data model
+
+Each item in `messages` must match the `Message` interface:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | `string` | Yes | Unique message id |
+| `senderId` | `string` | Yes | User id of the sender |
+| `time` | `string` | Yes | Display time (e.g. `"2:30 PM"`) — you format this |
+| `status` | `'sent' \| 'delivered' \| 'read'` | Yes | Delivery state (shown only for current user) |
+| `text` | `string` | No | Plain text; URLs are auto-linked |
+| `image` | `string` | No | Image URI |
+| `video` | `string` | No | Video URI |
+| `audio` | `string` | No | Audio file URI |
+| `senderName` | `string` | No | Shown when `showUserNames` is true |
+| `senderAvatar` | `string` | No | Avatar image URI; falls back to first letter of `senderName` |
+
+A message can combine fields (e.g. text + image), but typically you use one primary content type per bubble.
+
+```typescript
+import type { Message } from 'movius-chats/lib/typescript/types';
+
+const example: Message = {
+  id: '1',
+  senderId: 'user-2',
+  senderName: 'Alex',
+  senderAvatar: 'https://example.com/avatar.jpg',
+  text: 'Check this out https://example.com',
+  time: '10:42 AM',
+  status: 'read',
 };
 ```
 
-## Props
+---
 
-### Core Props
+## Message list ordering
 
-| Prop               | Type                                                         | Required | Description                                                            |
-| ------------------ | ------------------------------------------------------------ | -------- | ---------------------------------------------------------------------- |
-| messages           | Message[]                                                    | Yes      | Array of message objects to display                                    |
-| currentUserId      | string                                                       | Yes      | ID of the current user                                                 |
-| onSendMessage      | (message: Omit<Message, "id" \| "time" \| "status">) => void | Yes      | Callback when a message is sent                                        |
-| onMessageLongPress | (message: Message) => void                                   | No       | Callback for long-pressing a message                                   |
-| onAttachmentPress  | () => void                                                   | No       | Callback for attachment button press                                   |
-| onAudioRecordStart | () => void                                                   | No       | Callback when audio recording starts                                   |
-| onAudioRecordEnd   | () => void                                                   | No       | Callback when audio recording ends                                     |
-| onCameraPress      | () => void                                                   | No       | Callback for camera button press                                       |
-| onTypingStart      | () => void                                                   | No       | Callback when user starts typing                                       |
-| onTypingEnd        | () => void                                                   | No       | Callback when user stops typing                                        |
-| placeholder        | string                                                       | No       | Input placeholder text                                                 |
-| typingUsers        | Array<{ id: string; avatar: string; name: string }>          | No       | List of users who are typing                                           |
+`ChatScreen` uses an **inverted** `FlatList`. Put the **newest message at index `0`** of the `messages` array:
+
+```typescript
+setMessages((prev) => [newMessage, ...prev]); // ✅ correct
+```
+
+Older messages sit at higher indices and appear higher on screen.
+
+**Grouping:** consecutive messages from the same sender share bubble styling; avatars and bubble tails show on the first message of a sequence (`isFirstInSequence`).
+
+---
+
+## ChatScreen API
+
+`ChatScreen` is the **default export** from `movius-chats`. It wraps your chat in `AudioProvider` + `ChatProvider` and renders the message list, typing indicator, input (or custom input), and full-screen media viewer.
+
+### Core props
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `messages` | `Message[]` | Yes | Messages to render (newest first) |
+| `currentUserId` | `string` | Yes | Logged-in user id; used for bubble alignment & status |
+| `onSendMessage` | `(msg: Omit<Message, 'id' \| 'time' \| 'status'>) => void` | Yes | Fired when user taps send with text and/or `previewData` |
+| `onMessageLongPress` | `(message: Message) => void` | No | Long-press on a bubble (reply, delete, etc.) |
+| `placeholder` | `string` | No | Input placeholder (default: `"Message"`) |
+
+### Feature flags
+
+All flags below default to **falsy** (hidden) unless you pass `true`:
+
+| Prop | Description |
+|------|-------------|
+| `showAvatars` | Avatar (or initial) on received messages & typing row |
+| `showUserNames` | Sender name above received bubbles |
+| `showBubbleTail` | WhatsApp-style tail on first bubble in a sequence |
+| `showMessageStatus` | Timestamp + checkmarks for sent messages |
+| `showEmojiButton` | Emoji button in input (UI only; wire your own picker) |
+| `showAttachmentsButton` | Paperclip → calls `onAttachmentPress` |
+| `showCameraButton` | Camera icon when input is empty → `onCameraPress` |
+| `showVoiceRecordButton` | Mic when input empty; send when text present |
+
+### Input & typing
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `onTypingStart` | `() => void` | Called when input has non-empty text |
+| `onTypingEnd` | `() => void` | Called when input is cleared |
+| `onAttachmentPress` | `() => void` | User tapped attachment — open document picker, etc. |
+| `onCameraPress` | `() => void` | User tapped camera — open camera / image picker |
+| `onAudioRecordStart` | `() => void` | Mic press / long-press start |
+| `onAudioRecordEnd` | `() => void` | Mic release — upload recorded audio and append to messages |
+| `typingUsers` | `Array<{ id: string; avatar: string; name: string }>` | Users currently typing (excludes `currentUserId` in UI) |
+
+**Note:** Built-in `onSendMessage` from the default input only includes `{ text, senderId }`. Recording, camera, and file picking are **intentionally delegated** to your app via the callbacks above.
+
+### Attachment preview
+
+Show a file/image/video preview above the input before sending:
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `previewData` | `{ uri: string; type: string; name: string }` | MIME type in `type` (e.g. `image/jpeg`, `video/mp4`, `application/pdf`) |
+| `closePreview` | `() => void` | Clear preview when user taps X |
+
+When `previewData` is set, send is enabled even if text is empty. Your `onSendMessage` handler should read `previewData` from closure/state and attach `image`, `video`, or file metadata to the outgoing message.
 
 ### Theming
 
-The component supports extensive theming through the `theme` prop:
+Pass a `theme` object to customize colors, typography, and styles. All keys are optional.
 
 ```typescript
- theme?: {
-    colors?: {
-      sentMessageTailColor?: string;
-      receivedMessageTailColor?: string;
-      timestamp?: string;
-      inputsIconsColor?: string;
-      sendIconsColor?: string;
-      placeholderTextColor?: string;
-      audioPlayIconColor?: string;
-      audioPauseIconColor?: string;
-      videoPlayIconColor?: string;
-    };
-    bubbleStyle?: {
-      sent?: ViewStyle;
-      received?: ViewStyle;
-      avatarTextStyle?: TextStyle;
-      userNameStyle?: TextStyle;
-      avatarImageStyle?: ImageStyle;
-      typingContainerStyle?: ViewStyle;
-      additionalTypingUsersContainerStyle?: ViewStyle;
-      additionalTypingUsersTextStyle?: TextStyle;
-    };
-    messageStyle?: {
-      sentTextStyle?: TextStyle;
-      receivedTextStyle?: TextStyle;
-      audioPlayButtonStyle?: ViewStyle;
-      audioKnobStyle?: ViewStyle;
-      progressBarStyle?: ViewStyle;
-      activeProgressBarStyle?: ViewStyle;
-      audioDurationStyle?: TextStyle;
-    };
-    inputStyles?: {
-      inputSectionContainerStyle?: ViewStyle;
-      inputContainerStyle?: ViewStyle;
-      sendButtonStyle?: ViewStyle;
-    };
-    filePreviewStyle?: {
-      root?: ViewStyle;
-      container?: ViewStyle;
-      iconContainer?: ViewStyle;
-      nameContainer?: ViewStyle;
-      text?: TextStyle;
-    };
+theme?: {
+  fontFamily?: string;
+
+  colors?: {
+    sentMessageTailColor?: string;
+    receivedMessageTailColor?: string;
+    timestamp?: string;
+    inputsIconsColor?: string;
+    sendIconsColor?: string;
+    placeholderTextColor?: string;
+    inputTextColor?: string;
+    audioPlayIconColor?: string;
+    audioPauseIconColor?: string;
+    videoPlayIconColor?: string;
+    sentIconColor?: string;
+    deliveredIconColor?: string;
+    readIconColor?: string;
   };
+
+  sizes?: {
+    inputIconSize?: string; // twrnc class, e.g. 'h-6 w-6'
+  };
+
+  bubbleStyle?: {
+    sent?: ViewStyle;
+    received?: ViewStyle;
+    avatarTextStyle?: TextStyle;
+    userNameStyle?: TextStyle;
+    avatarImageStyle?: ImageStyle;
+    typingContainerStyle?: ViewStyle;
+    additionalTypingUsersContainerStyle?: ViewStyle;
+    additionalTypingUsersTextStyle?: TextStyle;
+  };
+
+  messageStyle?: {
+    sentTextStyle?: TextStyle;
+    receivedTextStyle?: TextStyle;
+    audioPlayButtonStyle?: ViewStyle;
+    audioKnobStyle?: ViewStyle;
+    progressBarStyle?: ViewStyle;
+    activeProgressBarStyle?: ViewStyle;
+    audioDurationStyle?: TextStyle;
+  };
+
+  inputStyles?: {
+    inputSectionContainerStyle?: ViewStyle;
+    inputContainerStyle?: ViewStyle;
+    sendButtonStyle?: ViewStyle;
+  };
+
+  filePreviewStyle?: {
+    root?: ViewStyle;
+    container?: ViewStyle;
+    iconContainer?: ViewStyle;
+    nameContainer?: ViewStyle;
+    text?: TextStyle;
+  };
+}
 ```
 
-### Custom Components
+Default bubble colors (before `theme` overrides): sent ≈ green (`bg-green-500`), received ≈ white.
 
-| Prop                         | Type                                 | Description                |
-| ---------------------------- | ------------------------------------ | -------------------------- | ------------------------------- |
-| renderCustomInput            | () => React.ReactNode                | Custom input component     |
-| renderCustomVideoBubbleError | () => React.ReactNode                | Custom video error display |
-| renderCustomTyping           | () => React.ReactNode                | Custom typing indicator    |
-| CustomEmojiIcon              | () => React.ReactNode                | Custom emoji picker icon   |
-| CustomAttachmentIcon         | () => React.ReactNode                | Custom attachment icon     |
-| CustomCameraIcon             | () => React.ReactNode                | Custom camera icon         |
-| CustomSendIcon               | () => React.ReactNode                | Custom send button icon    |
-| CustomMicrophoneIcon         | () => React.ReactNode                | Custom microphone icon     |
-| CustomPlayIcon               | () => React.ReactNode                | Custom play icon           |
-| CustomPauseIcon              | () => React.ReactNode                | Custom pause icon          |
-| CustomFileIcon               | React.ComponentType<{ style?: any }> | Custom file icon           |
-| CustomImagePreview           | React.ComponentType<{ uri: string }> | Custom image preview component. |
-| CustomVideoPreview           | React.ComponentType<{ uri: string }> | Custom video preview component. |
+### Custom components & icons
 
+| Prop | Type | Description |
+|------|------|-------------|
+| `renderCustomInput` | `() => React.ReactNode` | Replace entire input bar |
+| `renderCustomTyping` | `() => React.ReactNode` | Replace typing bubble content |
+| `renderCustomVideoBubbleError` | `() => React.ReactNode` | Replace inline video error UI |
+| `CustomEmojiIcon` | `() => React.ReactNode` | Emoji button |
+| `CustomAttachmentIcon` | `() => React.ReactNode` | Attachment button |
+| `CustomCameraIcon` | `() => React.ReactNode` | Camera button |
+| `CustomSendIcon` | `() => React.ReactNode` | Send button |
+| `CustomMicrophoneIcon` | `() => React.ReactNode` | Microphone button |
+| `CustomPlayIcon` | `() => React.ReactNode` | Play icon in video/audio bubbles |
+| `CustomPauseIcon` | `() => React.ReactNode` | Pause icon in audio player |
+| `CustomFileIcon` | `React.ComponentType<{ style?: any }>` | Generic file preview icon |
+| `CustomImagePreview` | `React.ComponentType<{ uri: string }>` | Image attachment preview |
+| `CustomVideoPreview` | `React.ComponentType<{ uri: string }>` | Video attachment preview |
 
-## Advanced Usage
+---
 
-### Custom Theme Example
+## Usage examples
 
-```typescript
+### Text messages
+
+```tsx
+onSendMessage={({ text, senderId }) => {
+  addMessage({ text, senderId, status: 'sent' });
+}}
+```
+
+### Media messages
+
+Add URIs when building the `Message` object (usually after upload):
+
+```tsx
+const imageMessage: Message = {
+  id: '2',
+  senderId: currentUserId,
+  image: 'https://cdn.example.com/photo.jpg',
+  time: '11:00 AM',
+  status: 'delivered',
+};
+
+const audioMessage: Message = {
+  id: '3',
+  senderId: 'user-2',
+  audio: 'file:///path/to/recording.m4a',
+  time: '11:05 AM',
+  status: 'read',
+};
+```
+
+Tap image/video bubbles to open the built-in **MediaViewer** (pinch-zoom for images, native controls for video).
+
+### Typing indicators
+
+```tsx
+const [typingUsers, setTypingUsers] = useState<
+  { id: string; avatar: string; name: string }[]
+>([]);
+
 <ChatScreen
-  messages={messages}
-  currentUserId="user123"
-  onSendMessage={handleSendMessage}
-  theme={{
-    colors: {
-      sentMessageTailColor: '#007AFF',
-      receivedMessageTailColor: '#E9E9EB',
-      timestamp: '#8E8E93',
-    },
-    bubbleStyle: {
-      sent: {
-        backgroundColor: '#007AFF',
-        borderRadius: 20,
-      },
-      received: {
-        backgroundColor: '#E9E9EB',
-        borderRadius: 20,
-      },
-    },
-    filePreviewStyle: {
-      root: { top: 10, left: 10 },
-      container: { backgroundColor: '#f0f0f0', borderRadius: 16 },
-      iconContainer: { backgroundColor: '#333' },
-      nameContainer: { backgroundColor: '#eee' },
-      text: { color: 'red', fontWeight: 'bold' },
-    },
+  typingUsers={typingUsers}
+  onTypingStart={() => notifyServer('typing-start')}
+  onTypingEnd={() => notifyServer('typing-end')}
+  // ...
+/>
+```
+
+When your socket receives “user X is typing”, push into `typingUsers`. The component shows up to two avatars plus a “+N” badge.
+
+### Attachments & camera (parent-controlled)
+
+```tsx
+import { launchImageLibrary } from 'react-native-image-picker';
+
+<ChatScreen
+  showAttachmentsButton
+  showCameraButton
+  onAttachmentPress={async () => {
+    const result = await launchImageLibrary({ mediaType: 'mixed' });
+  }}
+  onCameraPress={async () => {
+    // open camera, then add message with image/video URI
+  }}
+  onAudioRecordStart={() => {
+    // start native recorder
+  }}
+  onAudioRecordEnd={async () => {
+    // stop recorder, upload, then:
+    // addMessage({ audio: uploadedUrl, senderId: currentUserId, ... });
   }}
 />
 ```
 
-### Expo Usage
+### Attachment preview before send
 
-If you're using Expo, follow these steps:
+```tsx
+const [previewData, setPreviewData] = useState<{
+  uri: string;
+  type: string;
+  name: string;
+} | null>(null);
 
-1. Create a development build of your app:
+<ChatScreen
+  previewData={previewData ?? undefined}
+  closePreview={() => setPreviewData(null)}
+  onAttachmentPress={async () => {
+    const asset = await pickDocument();
+    setPreviewData({
+      uri: asset.uri,
+      type: asset.type ?? 'application/octet-stream',
+      name: asset.name ?? 'file',
+    });
+  }}
+  onSendMessage={({ text, senderId }) => {
+    const msg: Message = {
+      id: String(Date.now()),
+      senderId,
+      text: text || undefined,
+      image: previewData?.type.startsWith('image/')
+        ? previewData.uri
+        : undefined,
+      video: previewData?.type.startsWith('video/')
+        ? previewData.uri
+        : undefined,
+      time: formatTime(new Date()),
+      status: 'sent',
+    };
+    setMessages((prev) => [msg, ...prev]);
+    setPreviewData(null);
+  }}
+/>
+```
 
-   ```bash
-   npx expo prebuild
-   ```
+### Custom theme
 
-2. Run on your desired platform:
+```tsx
+<ChatScreen
+  theme={{
+    fontFamily: 'Inter-Regular',
+    colors: {
+      sentMessageTailColor: '#007AFF',
+      receivedMessageTailColor: '#E9E9EB',
+      timestamp: '#8E8E93',
+      readIconColor: '#34C759',
+      inputTextColor: '#000000',
+    },
+    bubbleStyle: {
+      sent: { backgroundColor: '#007AFF' },
+      received: { backgroundColor: '#E9E9EB' },
+    },
+    messageStyle: {
+      sentTextStyle: { color: '#FFFFFF' },
+      receivedTextStyle: { color: '#000000' },
+    },
+    inputStyles: {
+      sendButtonStyle: { backgroundColor: '#007AFF' },
+    },
+  }}
+  // ...
+/>
+```
 
-   ```bash
-   npx expo run:android
-   # or
-   npx expo run:ios
-   ```
+### Custom input bar
 
-3. For subsequent updates to the native modules, you'll need to rebuild:
-   ```bash
-   npx expo prebuild --clean
-   ```
+```tsx
+<ChatScreen
+  renderCustomInput={() => <MyComposer />}
+  // Still use messages / currentUserId / onSendMessage via your own state
+/>
+```
 
-### Performance Considerations
+When using `renderCustomInput`, you are responsible for calling your send logic; the default `ChatInput` is not mounted.
 
-- Messages are rendered using `FlatList` for optimal performance
-- Avatar images are cached automatically
-- Media messages use lazy loading
-- Typing indicators are debounced
+### Long-press actions
+
+```tsx
+<ChatScreen
+  onMessageLongPress={(message) => {
+  }}
+/>
+```
+
+---
+
+## TypeScript
+
+The main export is the default `ChatScreen` component. Types live in the build output:
+
+```typescript
+import ChatScreen from 'movius-chats';
+import type {
+  Message,
+  ChatScreenProps,
+} from 'movius-chats/lib/typescript/types';
+```
+
+`ChatScreenProps` is the full props interface for `ChatScreen`.
+
+---
+
+## Architecture overview
+
+```
+ChatScreen
+├── AudioProvider          # one audio message plays at a time
+├── ChatProvider           # props, theme, media viewer state
+├── FlatList (inverted)    # ChatBubble per message
+│   └── ListHeaderComponent → TypingIndicator
+├── ChatInput (optional)   # text, icons, file preview
+└── MediaViewer (Modal)    # full-screen image / video
+```
+
+Internal pieces (not exported from the package entry, but useful when reading source):
+
+- **ChatBubble** — layout, tail, avatar, `MessageContent`, `MessageStatus`
+- **MessageContent** — image, video thumbnail, `AudioPlayer`, parsed text
+- **AudioPlayer** — `react-native-sound` + Reanimated scrubber
+- **FilePreview** — pre-send attachment chip above input
+
+---
 
 ## Troubleshooting
 
-### Common Issues
+| Issue | What to try |
+|-------|-------------|
+| `Native module not found` | Rebuild iOS/Android after install; run `pod install` on iOS |
+| Crashes in Expo Go | Use a development build; native modules are not in Expo Go |
+| Audio silent on iOS | Set `AVAudioSession` category to playback (see installation) |
+| Video/audio won’t load | Check URI scheme (`https://`, `file://`) and Android `INTERNET` permission |
+| Reanimated worklet errors | Ensure `react-native-reanimated/plugin` is **last** in Babel config |
+| Types not found | Import from `movius-chats/lib/typescript/types` |
+| Messages appear in wrong order | Newest item must be `messages[0]` (inverted list) |
+| Icons/buttons missing | Pass feature flags (`showEmojiButton`, etc.) — they default to off |
 
-- **"Native module not found" error**: Ensure you've rebuilt your app after installing the package.
-- **Crashes in Expo Go**: This package uses native modules that are not compatible with Expo Go. Use a development build instead.
-- **Audio/Video not working**: Check that you've installed all required dependencies and rebuilt the app.
+---
 
 ## Contributing
 
-We welcome contributions! Please see our contributing guide for details.
+Issues and pull requests are welcome on [GitHub](https://github.com/David-Atueyi/Movius-Chats/issues).
+
+---
 
 ## License
 
-MIT
-
-## Support
-
-For issues and feature requests, please file an issue on the GitHub repository.
+ISC — see [package.json](./package.json).
