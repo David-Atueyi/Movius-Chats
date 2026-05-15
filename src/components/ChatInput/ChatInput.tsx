@@ -61,14 +61,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const inputBarIconSize = theme?.sizes?.inputIconSize;
   const inputBarIconStyle = getInputBarIconStyle(inputBarIconSize);
   const iconPixelSize = getInputBarIconPixelSize(inputBarIconSize);
-  const iconSlotPaddingTop = Math.max(
-    0,
-    (INPUT_BAR_SHELL_HEIGHT - iconPixelSize) / 2
-  );
-  const iconSlotStyle = { paddingTop: iconSlotPaddingTop };
 
   const isCompactInput =
     inputText.trim().length === 0 && !inputHeight.isMultiline;
+
+  const iconInset = Math.max(0, (INPUT_BAR_SHELL_HEIGHT - iconPixelSize) / 2);
+  const iconSlotStyle = isCompactInput
+    ? { paddingTop: iconInset, paddingBottom: iconInset }
+    : { paddingBottom: iconInset };
 
   const resetInputLayout = useCallback(() => {
     setInputHeight({ height: MIN_INPUT_HEIGHT, isMultiline: false });
@@ -155,7 +155,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             {
               minHeight: INPUT_BAR_SHELL_HEIGHT,
               borderRadius: isCompactInput ? 9999 : 24,
-              alignItems: 'flex-start',
+              alignItems: isCompactInput ? 'center' : 'flex-end',
             },
             theme?.inputStyles?.inputContainerStyle,
           ]}
