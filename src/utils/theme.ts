@@ -4,11 +4,17 @@ import tw from 'twrnc';
 const DEFAULT_INPUT_BAR_ICON_CLASS =
   Platform.OS === 'ios' ? 'h-6 w-6' : 'w-6 h-6';
 
+const DEFAULT_INPUT_BAR_ICON_PX = 24;
+
+export function getInputBarIconPixelSize(size?: string | number): number {
+  if (typeof size === 'number' && size > 0) {
+    return size;
+  }
+  return DEFAULT_INPUT_BAR_ICON_PX;
+}
+
 /** Size for emoji, attachment, and camera icons only (not send/mic). */
-export function getInputBarIconStyle(
-  size?: string | number,
-  extraClass?: string
-): ViewStyle {
+export function getInputBarIconStyle(size?: string | number): ViewStyle {
   if (typeof size === 'number' && size > 0) {
     return { width: size, height: size };
   }
@@ -18,7 +24,7 @@ export function getInputBarIconStyle(
       ? size.trim()
       : DEFAULT_INPUT_BAR_ICON_CLASS;
 
-  return tw.style(sizeClass, extraClass);
+  return tw.style(sizeClass);
 }
 
 /** Applies theme.fontFamily to any Text / ParsedText style array. */

@@ -7,12 +7,18 @@ import { MicrophoneIcon } from '../../assets/Icons/MicrophoneIcon';
 import { PaperClipIcon } from '../../assets/Icons/PaperClipIcon';
 import { PaperPlaneIcon } from '../../assets/Icons/PaperPlaneIcon';
 import { useChatContext } from '../../context/ChatContext';
-import { getInputBarIconStyle, withFontFamily } from '../../utils/theme';
+import {
+  getInputBarIconPixelSize,
+  getInputBarIconStyle,
+  withFontFamily,
+} from '../../utils/theme';
 import FilePreview from './FilePreview';
 import { ChatInputProps, InputHeightState } from './types';
 
 const MIN_INPUT_HEIGHT = Platform.OS === 'ios' ? 32 : 30;
 const MAX_INPUT_HEIGHT = 118;
+/** Visual height of the pill bar (icons stay vertically centered in this band). */
+const INPUT_BAR_SHELL_HEIGHT = Platform.OS === 'ios' ? 50 : 48;
 
 const SEND_ICON_CLASS = 'h-6 w-6';
 const MIC_ICON_CLASS = 'h-8 w-8';
@@ -35,6 +41,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   CustomVideoPreview,
 }) => {
   const [inputText, setInputText] = useState('');
+  const [inputResetKey, setInputResetKey] = useState(0);
   const [inputHeight, setInputHeight] = useState<InputHeightState>({
     height: MIN_INPUT_HEIGHT,
     isMultiline: false,
@@ -51,8 +58,32 @@ const ChatInput: React.FC<ChatInputProps> = ({
     closePreview,
   } = useChatContext();
 
-  const inputBarIconStyle = getInputBarIconStyle(theme?.sizes?.inputIconSize);
-  const isSingleLine = !inputHeight.isMultiline;
+  const inputBarIconSize = theme?.sizes?.inputIconSize;
+  const inputBarIconStyle = getInputBarIconStyle(inputBarIconSize);
+  const iconPixelSize = getInputBarIconPixelSize(inputBarIconSize);
+  const iconSlotPaddingTop = Math.max(
+    0,
+    (INPUT_BAR_SHELL_HEIGHT - iconPixelSize) / 2
+  );
+  const iconSlotStyle = { paddingTop: iconSlotPaddingTop };
+
+  const isCompactInput =
+    inputText.trim().length === 0 && !inputHeight.isMultiline;
+
+  const resetInputLayout = useCallback(() => {
+    setInputHeight({ height: MIN_INPUT_HEIGHT, isMultiline: false });
+    setInputResetKey((key) => key + 1);
+  }, []);
+
+  const handleChangeText = useCallback(
+    (text: string) => {
+      setInputText(text);
+      if (text.length === 0) {
+        resetInputLayout();
+      }
+    },
+    [resetInputLayout]
+  );
 
   const handleContentSizeChange = useCallback(
     (event: { nativeEvent: { contentSize: { height: number } } }) => {
@@ -60,9 +91,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
         Math.max(event.nativeEvent.contentSize.height, MIN_INPUT_HEIGHT),
         MAX_INPUT_HEIGHT
       );
+      const isMultiline = newHeight > MIN_INPUT_HEIGHT;
       setInputHeight({
-        height: newHeight,
-        isMultiline: newHeight > MIN_INPUT_HEIGHT,
+        height: isMultiline ? newHeight : MIN_INPUT_HEIGHT,
+        isMultiline,
       });
     },
     []
@@ -81,8 +113,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
     });
 
     setInputText('');
-    setInputHeight({ height: MIN_INPUT_HEIGHT, isMultiline: false });
-  }, [inputText, onSendMessage, currentUserId, previewData]);
+    resetInputLayout();
+  }, [
+    inputText,
+    onSendMessage,
+    currentUserId,
+    previewData,
+    resetInputLayout,
+  ]);
 
   useEffect(() => {
     if (inputText.trim()) {
@@ -91,13 +129,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
       onTypingEnd?.();
     }
   }, [inputText, onTypingStart, onTypingEnd]);
-
-  // Collapse back to pill shape when user clears all text (no remount — keeps keyboard open)
-  useEffect(() => {
-    if (!inputText.length) {
-      setInputHeight({ height: MIN_INPUT_HEIGHT, isMultiline: false });
-    }
-  }, [inputText]);
 
   return (
     <View style={tw`w-full px-2`}>
@@ -120,38 +151,52 @@ const ChatInput: React.FC<ChatInputProps> = ({
       >
         <View
           style={[
-            tw`flex-1 px-3.5 bg-white flex-row gap-1`,
-            isSingleLine
-              ? tw`rounded-full items-center`
-              : tw`rounded-3xl items-end`,
+            tw`flex-1 flex-row bg-white overflow-hidden px-3.5`,
+            {
+              minHeight: INPUT_BAR_SHELL_HEIGHT,
+              borderRadius: isCompactInput ? 9999 : 24,
+              alignItems: 'flex-start',
+            },
             theme?.inputStyles?.inputContainerStyle,
           ]}
         >
           {showEmojiButton && (
-            <Pressable style={tw`justify-center`}>
-              {CustomEmojiIcon ? (
-                <CustomEmojiIcon />
-              ) : (
-                <EmojiFunnySquareIcon
-                  style={inputBarIconStyle}
-                  color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
-                />
-              )}
-            </Pressable>
+            <View style={iconSlotStyle}>
+              <Pressable>
+                {CustomEmojiIcon ? (
+                  <CustomEmojiIcon />
+                ) : (
+                  <EmojiFunnySquareIcon
+                    style={inputBarIconStyle}
+                    color={
+                      theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
+                    }
+                  />
+                )}
+              </Pressable>
+            </View>
           )}
 
           <TextInput
+            key={`chat-input-${inputResetKey}`}
             value={inputText}
-            onChangeText={setInputText}
+            onChangeText={handleChangeText}
             placeholder={placeholder || 'Message'}
             style={withFontFamily(
               [
-                tw`bg-transparent flex-1 pl-2 my-3`,
+                tw`bg-transparent flex-1 pl-2`,
                 Platform.OS === 'ios' ? tw`text-[17px]` : tw`text-[16px]`,
-                { minHeight: MIN_INPUT_HEIGHT, maxHeight: MAX_INPUT_HEIGHT },
+                {
+                  minHeight: MIN_INPUT_HEIGHT,
+                  maxHeight: MAX_INPUT_HEIGHT,
+                  paddingVertical: isCompactInput ? 0 : 8,
+                  marginVertical: isCompactInput
+                    ? (INPUT_BAR_SHELL_HEIGHT - MIN_INPUT_HEIGHT) / 2
+                    : 4,
+                },
                 {
                   color:
-                    theme?.colors?.inputTextColor || 'rgba(247, 247, 247, 0.9)',
+                    theme?.colors?.inputTextColor || 'rgba(0, 0, 0, 0.87)',
                 },
               ],
               theme?.fontFamily
@@ -160,11 +205,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
               theme?.colors?.placeholderTextColor || 'rgba(0, 0, 0, 0.4)'
             }
             multiline
-            textAlignVertical="center"
+            textAlignVertical={
+              inputHeight.isMultiline && inputText.length > 0 ? 'top' : 'center'
+            }
             onContentSizeChange={handleContentSizeChange}
           />
 
-          <View style={tw`flex-row items-center gap-4`}>
+          <View style={[tw`flex-row items-center gap-4`, iconSlotStyle]}>
             {showAttachmentsButton && (
               <Pressable onPress={onAttachmentPress}>
                 {CustomAttachmentIcon ? (
@@ -196,8 +243,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
           style={[
             tw`p-2 rounded-full bg-green-600 justify-center items-center`,
             {
-              height: Platform.OS === 'ios' ? 50 : 48,
-              width: Platform.OS === 'ios' ? 50 : 48,
+              height: INPUT_BAR_SHELL_HEIGHT,
+              width: INPUT_BAR_SHELL_HEIGHT,
               ...theme?.inputStyles?.sendButtonStyle,
             },
           ]}
