@@ -12,6 +12,7 @@ import { PlayIcon } from '../../assets/Icons/PlayIcon';
 import { useAudio } from '../../context/AudioContext';
 import { useChatContext } from '../../context/ChatContext';
 import { formatDuration } from '../../utils/datefunc';
+import { withFontFamily } from '../../utils/theme';
 import { AudioPlayerProps } from './types';
 
 const AudioPlayer: React.FC<AudioPlayerProps> = ({
@@ -244,10 +245,13 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       </View>
       <View style={tw`px-4 py-1`}>
         <Text
-          style={[
-            tw`text-xs text-gray-500`,
-            theme?.messageStyle?.audioDurationStyle,
-          ]}
+          style={withFontFamily(
+            [
+              tw`text-xs text-gray-500`,
+              theme?.messageStyle?.audioDurationStyle,
+            ],
+            theme?.fontFamily
+          )}
         >
           {!isNaN(currentTime) ? formatDuration(currentTime) : '0:00'}
         </Text>

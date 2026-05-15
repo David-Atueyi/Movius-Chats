@@ -20,6 +20,10 @@ export interface ChatScreenProps {
     onAudioRecordEnd?: () => void;
     onAudioRecordStart?: () => void;
     onCameraPress?: () => void;
+    /** iOS only: header/status-bar offset for KeyboardAvoidingView. Android uses full keyboard height on the input bar. */
+    keyboardVerticalOffset?: number;
+    /** Set true if your screen already handles keyboard insets. */
+    disableKeyboardAvoiding?: boolean;
     typingUsers?: Array<{
         id: string;
         avatar: string;
@@ -61,7 +65,8 @@ export interface ChatScreenProps {
             readIconColor?: string;
         };
         sizes?: {
-            inputIconSize?: string;
+            /** Emoji, attachment, and camera icons only (not send/mic). Twrnc class or pixels. */
+            inputIconSize?: string | number;
         };
         bubbleStyle?: {
             sent?: ViewStyle;

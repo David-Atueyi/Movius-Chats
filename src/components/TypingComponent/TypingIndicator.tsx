@@ -2,6 +2,7 @@ import { Image, Text, View } from 'react-native';
 import tw from 'twrnc';
 import { ArrowBack2RoundedIcon } from '../../assets/Icons/ArrowBack2RoundedIcon';
 import { useChatContext } from '../../context/ChatContext';
+import { withFontFamily } from '../../utils/theme';
 
 export interface TypingUser {
   id: string;
@@ -55,10 +56,13 @@ export const TypingIndicator = ({
                 />
               ) : (
                 <Text
-                  style={[
-                    tw`text-sm text-black font-semibold capitalize rounded-full bg-zinc-300 w-full h-full text-center pt-0.5`,
-                    theme?.bubbleStyle?.avatarTextStyle,
-                  ]}
+                  style={withFontFamily(
+                    [
+                      tw`text-sm text-black font-semibold capitalize rounded-full bg-zinc-300 w-full h-full text-center pt-0.5`,
+                      theme?.bubbleStyle?.avatarTextStyle,
+                    ],
+                    theme?.fontFamily
+                  )}
                 >
                   {user.name?.charAt(0)}
                 </Text>
@@ -77,10 +81,13 @@ export const TypingIndicator = ({
               ]}
             >
               <Text
-                style={[
-                  tw`text-white text-xs font-semibold`,
-                  theme?.bubbleStyle?.additionalTypingUsersTextStyle,
-                ]}
+                style={withFontFamily(
+                  [
+                    tw`text-white text-xs font-semibold`,
+                    theme?.bubbleStyle?.additionalTypingUsersTextStyle,
+                  ],
+                  theme?.fontFamily
+                )}
               >
                 +{additionalUsers}
               </Text>
@@ -107,7 +114,9 @@ export const TypingIndicator = ({
           renderCustomTyping()
         ) : (
           <View style={tw`flex-row items-center py-3 px-2 justify-center`}>
-            <Text style={tw`text-gray-600`}>Typing...</Text>
+            <Text style={withFontFamily(tw`text-gray-600`, theme?.fontFamily)}>
+              Typing...
+            </Text>
           </View>
         )}
       </View>

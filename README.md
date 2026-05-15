@@ -259,6 +259,8 @@ Older messages sit at higher indices and appear higher on screen.
 | `onSendMessage` | `(msg: Omit<Message, 'id' \| 'time' \| 'status'>) => void` | Yes | Fired when user taps send with text and/or `previewData` |
 | `onMessageLongPress` | `(message: Message) => void` | No | Long-press on a bubble (reply, delete, etc.) |
 | `placeholder` | `string` | No | Input placeholder (default: `"Message"`) |
+| `keyboardVerticalOffset` | `number` | No | **iOS only:** header offset for `KeyboardAvoidingView`. Default: `0` |
+| `disableKeyboardAvoiding` | `boolean` | No | Set `true` if your screen already handles the keyboard |
 
 ### Feature flags
 
@@ -324,9 +326,10 @@ theme?: {
     readIconColor?: string;
   };
 
-  sizes?: {
-    inputIconSize?: string; // twrnc class, e.g. 'h-6 w-6'
-  };
+    sizes?: {
+      /** Twrnc classes (`"h-8 w-8"`) or pixels (`28`) for input-bar icons */
+      inputIconSize?: string | number;
+    };
 
   bubbleStyle?: {
     sent?: ViewStyle;
@@ -366,6 +369,81 @@ theme?: {
 ```
 
 Default bubble colors (before `theme` overrides): sent ≈ green (`bg-green-500`), received ≈ white.
+
+#### Custom font (`theme.fontFamily`)
+
+`fontFamily` applies to **all text** in the package (messages, timestamps, typing label, input, file names, errors).
+
+**You must load the font in your app first** — the library only sets the `fontFamily` style name.
+
+**Expo:**
+
+```tsx
+import { useFonts } from 'expo-font';
+
+export default function App() {
+  const [loaded] = useFonts({
+  InterRegular: require('./assets/fonts/Inter-Regular.ttf'),
+  });
+
+  if (!loaded) return null;
+
+  return (
+    <ChatScreen
+      theme={{ fontFamily: 'InterRegular' }}
+      // ...
+    />
+  );
+}
+```
+
+**React Native CLI:** follow [react-native custom fonts](https://reactnative.dev/docs/custom-fonts) and use the exact font family name registered on each platform.
+
+#### Input icon size (`theme.sizes.inputIconSize`)
+
+Use either **pixels** (recommended) or **twrnc classes**:
+
+```tsx
+<ChatScreen
+  theme={{
+    sizes: {
+      inputIconSize: 28,        // 28×28 px — emoji, attachment, camera only
+      // inputIconSize: 'h-8 w-8', // alternative: tailwind classes via twrnc
+    },
+  }}
+/>
+```
+
+#### Keyboard avoiding
+
+The package lifts the chat when the keyboard opens (keyboard listeners + `KeyboardAvoidingView` on iOS).
+
+1. Wrap `ChatScreen` in a parent with `flex: 1` (e.g. `SafeAreaView style={{ flex: 1 }}`).
+2. Wrap `ChatScreen` in `<View style={{ flex: 1 }}>` and give the screen root `flex: 1`.
+3. **iOS only:** set `keyboardVerticalOffset` to header + status bar (e.g. `insets.top + 44`). **Android:** omit or use `0` — the package lifts the input by the full keyboard height.
+
+```tsx
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const insets = useSafeAreaInsets();
+
+<View style={{ flex: 1 }}>
+  <ChatScreen
+    keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 44 : 0}
+    // ...
+  />
+</View>
+```
+
+3. **Android (Expo):** in `app.json`:
+
+```json
+"android": {
+  "softwareKeyboardLayoutMode": "resize"
+}
+```
+
+4. If your navigator already uses `KeyboardAvoidingView`, pass `disableKeyboardAvoiding` to avoid double offset.
 
 ### Custom components & icons
 

@@ -6,6 +6,7 @@ import { LoadingIcon } from '../../assets/Icons/LoadingIcon';
 import { PlayIcon } from '../../assets/Icons/PlayIcon';
 import { useChatContext } from '../../context/ChatContext';
 import { formatDuration } from '../../utils/datefunc';
+import { getFontFamilyStyle, withFontFamily } from '../../utils/theme';
 import AudioPlayer from '../AudioPlayer/AudioPlayer';
 import { MessageContentProps } from './types';
 import ParsedText from 'react-native-parsed-text';
@@ -86,7 +87,12 @@ const MessageContent: React.FC<MessageContentProps> = ({
               <View
                 style={tw`absolute inset-0 flex items-center justify-center bg-red-500/60 p-2`}
               >
-                <Text style={tw`text-white font-bold`}>
+                <Text
+                  style={withFontFamily(
+                    tw`text-white font-bold`,
+                    theme?.fontFamily
+                  )}
+                >
                   Failed to load video
                 </Text>
               </View>
@@ -127,18 +133,25 @@ const MessageContent: React.FC<MessageContentProps> = ({
 
       {message.text && (
         <ParsedText
-          style={[
-            tw`pt-1`,
-            showMessageStatus ? tw`pb-0` : tw`pb-2`,
-            { wordBreak: 'break-word', overflowWrap: 'break-word' },
-            isCurrentUser
-              ? theme?.messageStyle?.sentTextStyle
-              : theme?.messageStyle?.receivedTextStyle,
-          ]}
+          style={withFontFamily(
+            [
+              tw`pt-1`,
+              showMessageStatus ? tw`pb-0` : tw`pb-2`,
+              { wordBreak: 'break-word', overflowWrap: 'break-word' },
+              isCurrentUser
+                ? theme?.messageStyle?.sentTextStyle
+                : theme?.messageStyle?.receivedTextStyle,
+            ],
+            theme?.fontFamily
+          )}
           parse={[
             {
               type: 'url',
-              style: { color: 'blue', textDecorationLine: 'underline' },
+              style: {
+                color: 'blue',
+                textDecorationLine: 'underline',
+                ...getFontFamilyStyle(theme?.fontFamily),
+              },
               onPress: (url) =>
                 Linking.openURL(
                   url.startsWith('http') ? url : `https://${url}`
