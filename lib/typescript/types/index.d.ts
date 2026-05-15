@@ -44,6 +44,7 @@ export interface ChatScreenProps {
         uri: string;
     }>;
     theme?: {
+        fontFamily?: string;
         colors?: {
             sentMessageTailColor?: string;
             receivedMessageTailColor?: string;
@@ -54,6 +55,13 @@ export interface ChatScreenProps {
             audioPlayIconColor?: string;
             audioPauseIconColor?: string;
             videoPlayIconColor?: string;
+            inputTextColor?: string;
+            sentIconColor?: string;
+            deliveredIconColor?: string;
+            readIconColor?: string;
+        };
+        sizes?: {
+            inputIconSize?: string;
         };
         bubbleStyle?: {
             sent?: ViewStyle;
