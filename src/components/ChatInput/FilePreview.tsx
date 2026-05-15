@@ -3,6 +3,7 @@ import { Image, Pressable, Text, View } from 'react-native';
 import Video from 'react-native-video';
 import { FileIcon } from '../../assets/Icons/FileIcon';
 import { useChatContext } from '../../context/ChatContext';
+import { withFontFamily } from '../../utils/theme';
 import TruncateFileName from './TruncateFileName';
 import { ChatInputProps } from './types';
 
@@ -57,7 +58,14 @@ const FilePreview: React.FC<Omit<ChatInputProps, 'onSendMessage'>> = ({
           alignItems: 'center',
         }}
       >
-        <Text style={{ fontSize: 12, color: 'black' }}>X</Text>
+        <Text
+          style={withFontFamily(
+            { fontSize: 12, color: 'black' },
+            theme?.fontFamily
+          )}
+        >
+          X
+        </Text>
       </Pressable>
 
       {isImage ? (

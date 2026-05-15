@@ -5,6 +5,8 @@ import Video, { VideoRef } from 'react-native-video';
 import tw from 'twrnc';
 import { LoadingIcon } from '../../assets/Icons/LoadingIcon';
 import { XIcon } from '../../assets/Icons/XIcon';
+import { useChatContext } from '../../context/ChatContext';
+import { withFontFamily } from '../../utils/theme';
 import { MediaViewerProps } from './types';
 
 const MediaViewer: React.FC<MediaViewerProps> = ({
@@ -12,6 +14,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
   videoUrl,
   onClose,
 }) => {
+  const { theme } = useChatContext();
   const videoRef = useRef<VideoRef>(null);
   const [videoIsLoading, setVideoIsLoading] = useState(false);
   const [videoHasError, setVideoHasError] = useState(false);
@@ -84,7 +87,12 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
               <View
                 style={tw`absolute inset-0 flex items-center justify-center bg-red-500/60 p-2`}
               >
-                <Text style={tw`text-white font-bold`}>
+                <Text
+                  style={withFontFamily(
+                    tw`text-white font-bold`,
+                    theme?.fontFamily
+                  )}
+                >
                   Failed to load video
                 </Text>
               </View>

@@ -7,6 +7,7 @@ import MediaViewer from './components/MediaViewer/MediaViewer';
 import { TypingIndicator } from './components/TypingComponent/TypingIndicator';
 import { AudioProvider } from './context/AudioContext';
 import { ChatProvider, useChatContext } from './context/ChatContext';
+import { useKeyboardInset } from './hooks/useKeyboardInset';
 import { ChatScreenProps } from './types';
 
 const ChatScreenContent = () => {
@@ -34,70 +35,95 @@ const ChatScreenContent = () => {
     CustomFileIcon,
     CustomImagePreview,
     CustomVideoPreview,
+    keyboardVerticalOffset = 0,
+    disableKeyboardAvoiding = false,
   } = useChatContext();
+
+  const keyboardInset = useKeyboardInset(
+    keyboardVerticalOffset,
+    !disableKeyboardAvoiding
+  );
+
+  const content = (
+    <View
+      style={[
+        tw`flex-1 px-2 pb-4 gap-2 relative`,
+        !disableKeyboardAvoiding && keyboardInset > 0
+          ? { paddingBottom: keyboardInset + 16 }
+          : undefined,
+      ]}
+    >
+      <FlatList
+        style={tw`flex-1`}
+        data={messages}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) => (
+          <ChatBubble
+            message={item}
+            isCurrentUser={item.senderId === currentUserId}
+            onLongPress={() => onMessageLongPress?.(item)}
+            isFirstInSequence={
+              index === messages.length - 1 ||
+              messages[index + 1]?.senderId !== item.senderId
+            }
+          />
+        )}
+        ListHeaderComponent={
+          <TypingIndicator
+            typingUsers={typingUsers || []}
+            currentUserId={currentUserId}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+        inverted
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+      />
+
+      {renderCustomInput ? (
+        renderCustomInput()
+      ) : (
+        <ChatInput
+          onSendMessage={onSendMessage}
+          onTypingStart={onTypingStart}
+          onTypingEnd={onTypingEnd}
+          onAttachmentPress={onAttachmentPress}
+          onAudioRecordEnd={onAudioRecordEnd}
+          onAudioRecordStart={onAudioRecordStart}
+          onCameraPress={onCameraPress}
+          CustomEmojiIcon={CustomEmojiIcon}
+          CustomAttachmentIcon={CustomAttachmentIcon}
+          CustomCameraIcon={CustomCameraIcon}
+          CustomMicrophoneIcon={CustomMicrophoneIcon}
+          CustomSendIcon={CustomSendIcon}
+          CustomFileIcon={CustomFileIcon}
+          CustomImagePreview={CustomImagePreview}
+          CustomVideoPreview={CustomVideoPreview}
+        />
+      )}
+
+      <MediaViewer
+        imageUrl={mediaUrl.imageUrl}
+        videoUrl={mediaUrl.videoUrl}
+        onClose={() => {
+          setMediaUrl({ imageUrl: '', videoUrl: '' });
+          setIsVideoPlaying(false);
+        }}
+      />
+    </View>
+  );
+
+  if (disableKeyboardAvoiding) {
+    return <View style={tw`flex-1`}>{content}</View>;
+  }
 
   return (
     <KeyboardAvoidingView
       style={tw`flex-1`}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={keyboardVerticalOffset}
     >
-      <View style={tw`flex-1 px-2 pb-4 gap-2 relative`}>
-        <FlatList
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => (
-            <ChatBubble
-              message={item}
-              isCurrentUser={item.senderId === currentUserId}
-              onLongPress={() => onMessageLongPress?.(item)}
-              isFirstInSequence={
-                index === messages.length - 1 ||
-                messages[index + 1]?.senderId !== item.senderId
-              }
-            />
-          )}
-          ListHeaderComponent={
-            <TypingIndicator
-              typingUsers={typingUsers || []}
-              currentUserId={currentUserId}
-            />
-          }
-          showsVerticalScrollIndicator={false}
-          inverted
-        />
-
-        {renderCustomInput ? (
-          renderCustomInput()
-        ) : (
-          <ChatInput
-            onSendMessage={onSendMessage}
-            onTypingStart={onTypingStart}
-            onTypingEnd={onTypingEnd}
-            onAttachmentPress={onAttachmentPress}
-            onAudioRecordEnd={onAudioRecordEnd}
-            onAudioRecordStart={onAudioRecordStart}
-            onCameraPress={onCameraPress}
-            CustomEmojiIcon={CustomEmojiIcon}
-            CustomAttachmentIcon={CustomAttachmentIcon}
-            CustomCameraIcon={CustomCameraIcon}
-            CustomMicrophoneIcon={CustomMicrophoneIcon}
-            CustomSendIcon={CustomSendIcon}
-            CustomFileIcon={CustomFileIcon}
-            CustomImagePreview={CustomImagePreview}
-            CustomVideoPreview={CustomVideoPreview}
-          />
-        )}
-
-        <MediaViewer
-          imageUrl={mediaUrl.imageUrl}
-          videoUrl={mediaUrl.videoUrl}
-          onClose={() => {
-            setMediaUrl({ imageUrl: '', videoUrl: '' });
-            setIsVideoPlaying(false);
-          }}
-        />
-      </View>
+      {content}
     </KeyboardAvoidingView>
   );
 };

@@ -1,5 +1,7 @@
-import React from "react";
-import { StyleProp, Text, TextStyle } from "react-native";
+import React from 'react';
+import { StyleProp, Text, TextStyle } from 'react-native';
+import { useChatContext } from '../../context/ChatContext';
+import { withFontFamily } from '../../utils/theme';
 
 const TruncateFileName = ({
   fileName,
@@ -8,6 +10,7 @@ const TruncateFileName = ({
   fileName: string;
   style?: StyleProp<TextStyle>;
 }) => {
+  const { theme } = useChatContext();
   const getTruncatedName = (fullName: string) => {
     const lastDot = fullName.lastIndexOf('.');
     if (lastDot === -1) return fullName;
@@ -23,7 +26,10 @@ const TruncateFileName = ({
     <Text
       numberOfLines={2}
       ellipsizeMode="tail"
-      style={[{ fontSize: 14, fontWeight: '600', color: 'black' }, style]}
+      style={withFontFamily(
+        [{ fontSize: 14, fontWeight: '600', color: 'black' }, style],
+        theme?.fontFamily
+      )}
     >
       {getTruncatedName(fileName)}
     </Text>

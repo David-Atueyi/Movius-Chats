@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import tw from 'twrnc';
+import { withFontFamily } from '../../utils/theme';
 import { CheckAllIcon } from '../../assets/Icons/CheckAllIcon';
 import { CheckIcon } from '../../assets/Icons/CheckIcon';
 import { useChatContext } from '../../context/ChatContext';
@@ -28,15 +29,18 @@ const MessageStatus: React.FC<MessageStatusProps> = ({
           ]}
         >
           <Text
-            style={[
-              tw`text-xs`,
-              {
-                color:
-                  hasText || hasAudio
-                    ? theme?.colors?.timestamp || 'rgba(107, 114, 128, 0.7)'
-                    : 'white',
-              },
-            ]}
+            style={withFontFamily(
+              [
+                tw`text-xs`,
+                {
+                  color:
+                    hasText || hasAudio
+                      ? theme?.colors?.timestamp || 'rgba(107, 114, 128, 0.7)'
+                      : 'white',
+                },
+              ],
+              theme?.fontFamily
+            )}
           >
             {time}
           </Text>

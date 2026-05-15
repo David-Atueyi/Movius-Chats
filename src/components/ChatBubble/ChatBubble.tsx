@@ -3,6 +3,7 @@ import { Image, Pressable, Text, View } from 'react-native';
 import tw from 'twrnc';
 import { ArrowBack2RoundedIcon } from '../../assets/Icons/ArrowBack2RoundedIcon';
 import { useChatContext } from '../../context/ChatContext';
+import { withFontFamily } from '../../utils/theme';
 import MessageContent from './MessageContent';
 import MessageStatus from './MessageStatus';
 import { ChatBubbleProps } from './types';
@@ -71,10 +72,13 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
               />
             ) : (
               <Text
-                style={[
-                  tw`text-sm text-black font-semibold capitalize rounded-full bg-zinc-300 w-full h-full text-center pt-0.5`,
-                  theme?.bubbleStyle?.avatarTextStyle,
-                ]}
+                style={withFontFamily(
+                  [
+                    tw`text-sm text-black font-semibold capitalize rounded-full bg-zinc-300 w-full h-full text-center pt-0.5`,
+                    theme?.bubbleStyle?.avatarTextStyle,
+                  ],
+                  theme?.fontFamily
+                )}
               >
                 {message.senderName?.charAt(0)}
               </Text>
@@ -82,10 +86,13 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
           </View>
           {showUserNames && message.senderName && (
             <Text
-              style={[
-                tw`text-sm text-black font-semibold mt-1 capitalize`,
-                theme?.bubbleStyle?.userNameStyle,
-              ]}
+              style={withFontFamily(
+                [
+                  tw`text-sm text-black font-semibold mt-1 capitalize`,
+                  theme?.bubbleStyle?.userNameStyle,
+                ],
+                theme?.fontFamily
+              )}
             >
               {message.senderName}
             </Text>
