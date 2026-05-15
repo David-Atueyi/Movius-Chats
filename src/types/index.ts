@@ -24,7 +24,7 @@ export interface ChatScreenProps {
   onAudioRecordStart?: () => void;
   onCameraPress?: () => void;
 
-  /** Extra space subtracted from keyboard height (header, tab bar, safe area). */
+  /** iOS only: header/status-bar offset for KeyboardAvoidingView. Android uses full keyboard height on the input bar. */
   keyboardVerticalOffset?: number;
   /** Set true if your screen already handles keyboard insets. */
   disableKeyboardAvoiding?: boolean;
@@ -59,7 +59,7 @@ export interface ChatScreenProps {
       readIconColor?: string;
     };
     sizes?: {
-      /** Twrnc classes (e.g. `"h-8 w-8"`) or pixel size (e.g. `28`). */
+      /** Emoji, attachment, and camera icons only (not send/mic). Twrnc class or pixels. */
       inputIconSize?: string | number;
     };
     bubbleStyle?: {

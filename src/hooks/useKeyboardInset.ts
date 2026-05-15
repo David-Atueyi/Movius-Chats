@@ -2,13 +2,10 @@ import { useEffect, useState } from 'react';
 import { Keyboard, KeyboardEvent, Platform } from 'react-native';
 
 /**
- * Returns bottom padding to apply when the software keyboard is open.
- * More reliable than KeyboardAvoidingView alone on Android chat layouts.
+ * Full keyboard height for lifting the input bar above the software keyboard.
+ * Do not subtract header offset here — that is only for KeyboardAvoidingView on iOS.
  */
-export function useKeyboardInset(
-  keyboardVerticalOffset = 0,
-  enabled = true
-) {
+export function useKeyboardInset(enabled = true) {
   const [inset, setInset] = useState(0);
 
   useEffect(() => {
@@ -23,8 +20,7 @@ export function useKeyboardInset(
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
     const onShow = (event: KeyboardEvent) => {
-      const height = event.endCoordinates.height;
-      setInset(Math.max(0, height - keyboardVerticalOffset));
+      setInset(event.endCoordinates.height);
     };
 
     const onHide = () => setInset(0);
@@ -36,7 +32,7 @@ export function useKeyboardInset(
       showSub.remove();
       hideSub.remove();
     };
-  }, [keyboardVerticalOffset, enabled]);
+  }, [enabled]);
 
   return enabled ? inset : 0;
 }

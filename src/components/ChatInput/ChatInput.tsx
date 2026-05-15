@@ -7,7 +7,7 @@ import { MicrophoneIcon } from '../../assets/Icons/MicrophoneIcon';
 import { PaperClipIcon } from '../../assets/Icons/PaperClipIcon';
 import { PaperPlaneIcon } from '../../assets/Icons/PaperPlaneIcon';
 import { useChatContext } from '../../context/ChatContext';
-import { getInputIconStyle, withFontFamily } from '../../utils/theme';
+import { getInputBarIconStyle, withFontFamily } from '../../utils/theme';
 import FilePreview from './FilePreview';
 import { ChatInputProps, InputHeightState } from './types';
 
@@ -48,12 +48,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
     closePreview,
   } = useChatContext();
 
-  const inputIconStyle = getInputIconStyle(
-    theme?.sizes?.inputIconSize,
+  const inputBarIconSize = theme?.sizes?.inputIconSize;
+  const emojiIconStyle = getInputBarIconStyle(
+    inputBarIconSize,
     inputHeight.isMultiline ? 'pb-14' : undefined
   );
-  const inputIconStyleInline = getInputIconStyle(theme?.sizes?.inputIconSize);
-  const sendIconStyle = getInputIconStyle(theme?.sizes?.inputIconSize);
+  const inputBarIconStyle = getInputBarIconStyle(inputBarIconSize);
 
   const handleContentSizeChange = useCallback(
     (event: { nativeEvent: { contentSize: { height: number } } }) => {
@@ -127,7 +127,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 <CustomEmojiIcon />
               ) : (
                 <EmojiFunnySquareIcon
-                  style={inputIconStyle}
+                  style={emojiIconStyle}
                   color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
                 />
               )}
@@ -145,7 +145,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 { minHeight: MIN_INPUT_HEIGHT, maxHeight: MAX_INPUT_HEIGHT },
                 {
                   color:
-                    theme?.colors?.inputTextColor || 'rgba(0, 0, 0, 0.87)',
+                    theme?.colors?.inputTextColor || 'rgba(247, 247, 247, 0.9)',
                 },
               ],
               theme?.fontFamily
@@ -170,7 +170,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                   <CustomAttachmentIcon />
                 ) : (
                   <PaperClipIcon
-                    style={inputIconStyleInline}
+                    style={inputBarIconStyle}
                     color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
                   />
                 )}
@@ -182,7 +182,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                   <CustomCameraIcon />
                 ) : (
                   <CameraIcon
-                    style={inputIconStyleInline}
+                    style={inputBarIconStyle}
                     color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
                   />
                 )}
@@ -213,7 +213,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               <CustomSendIcon />
             ) : (
               <PaperPlaneIcon
-                style={sendIconStyle}
+                style={tw.style('h-6 w-6')}
                 color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
               />
             )
@@ -222,7 +222,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               <CustomMicrophoneIcon />
             ) : (
               <MicrophoneIcon
-                style={sendIconStyle}
+                style={tw.style('h-6 w-6')}
                 color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
               />
             )
@@ -230,7 +230,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             <CustomSendIcon />
           ) : (
             <PaperPlaneIcon
-              style={sendIconStyle}
+              style={tw.style('h-6 w-6')}
               color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
             />
           )}

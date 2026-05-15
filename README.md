@@ -259,7 +259,7 @@ Older messages sit at higher indices and appear higher on screen.
 | `onSendMessage` | `(msg: Omit<Message, 'id' \| 'time' \| 'status'>) => void` | Yes | Fired when user taps send with text and/or `previewData` |
 | `onMessageLongPress` | `(message: Message) => void` | No | Long-press on a bubble (reply, delete, etc.) |
 | `placeholder` | `string` | No | Input placeholder (default: `"Message"`) |
-| `keyboardVerticalOffset` | `number` | No | Subtract from keyboard height (header + tab bar + safe area). Default: `0` |
+| `keyboardVerticalOffset` | `number` | No | **iOS only:** header offset for `KeyboardAvoidingView`. Default: `0` |
 | `disableKeyboardAvoiding` | `boolean` | No | Set `true` if your screen already handles the keyboard |
 
 ### Feature flags
@@ -407,7 +407,7 @@ Use either **pixels** (recommended) or **twrnc classes**:
 <ChatScreen
   theme={{
     sizes: {
-      inputIconSize: 28,        // 28×28 px — attachment, camera, emoji, send, mic
+      inputIconSize: 28,        // 28×28 px — emoji, attachment, camera only
       // inputIconSize: 'h-8 w-8', // alternative: tailwind classes via twrnc
     },
   }}
@@ -419,17 +419,20 @@ Use either **pixels** (recommended) or **twrnc classes**:
 The package lifts the chat when the keyboard opens (keyboard listeners + `KeyboardAvoidingView` on iOS).
 
 1. Wrap `ChatScreen` in a parent with `flex: 1` (e.g. `SafeAreaView style={{ flex: 1 }}`).
-2. Set `keyboardVerticalOffset` to your header + top inset (try `60`–`100` on iOS with a stack header):
+2. Wrap `ChatScreen` in `<View style={{ flex: 1 }}>` and give the screen root `flex: 1`.
+3. **iOS only:** set `keyboardVerticalOffset` to header + status bar (e.g. `insets.top + 44`). **Android:** omit or use `0` — the package lifts the input by the full keyboard height.
 
 ```tsx
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const insets = useSafeAreaInsets();
 
-<ChatScreen
-  keyboardVerticalOffset={insets.top + 44}
-  // ...
-/>
+<View style={{ flex: 1 }}>
+  <ChatScreen
+    keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 44 : 0}
+    // ...
+  />
+</View>
 ```
 
 3. **Android (Expo):** in `app.json`:

@@ -1,11 +1,11 @@
 import { Platform, StyleProp, TextStyle, ViewStyle } from 'react-native';
 import tw from 'twrnc';
 
-const DEFAULT_INPUT_ICON_CLASS =
+const DEFAULT_INPUT_BAR_ICON_CLASS =
   Platform.OS === 'ios' ? 'h-6 w-6' : 'w-6 h-6';
 
-/** Resolves theme.sizes.inputIconSize (twrnc class string or pixel number). */
-export function getInputIconStyle(
+/** Size for emoji, attachment, and camera icons only (not send/mic). */
+export function getInputBarIconStyle(
   size?: string | number,
   extraClass?: string
 ): ViewStyle {
@@ -16,7 +16,7 @@ export function getInputIconStyle(
   const sizeClass =
     typeof size === 'string' && size.trim().length > 0
       ? size.trim()
-      : DEFAULT_INPUT_ICON_CLASS;
+      : DEFAULT_INPUT_BAR_ICON_CLASS;
 
   return tw.style(sizeClass, extraClass);
 }

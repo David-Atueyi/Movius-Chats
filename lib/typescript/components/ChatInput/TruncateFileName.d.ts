@@ -1,5 +1,5 @@
-import React from "react";
-import { StyleProp, TextStyle } from "react-native";
+import React from 'react';
+import { StyleProp, TextStyle } from 'react-native';
 declare const _default: React.MemoExoticComponent<({ fileName, style, }: {
     fileName: string;
     style?: StyleProp<TextStyle>;

@@ -39,20 +39,32 @@ const ChatScreenContent = () => {
     disableKeyboardAvoiding = false,
   } = useChatContext();
 
-  const keyboardInset = useKeyboardInset(
-    keyboardVerticalOffset,
-    !disableKeyboardAvoiding
+  const keyboardInset = useKeyboardInset(!disableKeyboardAvoiding);
+
+  const inputSection = renderCustomInput ? (
+    renderCustomInput()
+  ) : (
+    <ChatInput
+      onSendMessage={onSendMessage}
+      onTypingStart={onTypingStart}
+      onTypingEnd={onTypingEnd}
+      onAttachmentPress={onAttachmentPress}
+      onAudioRecordEnd={onAudioRecordEnd}
+      onAudioRecordStart={onAudioRecordStart}
+      onCameraPress={onCameraPress}
+      CustomEmojiIcon={CustomEmojiIcon}
+      CustomAttachmentIcon={CustomAttachmentIcon}
+      CustomCameraIcon={CustomCameraIcon}
+      CustomMicrophoneIcon={CustomMicrophoneIcon}
+      CustomSendIcon={CustomSendIcon}
+      CustomFileIcon={CustomFileIcon}
+      CustomImagePreview={CustomImagePreview}
+      CustomVideoPreview={CustomVideoPreview}
+    />
   );
 
   const content = (
-    <View
-      style={[
-        tw`flex-1 px-2 pb-4 gap-2 relative`,
-        !disableKeyboardAvoiding && keyboardInset > 0
-          ? { paddingBottom: keyboardInset + 16 }
-          : undefined,
-      ]}
-    >
+    <View style={tw`flex-1 px-2 pb-4 gap-2 relative`}>
       <FlatList
         style={tw`flex-1`}
         data={messages}
@@ -80,27 +92,15 @@ const ChatScreenContent = () => {
         keyboardDismissMode="interactive"
       />
 
-      {renderCustomInput ? (
-        renderCustomInput()
-      ) : (
-        <ChatInput
-          onSendMessage={onSendMessage}
-          onTypingStart={onTypingStart}
-          onTypingEnd={onTypingEnd}
-          onAttachmentPress={onAttachmentPress}
-          onAudioRecordEnd={onAudioRecordEnd}
-          onAudioRecordStart={onAudioRecordStart}
-          onCameraPress={onCameraPress}
-          CustomEmojiIcon={CustomEmojiIcon}
-          CustomAttachmentIcon={CustomAttachmentIcon}
-          CustomCameraIcon={CustomCameraIcon}
-          CustomMicrophoneIcon={CustomMicrophoneIcon}
-          CustomSendIcon={CustomSendIcon}
-          CustomFileIcon={CustomFileIcon}
-          CustomImagePreview={CustomImagePreview}
-          CustomVideoPreview={CustomVideoPreview}
-        />
-      )}
+      <View
+        style={
+          !disableKeyboardAvoiding && keyboardInset > 0
+            ? { marginBottom: keyboardInset }
+            : undefined
+        }
+      >
+        {inputSection}
+      </View>
 
       <MediaViewer
         imageUrl={mediaUrl.imageUrl}
@@ -117,10 +117,14 @@ const ChatScreenContent = () => {
     return <View style={tw`flex-1`}>{content}</View>;
   }
 
+  if (Platform.OS === 'android') {
+    return <View style={tw`flex-1`}>{content}</View>;
+  }
+
   return (
     <KeyboardAvoidingView
       style={tw`flex-1`}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
       keyboardVerticalOffset={keyboardVerticalOffset}
     >
       {content}

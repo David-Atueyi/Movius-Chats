@@ -20,6 +20,10 @@ export interface ChatScreenProps {
     onAudioRecordEnd?: () => void;
     onAudioRecordStart?: () => void;
     onCameraPress?: () => void;
+    /** Extra space subtracted from keyboard height (header, tab bar, safe area). */
+    keyboardVerticalOffset?: number;
+    /** Set true if your screen already handles keyboard insets. */
+    disableKeyboardAvoiding?: boolean;
     typingUsers?: Array<{
         id: string;
         avatar: string;
@@ -61,7 +65,8 @@ export interface ChatScreenProps {
             readIconColor?: string;
         };
         sizes?: {
-            inputIconSize?: string;
+            /** Twrnc classes (e.g. `"h-8 w-8"`) or pixel size (e.g. `28`). */
+            inputIconSize?: string | number;
         };
         bubbleStyle?: {
             sent?: ViewStyle;
