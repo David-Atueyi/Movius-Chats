@@ -44,17 +44,20 @@ const MessageStatus: React.FC<MessageStatusProps> = ({
             <View style={tw`ml-1 flex-row items-center`}>
               {status === 'sent' && (
                 <CheckIcon
-                  style={tw.style('fill-[#6B7280] h-4 w-4', { opacity: 0.7 })}
+                  style={tw.style('h-4 w-4', { opacity: 0.7 })}
+                  fill={theme?.colors?.sentIconColor || '#6B7280'}
                 />
               )}
               {status === 'delivered' && (
                 <CheckAllIcon
-                  style={tw.style('fill-[#6B7280] h-4 w-4', { opacity: 0.7 })}
+                  style={tw.style('h-4 w-4', { opacity: 0.7 })}
+                  fill={theme?.colors?.deliveredIconColor || '#6B7280'}
                 />
               )}
               {status === 'read' && (
                 <CheckAllIcon
-                  style={tw.style('fill-[#3B82F6] h-4 w-4', { opacity: 0.9 })}
+                  style={tw.style('h-4 w-4', { opacity: 0.9 })}
+                  fill={theme?.colors?.readIconColor || '#3B82F6'}
                 />
               )}
             </View>

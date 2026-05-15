@@ -122,7 +122,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               ) : (
                 <EmojiFunnySquareIcon
                   style={tw.style(
-                    `${Platform.OS === 'ios' ? 'h-6 w-6' : 'w-7 h-7'}`,
+                    `${theme?.sizes?.inputIconSize || Platform.OS === 'ios' ? 'h-6 w-6' : 'w-6 h-6'}`,
                     inputHeight.isMultiline ? 'pb-14' : 'pb-0'
                   )}
                   color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
@@ -139,6 +139,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
               tw`bg-transparent flex-1 pl-2 my-3`,
               Platform.OS === 'ios' ? tw`text-[17px]` : tw`text-[16px]`,
               { minHeight: MIN_INPUT_HEIGHT, maxHeight: MAX_INPUT_HEIGHT },
+              {
+                color:
+                  theme?.colors?.inputTextColor || 'rgba(247, 247, 247, 0.9)',
+              },
+              theme?.fontFamily ? { fontFamily: theme.fontFamily } : undefined,
             ]}
             placeholderTextColor={
               theme?.colors?.placeholderTextColor || 'rgba(0, 0, 0, 0.4)'
@@ -161,7 +166,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 ) : (
                   <PaperClipIcon
                     style={tw.style(
-                      Platform.OS === 'ios' ? 'h-6 w-6' : 'w-7 h-7'
+                      theme?.sizes?.inputIconSize || Platform.OS === 'ios'
+                        ? 'h-6 w-6'
+                        : 'w-6 h-6'
                     )}
                     color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
                   />
@@ -175,7 +182,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 ) : (
                   <CameraIcon
                     style={tw.style(
-                      Platform.OS === 'ios' ? 'h-6 w-6' : 'w-7 h-7'
+                      theme?.sizes?.inputIconSize || Platform.OS === 'ios'
+                        ? 'h-6 w-6'
+                        : 'w-6 h-6'
                     )}
                     color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
                   />
@@ -233,7 +242,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
       </View>
     </View>
   );
-
 };
 
 export default React.memo(ChatInput);

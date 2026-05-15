@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlatList, View } from 'react-native';
+import { FlatList, KeyboardAvoidingView, Platform, View } from 'react-native';
 import tw from 'twrnc';
 import ChatBubble from './components/ChatBubble/ChatBubble';
 import ChatInput from './components/ChatInput/ChatInput';
@@ -37,62 +37,68 @@ const ChatScreenContent = () => {
   } = useChatContext();
 
   return (
-    <View style={tw`flex-1 px-2 pb-4 gap-2 relative`}>
-      <FlatList
-        data={messages}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <ChatBubble
-            message={item}
-            isCurrentUser={item.senderId === currentUserId}
-            onLongPress={() => onMessageLongPress?.(item)}
-            isFirstInSequence={
-              index === messages.length - 1 ||
-              messages[index + 1]?.senderId !== item.senderId
-            }
+    <KeyboardAvoidingView
+      style={tw`flex-1`}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    >
+      <View style={tw`flex-1 px-2 pb-4 gap-2 relative`}>
+        <FlatList
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item, index }) => (
+            <ChatBubble
+              message={item}
+              isCurrentUser={item.senderId === currentUserId}
+              onLongPress={() => onMessageLongPress?.(item)}
+              isFirstInSequence={
+                index === messages.length - 1 ||
+                messages[index + 1]?.senderId !== item.senderId
+              }
+            />
+          )}
+          ListHeaderComponent={
+            <TypingIndicator
+              typingUsers={typingUsers || []}
+              currentUserId={currentUserId}
+            />
+          }
+          showsVerticalScrollIndicator={false}
+          inverted
+        />
+
+        {renderCustomInput ? (
+          renderCustomInput()
+        ) : (
+          <ChatInput
+            onSendMessage={onSendMessage}
+            onTypingStart={onTypingStart}
+            onTypingEnd={onTypingEnd}
+            onAttachmentPress={onAttachmentPress}
+            onAudioRecordEnd={onAudioRecordEnd}
+            onAudioRecordStart={onAudioRecordStart}
+            onCameraPress={onCameraPress}
+            CustomEmojiIcon={CustomEmojiIcon}
+            CustomAttachmentIcon={CustomAttachmentIcon}
+            CustomCameraIcon={CustomCameraIcon}
+            CustomMicrophoneIcon={CustomMicrophoneIcon}
+            CustomSendIcon={CustomSendIcon}
+            CustomFileIcon={CustomFileIcon}
+            CustomImagePreview={CustomImagePreview}
+            CustomVideoPreview={CustomVideoPreview}
           />
         )}
-        ListHeaderComponent={
-          <TypingIndicator
-            typingUsers={typingUsers || []}
-            currentUserId={currentUserId}
-          />
-        }
-        showsVerticalScrollIndicator={false}
-        inverted
-      />
 
-      {renderCustomInput ? (
-        renderCustomInput()
-      ) : (
-        <ChatInput
-          onSendMessage={onSendMessage}
-          onTypingStart={onTypingStart}
-          onTypingEnd={onTypingEnd}
-          onAttachmentPress={onAttachmentPress}
-          onAudioRecordEnd={onAudioRecordEnd}
-          onAudioRecordStart={onAudioRecordStart}
-          onCameraPress={onCameraPress}
-          CustomEmojiIcon={CustomEmojiIcon}
-          CustomAttachmentIcon={CustomAttachmentIcon}
-          CustomCameraIcon={CustomCameraIcon}
-          CustomMicrophoneIcon={CustomMicrophoneIcon}
-          CustomSendIcon={CustomSendIcon}
-          CustomFileIcon={CustomFileIcon}
-          CustomImagePreview={CustomImagePreview}
-          CustomVideoPreview={CustomVideoPreview}
+        <MediaViewer
+          imageUrl={mediaUrl.imageUrl}
+          videoUrl={mediaUrl.videoUrl}
+          onClose={() => {
+            setMediaUrl({ imageUrl: '', videoUrl: '' });
+            setIsVideoPlaying(false);
+          }}
         />
-      )}
-
-      <MediaViewer
-        imageUrl={mediaUrl.imageUrl}
-        videoUrl={mediaUrl.videoUrl}
-        onClose={() => {
-          setMediaUrl({ imageUrl: '', videoUrl: '' });
-          setIsVideoPlaying(false);
-        }}
-      />
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 
