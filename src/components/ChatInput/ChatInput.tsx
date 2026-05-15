@@ -11,8 +11,15 @@ import { getInputBarIconStyle, withFontFamily } from '../../utils/theme';
 import FilePreview from './FilePreview';
 import { ChatInputProps, InputHeightState } from './types';
 
-const MIN_INPUT_HEIGHT = Platform.OS === 'ios' ? 32 : 30;
-const MAX_INPUT_HEIGHT = 118;
+const MIN_TEXT_HEIGHT = Platform.OS === 'ios' ? 22 : 20;
+const MAX_TEXT_HEIGHT = 100;
+/** Matches send button height for a consistent pill shape */
+const BAR_HEIGHT = Platform.OS === 'ios' ? 48 : 46;
+const PILL_RADIUS = BAR_HEIGHT / 2;
+const EXPANDED_RADIUS = 22;
+
+const SEND_ICON_CLASS = 'h-6 w-6';
+const MIC_ICON_CLASS = 'h-8 w-8';
 
 const ChatInput: React.FC<ChatInputProps> = ({
   onSendMessage,
@@ -33,7 +40,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   const [inputText, setInputText] = useState('');
   const [inputHeight, setInputHeight] = useState<InputHeightState>({
-    height: MIN_INPUT_HEIGHT,
+    height: MIN_TEXT_HEIGHT,
     isMultiline: false,
   });
   const {
@@ -49,24 +56,48 @@ const ChatInput: React.FC<ChatInputProps> = ({
   } = useChatContext();
 
   const inputBarIconSize = theme?.sizes?.inputIconSize;
-  const emojiIconStyle = getInputBarIconStyle(
-    inputBarIconSize,
-    inputHeight.isMultiline ? 'pb-14' : undefined
-  );
   const inputBarIconStyle = getInputBarIconStyle(inputBarIconSize);
+  const iconSlotSize =
+    typeof inputBarIconSize === 'number' && inputBarIconSize > 0
+      ? inputBarIconSize
+      : 24;
+
+  const isCompact = !inputHeight.isMultiline;
+  const showCamera = showCameraButton && !inputText.trim();
+
+  const resetInputLayout = useCallback(() => {
+    setInputHeight({ height: MIN_TEXT_HEIGHT, isMultiline: false });
+  }, []);
+
+  const handleChangeText = useCallback(
+    (text: string) => {
+      setInputText(text);
+      if (!text.trim()) {
+        resetInputLayout();
+      }
+    },
+    [resetInputLayout]
+  );
 
   const handleContentSizeChange = useCallback(
     (event: { nativeEvent: { contentSize: { height: number } } }) => {
+      const contentHeight = event.nativeEvent.contentSize.height;
+
+      if (!inputText.trim()) {
+        resetInputLayout();
+        return;
+      }
+
       const newHeight = Math.min(
-        Math.max(event.nativeEvent.contentSize.height, MIN_INPUT_HEIGHT),
-        MAX_INPUT_HEIGHT
+        Math.max(contentHeight, MIN_TEXT_HEIGHT),
+        MAX_TEXT_HEIGHT
       );
       setInputHeight({
         height: newHeight,
-        isMultiline: newHeight > MIN_INPUT_HEIGHT,
+        isMultiline: newHeight > MIN_TEXT_HEIGHT + 4,
       });
     },
-    []
+    [inputText, resetInputLayout]
   );
 
   const handleSendMessage = useCallback(() => {
@@ -82,8 +113,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
     });
 
     setInputText('');
-    setInputHeight({ height: MIN_INPUT_HEIGHT, isMultiline: false });
-  }, [inputText, onSendMessage, currentUserId, previewData]);
+    resetInputLayout();
+  }, [
+    inputText,
+    onSendMessage,
+    currentUserId,
+    previewData,
+    resetInputLayout,
+  ]);
 
   useEffect(() => {
     if (inputText.trim()) {
@@ -92,6 +129,24 @@ const ChatInput: React.FC<ChatInputProps> = ({
       onTypingEnd?.();
     }
   }, [inputText, onTypingStart, onTypingEnd]);
+
+  const renderInputBarIcon = (
+    icon: React.ReactNode,
+    onPress?: () => void
+  ) => (
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      style={{
+        width: iconSlotSize,
+        height: iconSlotSize,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {icon}
+    </Pressable>
+  );
 
   return (
     <View style={tw`w-full px-2`}>
@@ -102,7 +157,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           CustomFileIcon={CustomFileIcon}
           CustomImagePreview={CustomImagePreview}
           CustomVideoPreview={CustomVideoPreview}
-          inputHeight={inputHeight.height}
+          inputHeight={isCompact ? BAR_HEIGHT : inputHeight.height + 24}
         />
       )}
 
@@ -114,38 +169,51 @@ const ChatInput: React.FC<ChatInputProps> = ({
       >
         <View
           style={[
-            tw`flex-1 px-3.5 bg-white gap-1 flex-row justify-between`,
-            inputHeight.isMultiline
-              ? tw`rounded-3xl items-end`
-              : tw`rounded-full items-center`,
+            tw`flex-1 flex-row items-center bg-white px-2`,
+            {
+              minHeight: BAR_HEIGHT,
+              borderRadius: isCompact ? PILL_RADIUS : EXPANDED_RADIUS,
+              paddingVertical: isCompact ? 0 : 8,
+            },
             theme?.inputStyles?.inputContainerStyle,
           ]}
         >
-          {showEmojiButton && (
-            <Pressable>
-              {CustomEmojiIcon ? (
+          {showEmojiButton &&
+            renderInputBarIcon(
+              CustomEmojiIcon ? (
                 <CustomEmojiIcon />
               ) : (
                 <EmojiFunnySquareIcon
-                  style={emojiIconStyle}
-                  color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
+                  style={inputBarIconStyle}
+                  color={
+                    theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
+                  }
                 />
-              )}
-            </Pressable>
-          )}
+              )
+            )}
 
           <TextInput
+            key={isCompact ? 'input-compact' : 'input-expanded'}
             value={inputText}
-            onChangeText={setInputText}
+            onChangeText={handleChangeText}
             placeholder={placeholder || 'Message'}
             style={withFontFamily(
               [
-                tw`bg-transparent flex-1 pl-2 my-3`,
+                tw`flex-1 bg-transparent`,
                 Platform.OS === 'ios' ? tw`text-[17px]` : tw`text-[16px]`,
-                { minHeight: MIN_INPUT_HEIGHT, maxHeight: MAX_INPUT_HEIGHT },
                 {
+                  minHeight: MIN_TEXT_HEIGHT,
+                  maxHeight: inputHeight.isMultiline
+                    ? MAX_TEXT_HEIGHT
+                    : MIN_TEXT_HEIGHT,
+                  paddingVertical: isCompact
+                    ? Platform.OS === 'ios'
+                      ? 12
+                      : 11
+                    : 8,
+                  paddingHorizontal: 4,
                   color:
-                    theme?.colors?.inputTextColor || 'rgba(247, 247, 247, 0.9)',
+                    theme?.colors?.inputTextColor || 'rgba(0, 0, 0, 0.87)',
                 },
               ],
               theme?.fontFamily
@@ -154,49 +222,49 @@ const ChatInput: React.FC<ChatInputProps> = ({
               theme?.colors?.placeholderTextColor || 'rgba(0, 0, 0, 0.4)'
             }
             multiline
+            scrollEnabled={inputHeight.isMultiline}
             textAlignVertical="center"
             onContentSizeChange={handleContentSizeChange}
           />
 
-          <View
-            style={[
-              tw`gap-4 flex-row`,
-              inputHeight.isMultiline ? tw`pb-4` : tw`pb-0`,
-            ]}
-          >
-            {showAttachmentsButton && (
-              <Pressable onPress={onAttachmentPress}>
-                {CustomAttachmentIcon ? (
+          <View style={tw`flex-row items-center gap-3 pr-1`}>
+            {showAttachmentsButton &&
+              renderInputBarIcon(
+                CustomAttachmentIcon ? (
                   <CustomAttachmentIcon />
                 ) : (
                   <PaperClipIcon
                     style={inputBarIconStyle}
-                    color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
+                    color={
+                      theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
+                    }
                   />
-                )}
-              </Pressable>
-            )}
-            {showCameraButton && !inputText.trim() && (
-              <Pressable onPress={onCameraPress}>
-                {CustomCameraIcon ? (
+                ),
+                onAttachmentPress
+              )}
+            {showCamera &&
+              renderInputBarIcon(
+                CustomCameraIcon ? (
                   <CustomCameraIcon />
                 ) : (
                   <CameraIcon
                     style={inputBarIconStyle}
-                    color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
+                    color={
+                      theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
+                    }
                   />
-                )}
-              </Pressable>
-            )}
+                ),
+                onCameraPress
+              )}
           </View>
         </View>
 
         <Pressable
           style={[
-            tw`p-2 rounded-full bg-green-600 justify-center items-center`,
+            tw`rounded-full bg-green-600 justify-center items-center`,
             {
-              height: Platform.OS === 'ios' ? 50 : 48,
-              width: Platform.OS === 'ios' ? 50 : 48,
+              height: BAR_HEIGHT,
+              width: BAR_HEIGHT,
               ...theme?.inputStyles?.sendButtonStyle,
             },
           ]}
@@ -213,7 +281,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               <CustomSendIcon />
             ) : (
               <PaperPlaneIcon
-                style={tw.style('h-6 w-6')}
+                style={tw.style(SEND_ICON_CLASS)}
                 color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
               />
             )
@@ -222,7 +290,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               <CustomMicrophoneIcon />
             ) : (
               <MicrophoneIcon
-                style={tw.style('h-6 w-6')}
+                style={tw.style(MIC_ICON_CLASS)}
                 color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
               />
             )
@@ -230,7 +298,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             <CustomSendIcon />
           ) : (
             <PaperPlaneIcon
-              style={tw.style('h-6 w-6')}
+              style={tw.style(SEND_ICON_CLASS)}
               color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
             />
           )}
