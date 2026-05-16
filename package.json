@@ -10,6 +10,7 @@
   "files": [
     "src",
     "lib",
+    "scripts",
     "!**/__tests__",
     "!**/__fixtures__",
     "!**/__mocks__"
@@ -24,7 +25,8 @@
     "build:js": "rollup -c rollup.config.mjs",
     "clean": "rimraf lib",
     "release": "release-it",
-    "example": "yarn --cwd example"
+    "example": "yarn --cwd example",
+    "postinstall": "node scripts/patchSound.js"
   },
   "repository": {
     "type": "git",
