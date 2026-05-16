@@ -139,8 +139,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, [inputText, onTypingStart, onTypingEnd]);
 
-  const showSendButton =
-    !!inputText.trim() || hasPreviewAttachments;
+  const showSendButton = !!inputText.trim() || hasPreviewAttachments;
 
   return (
     <View style={tw`w-full px-2`}>
@@ -180,9 +179,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 ) : (
                   <EmojiFunnySquareIcon
                     style={inputBarIconStyle}
-                    color={
-                      theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
-                    }
+                    color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
                   />
                 )}
               </Pressable>
@@ -207,8 +204,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                     : 4,
                 },
                 {
-                  color:
-                    theme?.colors?.inputTextColor || 'rgba(0, 0, 0, 0.87)',
+                  color: theme?.colors?.inputTextColor || 'rgba(0, 0, 0, 0.87)',
                 },
               ],
               theme?.fontFamily
@@ -260,9 +256,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               ...theme?.inputStyles?.sendButtonStyle,
             },
           ]}
-          onPress={
-            showSendButton ? handleSendMessage : onAudioRecordStart
-          }
+          onPress={showSendButton ? handleSendMessage : onAudioRecordStart}
           onLongPress={onAudioRecordStart}
           onPressOut={onAudioRecordEnd}
         >

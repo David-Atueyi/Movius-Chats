@@ -7,13 +7,11 @@ import type { MessageMediaItem, PreviewAttachment } from '../../types';
 import { withFontFamily } from '../../utils/theme';
 import TruncateFileName from './TruncateFileName';
 
-function previewsToMediaItems(previews: PreviewAttachment[]): MessageMediaItem[] {
+function previewsToMediaItems(
+  previews: PreviewAttachment[]
+): MessageMediaItem[] {
   return previews
-    .filter(
-      (p) =>
-        p.type?.startsWith('image/') ||
-        p.type?.startsWith('video/')
-    )
+    .filter((p) => p.type?.startsWith('image/') || p.type?.startsWith('video/'))
     .map((p) => ({
       uri: p.uri,
       kind: p.type.startsWith('video/') ? 'video' : 'image',
@@ -43,14 +41,10 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   const { theme, setMediaViewerGallery } = useChatContext();
 
   const media = previews.filter(
-    (p) =>
-      p.type?.startsWith('image/') ||
-      p.type?.startsWith('video/')
+    (p) => p.type?.startsWith('image/') || p.type?.startsWith('video/')
   );
   const docs = previews.filter(
-    (p) =>
-      !p.type?.startsWith('image/') &&
-      !p.type?.startsWith('video/')
+    (p) => !p.type?.startsWith('image/') && !p.type?.startsWith('video/')
   );
 
   const mediaAsItems = previewsToMediaItems(previews);
@@ -126,7 +120,13 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     const extraOnThird = media.length > 3 ? media.length - 3 : 0;
 
     return (
-      <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: CARD + 12 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          minHeight: CARD + 12,
+        }}
+      >
         {slice.map((p, idx) => {
           const rot =
             slice.length === 2
@@ -166,7 +166,9 @@ const FilePreview: React.FC<FilePreviewProps> = ({
                       justifyContent: 'center',
                     }}
                   >
-                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
+                    <Text
+                      style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}
+                    >
                       +{extraOnThird}
                     </Text>
                   </View>

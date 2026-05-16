@@ -101,7 +101,10 @@ const ChatScreenContent = () => {
         {inputSection}
       </View>
 
-      <MediaViewer gallery={mediaViewerGallery} onClose={clearMediaViewerGallery} />
+      <MediaViewer
+        gallery={mediaViewerGallery}
+        onClose={clearMediaViewerGallery}
+      />
     </View>
   );
 

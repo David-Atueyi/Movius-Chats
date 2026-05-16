@@ -169,7 +169,10 @@ const ViewerPage: React.FC<{
       {error && (
         <View style={tw`absolute inset-0 items-center justify-center px-6`}>
           <Text
-            style={withFontFamily(tw`text-white font-semibold`, theme?.fontFamily)}
+            style={withFontFamily(
+              tw`text-white font-semibold`,
+              theme?.fontFamily
+            )}
           >
             Failed to load video
           </Text>
