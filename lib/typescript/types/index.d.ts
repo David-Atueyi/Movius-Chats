@@ -38,6 +38,7 @@ export interface ChatScreenProps {
     onAudioRecordEnd?: () => void;
     onAudioRecordStart?: () => void;
     onCameraPress?: () => void;
+    onFileAttachmentPress?: (file: MessageFileAttachment) => void;
     keyboardVerticalOffset?: number;
     disableKeyboardAvoiding?: boolean;
     typingUsers?: Array<{
@@ -51,6 +52,7 @@ export interface ChatScreenProps {
     previewData?: PreviewAttachment;
     previewItems?: PreviewAttachment[];
     closePreview?: () => void;
+    onRemovePreviewItem?: (uri: string) => void;
     CustomFileIcon?: React.ComponentType<{
         style?: any;
     }>;

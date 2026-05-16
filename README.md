@@ -812,35 +812,6 @@ import type {
 
 ---
 
-## Publishing a new version
-
-```bash
-# 1. Bump version in package.json (follow semver)
-npm version patch   # or minor / major
-
-# 2. Build
-yarn build          # runs rollup + tsc
-
-# 3. Dry run to confirm what's included
-npm pack --dry-run
-
-# 4. Publish (use --otp if 2FA is on)
-npm publish --access public --otp=YOUR_CODE
-
-# 5. Tag the release
-git push && git push --tags
-```
-
-After publishing, update the package in your consumer app:
-
-```bash
-npm install movius-chats@latest
-```
-
-If native dependencies changed, run `pod install` and rebuild the app.
-
----
-
 ## License
 
 ISC — see [package.json](./package.json).
