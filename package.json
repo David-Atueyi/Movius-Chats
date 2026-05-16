@@ -49,7 +49,6 @@
     "react-native-reanimated": "*"
   },
   "dependencies": {
-    "react-native-image-zoom-viewer": "^3.0.1",
     "react-native-parsed-text": "^0.0.22",
     "react-native-sound": "^0.11.2",
     "react-native-svg": "15.2.0",
