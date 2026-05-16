@@ -1,34 +1,22 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, PanResponder, Pressable, Text, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
 
 // ─── New-Architecture compatibility shim ─────────────────────────────────────
-// react-native-sound imports resolveAssetSource via the old internal path.
-// On New Architecture that path returns an Object, not a function, causing:
-//   TypeError: resolveAssetSource is not a function (it is Object)
-// If the module is already cached as a non-function we swap in Image.resolveAssetSource
-// so that the Sound constructor doesn't throw.
-// The movius-chats postinstall script permanently patches Sound.js on `npm install`;
-// this runtime shim is a second safety net for apps that haven't reinstalled yet.
+// react-native-sound imports resolveAssetSource the old way; on New Architecture
+// that path returns an Object not a function → "resolveAssetSource is not a function".
+// We patch the cached module here as a runtime safety net.
+// The movius-chats postinstall script applies the permanent file-level fix.
 try {
   const ras = require('react-native/Libraries/Image/resolveAssetSource');
   if (typeof ras !== 'function') {
     const fn = Image.resolveAssetSource.bind(Image);
-    // Overwrite every exported key so any destructure or default-import also works.
     Object.keys(ras).forEach((k) => {
       try { (ras as any)[k] = (fn as any)[k]; } catch {}
     });
-    // Copy the function's own properties onto the object so calling it works too.
     Object.defineProperty(ras, '__esModule', { value: false, configurable: true });
-    // Make the object itself callable — not possible in JS, but we expose a helper
-    // via the global that react-native-sound can fall back to if it checks typeof.
     (global as any).__moviusRAS = fn;
   }
-} catch { /* module may not exist on some RN versions — safe to skip */ }
+} catch { /* safe to skip */ }
 
 import Sound from 'react-native-sound';
 import tw from 'twrnc';
@@ -40,25 +28,67 @@ import { formatDuration } from '../../utils/datefunc';
 import { withFontFamily } from '../../utils/theme';
 import { AudioPlayerProps } from './types';
 
+// ─── Waveform generator ───────────────────────────────────────────────────────
+// Generates a deterministic pseudo-random bar-height array from the audio URL
+// so the same message always shows the same waveform shape.
+const WAVEFORM_BARS = 34;
+const WAVEFORM_H = 34; // total container height in px
+
+function generateWaveform(url: string, count: number): number[] {
+  // djb2 hash seeded from URL
+  let h = 5381;
+  for (let i = 0; i < url.length; i++) {
+    h = ((h << 5) + h + url.charCodeAt(i)) | 0;
+  }
+  return Array.from({ length: count }, (_, i) => {
+    // Mix the index in so adjacent bars differ
+    h = (Math.imul(h ^ (h >>> 16), 0x45d9f3b + i * 31337)) | 0;
+    h = h ^ (h >>> 13);
+    const raw = Math.abs(h) % 100;
+    // Shape: bias toward mid heights (more natural look)
+    // minimum 18 % so very short bars still show
+    return 0.18 + (raw / 100) * 0.82;
+  });
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
 const AudioPlayer: React.FC<AudioPlayerProps> = ({
   audioUrl,
   audioId,
   isVideoPlaying,
+  isCurrentUser,
 }) => {
   const { theme, CustomPlayIcon, CustomPauseIcon } = useChatContext();
   const { currentlyPlayingId, setCurrentlyPlayingId } = useAudio();
+
   const [sound, setSound] = useState<Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const progressRef = useRef<View>(null);
-  const progressWidth = useRef(0);
-  const progressX = useRef(0);
-  const startX = useRef(0);
-  const knobPosition = useSharedValue(0);
 
-  // Initialize sound
+  const waveformWidth = useRef(0);
+  const soundRef = useRef<Sound | null>(null);
+
+  // Pre-compute waveform shape once per URL
+  const waveform = useMemo(() => generateWaveform(audioUrl, WAVEFORM_BARS), [audioUrl]);
+
+  // ── Resolved colors (sent vs received defaults) ─────────────────────────
+  const inactiveBarColor =
+    theme?.colors?.audioWaveformColor ??
+    (isCurrentUser ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.20)');
+
+  const activeBarColor =
+    theme?.colors?.audioWaveformActiveColor ??
+    (isCurrentUser ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.60)');
+
+  const timestampColor =
+    (isCurrentUser
+      ? theme?.colors?.sentAudioTimestampColor
+      : theme?.colors?.receivedAudioTimestampColor) ??
+    (isCurrentUser ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.45)');
+
+  // ── Initialize sound ────────────────────────────────────────────────────
   useEffect(() => {
     let mounted = true;
     let newSound: Sound | null = null;
@@ -70,111 +100,83 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         }
       });
       setSound(newSound);
-    } catch (e) {
+      soundRef.current = newSound;
+    } catch {
       console.warn(
-        '[movius-chats] AudioPlayer: Could not initialize react-native-sound.\n' +
-          'Run `npx expo run:android` (or ios) after a fresh install to apply ' +
-          'the resolveAssetSource compatibility patch automatically.'
+        '[movius-chats] AudioPlayer: Could not initialize react-native-sound. ' +
+          'Reinstall the package to apply the resolveAssetSource patch automatically.'
       );
     }
 
     return () => {
       mounted = false;
-      if (newSound) {
-        newSound.pause();
-        newSound.release();
-      }
+      newSound?.pause();
+      newSound?.release();
+      soundRef.current = null;
     };
   }, [audioUrl]);
 
-  // Handle stopping playback when another audio starts
+  // ── Stop when another audio/video starts ────────────────────────────────
   useEffect(() => {
-    if (
-      currentlyPlayingId &&
-      currentlyPlayingId !== audioId &&
-      isPlaying &&
-      sound
-    ) {
+    if (currentlyPlayingId && currentlyPlayingId !== audioId && isPlaying && sound) {
       sound.pause();
       setIsPlaying(false);
       setCurrentTime(0);
-      knobPosition.value = 0;
     }
   }, [currentlyPlayingId, audioId, isPlaying, sound]);
 
-  // Update progress
+  useEffect(() => {
+    if (isVideoPlaying && isPlaying && sound) {
+      sound.pause(() => {
+        setIsPlaying(false);
+        setCurrentlyPlayingId(null);
+      });
+    }
+  }, [isVideoPlaying]);
+
+  // ── Progress polling ─────────────────────────────────────────────────────
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (isPlaying && sound && !isDragging) {
       interval = setInterval(() => {
-        sound.getCurrentTime((seconds) => {
-          if (typeof seconds === 'number' && !isNaN(seconds)) {
-            setCurrentTime(seconds);
-            if (progressWidth.current > 0 && duration > 0) {
-              const progress = (seconds / duration) * progressWidth.current;
-              if (!isNaN(progress)) {
-                knobPosition.value = withSpring(progress, {
-                  damping: 15,
-                  stiffness: 100,
-                });
-              }
-            }
+        sound.getCurrentTime((sec) => {
+          if (typeof sec === 'number' && !isNaN(sec)) {
+            setCurrentTime(sec);
           }
         });
-      }, 100);
+      }, 80);
     }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    return () => { if (interval) clearInterval(interval); };
   }, [isPlaying, sound, isDragging, duration]);
 
+  // ── Seek helper ──────────────────────────────────────────────────────────
+  const seekTo = (x: number) => {
+    const w = waveformWidth.current;
+    if (w <= 0 || duration <= 0) return;
+    const ratio = Math.max(0, Math.min(x / w, 1));
+    const t = ratio * duration;
+    setCurrentTime(t);
+    soundRef.current?.setCurrentTime(t);
+  };
+
+  // ── PanResponder on waveform ─────────────────────────────────────────────
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponder: () => true,
     onPanResponderGrant: (evt) => {
       setIsDragging(true);
-      startX.current = evt.nativeEvent.pageX - knobPosition.value;
+      seekTo(evt.nativeEvent.locationX);
     },
     onPanResponderMove: (evt) => {
-      if (progressWidth.current > 0) {
-        const newPosition = evt.nativeEvent.pageX - startX.current;
-        const boundedPosition = Math.max(
-          0,
-          Math.min(newPosition, progressWidth.current)
-        );
-        knobPosition.value = boundedPosition;
-
-        const percentage = boundedPosition / progressWidth.current;
-        const newTime = percentage * duration;
-        if (!isNaN(newTime)) {
-          setCurrentTime(newTime);
-        }
-      }
+      seekTo(evt.nativeEvent.locationX);
     },
-    onPanResponderRelease: () => {
-      setIsDragging(false);
-      if (sound && progressWidth.current > 0) {
-        const percentage = knobPosition.value / progressWidth.current;
-        const newTime = percentage * duration;
-        if (!isNaN(newTime)) {
-          sound.setCurrentTime(newTime);
-        }
-      }
-    },
-    onPanResponderTerminate: () => {
-      setIsDragging(false);
-    },
+    onPanResponderRelease: () => { setIsDragging(false); },
+    onPanResponderTerminate: () => { setIsDragging(false); },
   });
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: knobPosition.value }],
-    };
-  });
-
+  // ── Play / pause ─────────────────────────────────────────────────────────
   const togglePlay = () => {
     if (!sound) return;
-
     if (isPlaying) {
       sound.pause(() => {
         setIsPlaying(false);
@@ -186,7 +188,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         if (success) {
           setIsPlaying(false);
           setCurrentTime(0);
-          knobPosition.value = withSpring(0);
           setCurrentlyPlayingId(null);
         }
       });
@@ -194,102 +195,85 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     }
   };
 
-  // Stop audio when video starts playing
-  useEffect(() => {
-    if (isVideoPlaying && isPlaying && sound) {
-      sound.pause(() => {
-        setIsPlaying(false);
-        setCurrentlyPlayingId(null);
-      });
-    }
-  }, [isVideoPlaying]);
+  // ── Progress ratio ───────────────────────────────────────────────────────
+  const progress = duration > 0 ? currentTime / duration : 0;
 
   return (
-    <View style={tw`rounded-lg w-56`}>
-      <View style={tw`flex-row items-center gap-2 px-2 pt-2`}>
+    <View style={tw`rounded-lg w-60`}>
+      <View style={tw`flex-row items-center gap-2 px-2 pt-2 pb-1`}>
+        {/* Play / Pause button */}
         <Pressable
           onPress={togglePlay}
           style={[
-            tw`bg-black/40 rounded-full p-2`,
+            tw`bg-black/35 rounded-full p-2 shrink-0`,
             theme?.messageStyle?.audioPlayButtonStyle,
           ]}
         >
           {isPlaying ? (
-            CustomPauseIcon ? (
-              <CustomPauseIcon />
-            ) : (
+            CustomPauseIcon ? <CustomPauseIcon /> : (
               <PauseIcon
-                style={tw.style('h-6 w-6')}
+                style={tw.style('h-5 w-5')}
                 color={theme?.colors?.audioPauseIconColor || 'white'}
               />
             )
-          ) : CustomPlayIcon ? (
-            <CustomPlayIcon />
-          ) : (
+          ) : CustomPlayIcon ? <CustomPlayIcon /> : (
             <PlayIcon
-              style={tw.style('h-6 w-6')}
+              style={tw.style('h-5 w-5')}
               color={theme?.colors?.audioPlayIconColor || 'white'}
             />
           )}
         </Pressable>
 
-        <View
-          ref={progressRef}
-          onLayout={(e) => {
-            const { width } = e.nativeEvent.layout;
-            progressWidth.current = width;
-          progressRef.current?.measure((_, __, ___, ____, pageX) => {
-            progressX.current = pageX;
-          });
-          }}
-          style={[
-            tw`relative h-1 bg-zinc-400 rounded overflow-visible w-[75%]`,
-            theme?.messageStyle?.progressBarStyle,
-          ]}
-        >
+        {/* Waveform + timestamp column */}
+        <View style={{ flex: 1 }}>
+          {/* Waveform bars */}
           <View
             style={[
-              tw`absolute h-full bg-slate-200`,
               {
-                width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`,
+                height: WAVEFORM_H,
+                flexDirection: 'row',
+                alignItems: 'flex-end',
               },
-              theme?.messageStyle?.activeProgressBarStyle,
+              theme?.messageStyle?.progressBarStyle,
             ]}
-          />
-          <Animated.View
+            onLayout={(e) => { waveformWidth.current = e.nativeEvent.layout.width; }}
             {...panResponder.panHandlers}
-            style={[
-              animatedStyle,
-              {
-                position: 'absolute',
-                top: -6,
-                width: 16,
-                height: 16,
-                borderRadius: 8,
-                backgroundColor: 'white',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.25,
-                shadowRadius: 3.84,
-                elevation: 5,
-              },
-              { ...theme?.messageStyle?.audioKnobStyle },
-            ]}
-          />
+          >
+            {waveform.map((amp, i) => {
+              const barProgress = (i + 0.5) / WAVEFORM_BARS;
+              const active = barProgress <= progress;
+              return (
+                <View
+                  key={i}
+                  style={[
+                    {
+                      flex: 1,
+                      marginHorizontal: 1,
+                      height: Math.max(3, Math.round(amp * WAVEFORM_H)),
+                      borderRadius: 2,
+                      backgroundColor: active ? activeBarColor : inactiveBarColor,
+                    },
+                    active ? theme?.messageStyle?.activeProgressBarStyle : undefined,
+                  ]}
+                />
+              );
+            })}
+          </View>
+
+          {/* Duration */}
+          <Text
+            style={withFontFamily(
+              [
+                tw`text-[10px] mt-0.5`,
+                { color: timestampColor },
+                theme?.messageStyle?.audioDurationStyle,
+              ],
+              theme?.fontFamily
+            )}
+          >
+            {!isNaN(currentTime) ? formatDuration(currentTime) : '0:00'}
+          </Text>
         </View>
-      </View>
-      <View style={tw`px-4 py-1`}>
-        <Text
-          style={withFontFamily(
-            [
-              tw`text-xs text-gray-500`,
-              theme?.messageStyle?.audioDurationStyle,
-            ],
-            theme?.fontFamily
-          )}
-        >
-          {!isNaN(currentTime) ? formatDuration(currentTime) : '0:00'}
-        </Text>
       </View>
     </View>
   );
