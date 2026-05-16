@@ -3,6 +3,8 @@ import type { PreviewAttachment } from '../../types';
 interface FilePreviewProps {
     previews: PreviewAttachment[];
     closePreview?: () => void;
+    /** Remove a single item by URI. When provided each card gets its own × button. */
+    onRemoveItem?: (uri: string) => void;
     CustomFileIcon?: React.ComponentType<{
         style?: any;
     }>;
