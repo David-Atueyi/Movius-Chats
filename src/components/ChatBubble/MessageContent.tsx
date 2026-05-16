@@ -15,7 +15,7 @@ const MessageContent: React.FC<MessageContentProps> = ({
   isVideoPlaying,
   isCurrentUser,
 }) => {
-  const { theme, showMessageStatus } = useChatContext();
+  const { theme, showMessageStatus, onFileAttachmentPress } = useChatContext();
 
   const mediaItems = useMemo(
     () => collectMediaItems(message),
@@ -31,13 +31,17 @@ const MessageContent: React.FC<MessageContentProps> = ({
       {(message.fileAttachments ?? []).map((file, idx) => (
         <Pressable
           key={`${file.uri}-${idx}`}
-          onPress={() =>
-            Linking.openURL(
-              file.uri.startsWith('http') || file.uri.startsWith('file:')
-                ? file.uri
-                : `file://${file.uri}`
-            )
-          }
+          onPress={() => {
+            if (onFileAttachmentPress) {
+              onFileAttachmentPress(file);
+            } else {
+              Linking.openURL(
+                file.uri.startsWith('http') || file.uri.startsWith('file:')
+                  ? file.uri
+                  : `file://${file.uri}`
+              );
+            }
+          }}
           style={tw`my-1.5 py-2 px-3 rounded-lg bg-black/10 max-w-[220px]`}
         >
           <Text

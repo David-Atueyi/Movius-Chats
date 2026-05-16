@@ -18,6 +18,13 @@ const GRID_WIDTH = 240;
 const SINGLE_HEIGHT = 320;
 const ROW_GAP = 2;
 
+// All multi-item layouts share this total height to match the single-item bubble
+const MULTI_HEIGHT = SINGLE_HEIGHT;
+const TWO_ROW_H = MULTI_HEIGHT;
+const THREE_TOP_H = Math.round(MULTI_HEIGHT * 0.55);
+const THREE_BOT_H = MULTI_HEIGHT - THREE_TOP_H - ROW_GAP;
+const FOUR_CELL_H = Math.round((MULTI_HEIGHT - ROW_GAP) / 2);
+
 interface MediaGridProps {
   items: MessageMediaItem[];
   onOpenGallery: (items: MessageMediaItem[], index: number) => void;
@@ -151,12 +158,11 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
 
   if (items.length === 2) {
     const half = (maxW - ROW_GAP) / 2;
-    const h = 140;
     return (
       <View
         style={{
           width: maxW,
-          height: h,
+          height: TWO_ROW_H,
           flexDirection: 'row',
           gap: ROW_GAP,
           marginVertical: 8,
@@ -166,7 +172,7 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
           <Pressable
             key={`${item.uri}-${idx}`}
             onPress={() => onOpenGallery(items, idx)}
-            style={{ width: half, height: h }}
+            style={{ width: half, height: TWO_ROW_H }}
           >
             {item.kind === 'image' ? (
               <Image
@@ -177,7 +183,7 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
             ) : (
               <VideoThumbCell
                 uri={item.uri}
-                cellStyle={{ width: half, height: h }}
+                cellStyle={{ width: half, height: TWO_ROW_H }}
                 roundedStyle={roundedSmall}
               />
             )}
@@ -191,14 +197,12 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
     const top = items[0]!;
     const left = items[1]!;
     const right = items[2]!;
-    const topH = 100;
-    const botH = 100;
     const bottomHalf = (maxW - ROW_GAP) / 2;
     return (
-      <View style={{ width: maxW, marginVertical: 8, gap: ROW_GAP }}>
+      <View style={{ width: maxW, height: MULTI_HEIGHT, marginVertical: 8, gap: ROW_GAP }}>
         <Pressable
           onPress={() => onOpenGallery(items, 0)}
-          style={{ width: maxW, height: topH }}
+          style={{ width: maxW, height: THREE_TOP_H }}
         >
           {top.kind === 'image' ? (
             <Image
@@ -209,22 +213,16 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
           ) : (
             <VideoThumbCell
               uri={top.uri}
-              cellStyle={{ width: maxW, height: topH }}
+              cellStyle={{ width: maxW, height: THREE_TOP_H }}
               roundedStyle={roundedSmall}
             />
           )}
         </Pressable>
-        <View
-          style={{
-            flexDirection: 'row',
-            gap: ROW_GAP,
-            height: botH,
-          }}
-        >
+        <View style={{ flexDirection: 'row', gap: ROW_GAP, height: THREE_BOT_H }}>
           <Pressable
             key={`${left.uri}-1`}
             onPress={() => onOpenGallery(items, 1)}
-            style={{ width: bottomHalf, height: botH }}
+            style={{ width: bottomHalf, height: THREE_BOT_H }}
           >
             {left.kind === 'image' ? (
               <Image
@@ -235,7 +233,7 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
             ) : (
               <VideoThumbCell
                 uri={left.uri}
-                cellStyle={{ width: bottomHalf, height: botH }}
+                cellStyle={{ width: bottomHalf, height: THREE_BOT_H }}
                 roundedStyle={roundedSmall}
               />
             )}
@@ -243,7 +241,7 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
           <Pressable
             key={`${right.uri}-2`}
             onPress={() => onOpenGallery(items, 2)}
-            style={{ width: bottomHalf, height: botH }}
+            style={{ width: bottomHalf, height: THREE_BOT_H }}
           >
             {right.kind === 'image' ? (
               <Image
@@ -254,7 +252,7 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
             ) : (
               <VideoThumbCell
                 uri={right.uri}
-                cellStyle={{ width: bottomHalf, height: botH }}
+                cellStyle={{ width: bottomHalf, height: THREE_BOT_H }}
                 roundedStyle={roundedSmall}
               />
             )}
@@ -265,7 +263,6 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
   }
 
   const cellW = (maxW - ROW_GAP) / 2;
-  const cellH = 100;
   const extra = items.length - 4;
   const display = items.slice(0, 4);
 
@@ -273,6 +270,7 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
     <View
       style={{
         width: maxW,
+        height: MULTI_HEIGHT,
         flexWrap: 'wrap',
         flexDirection: 'row',
         gap: ROW_GAP,
@@ -285,7 +283,7 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
           onPress={() => onOpenGallery(items, idx)}
           style={{
             width: cellW,
-            height: cellH,
+            height: FOUR_CELL_H,
             position: 'relative',
           }}
         >
@@ -298,7 +296,7 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
           ) : (
             <VideoThumbCell
               uri={cell.uri}
-              cellStyle={{ width: cellW, height: cellH }}
+              cellStyle={{ width: cellW, height: FOUR_CELL_H }}
               roundedStyle={roundedSmall}
             />
           )}

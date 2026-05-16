@@ -37,6 +37,7 @@ A highly customizable, feature-rich chat UI for **React Native**. Drop in a sing
   - [Font family (all text)](#font-family-all-text)
   - [Keyboard avoiding](#keyboard-avoiding)
   - [Custom input bar](#custom-input-bar)
+  - [Opening file attachments (expo-sharing)](#opening-file-attachments-expo-sharing)
   - [Long-press on a message](#long-press-on-a-message)
 - [Full-screen gallery viewer](#full-screen-gallery-viewer)
 - [Architecture overview](#architecture-overview)
@@ -289,6 +290,7 @@ All default to `false` (hidden) unless explicitly set to `true`:
 | `onCameraPress` | `() => void` | Camera icon tapped — open camera |
 | `onAudioRecordStart` | `() => void` | Mic pressed / long-pressed — start recording |
 | `onAudioRecordEnd` | `() => void` | Mic released — stop recording, upload, add message |
+| `onFileAttachmentPress` | `(file: MessageFileAttachment) => void` | Tapped a file-attachment chip in a bubble. Defaults to `Linking.openURL`. Supply this to use `expo-sharing` or a custom downloader. |
 | `typingUsers` | `{ id: string; avatar: string; name: string }[]` | Users currently typing (current user is excluded from display) |
 
 ### Attachment preview (composer)
@@ -299,7 +301,10 @@ Show a preview strip above the input before the user taps send.
 |------|------|-------------|
 | `previewItems` | `PreviewAttachment[]` | **Multiple** attachments — images/videos shown as a fanned spread; documents shown as file chips |
 | `previewData` | `PreviewAttachment` | **Single** attachment (kept for backward compatibility; `previewItems` takes precedence) |
-| `closePreview` | `() => void` | Called when the user taps the × on the preview |
+| `closePreview` | `() => void` | Fallback called when no `onRemovePreviewItem` is provided |
+| `onRemovePreviewItem` | `(uri: string) => void` | Called with the URI of whichever card the user tapped × on — removes only that item |
+
+**Per-item removal:** Every media thumbnail and every document chip shows its own × button. When `onRemovePreviewItem` is provided, tapping × on a card calls it with that card's URI so you can filter it out of your state. `closePreview` is only used as a fallback when `onRemovePreviewItem` is not supplied.
 
 When any preview is present, the send button appears regardless of text content.
 
@@ -416,14 +421,14 @@ theme?: {
 
 Use `mediaItems` in the `Message` object. The bubble renders a WhatsApp-style grid:
 
-| Count | Layout |
-|-------|--------|
-| 1 | Single full-width tile (cover) |
-| 2 | Side by side |
-| 3 | One on top, two below |
-| 4+ | 2 × 2 grid; bottom-right cell shows `+N` overlay |
+| Count | Layout | Height |
+|-------|--------|--------|
+| 1 | Single full-width tile (cover) | 320 px |
+| 2 | Side by side, two equal columns | 320 px |
+| 3 | One on top (55%), two below (45%) | 320 px |
+| 4+ | 2 × 2 grid; bottom-right cell shows `+N` overlay | 320 px |
 
-Tapping any cell opens the full-screen swipe gallery.
+All layouts share the same fixed height so multi-image bubbles stay visually consistent with single-image bubbles. Tapping any cell opens the full-screen swipe gallery.
 
 ```tsx
 const message: Message = {
@@ -466,7 +471,7 @@ const message: Message = {
 };
 ```
 
-Each attachment renders as a tappable row. Tapping it calls `Linking.openURL(uri)`.
+Each attachment renders as a tappable row. By default tapping calls `Linking.openURL(uri)`. Supply `onFileAttachmentPress` to override this with your own handler (e.g. `expo-sharing`).
 
 ### Audio message bubble
 
@@ -493,6 +498,10 @@ const [previews, setPreviews] = useState<PreviewAttachment[]>([]);
 <ChatScreen
   previewItems={previews}
   closePreview={() => setPreviews([])}
+  // Remove only the card whose × was tapped:
+  onRemovePreviewItem={(uri) =>
+    setPreviews((prev) => prev.filter((p) => p.uri !== uri))
+  }
   onAttachmentPress={async () => {
     const picked = await myPicker.pick(); // returns an array
     setPreviews(
@@ -530,10 +539,12 @@ const [previews, setPreviews] = useState<PreviewAttachment[]>([]);
 ```
 
 Preview UI:
-- **1 image/video** — single thumbnail.
-- **2–3 images/videos** — overlapping fan spread.
-- **4+ images/videos** — fan of 3 with a `+N` badge.
-- **Documents** — file chip with name + icon.
+- **1 image/video** — single thumbnail with × in the top-right corner.
+- **2–3 images/videos** — overlapping fan spread; each card has its own ×.
+- **4+ images/videos** — fan of 3 with a `+N` badge; each visible card has its own ×.
+- **Documents** — file chips, each with their own ×. If more than 3 documents are selected the list becomes scrollable.
+
+Tapping × on any card calls `onRemovePreviewItem(uri)` for that specific file. When the last item is removed the preview strip disappears automatically.
 
 ### Send button vs microphone
 
@@ -675,6 +686,39 @@ If your screen or navigator already handles the keyboard (e.g. wraps in its own 
 
 When `renderCustomInput` is provided the default `ChatInput` is not mounted. Preview props (`previewItems`, `closePreview`) are not wired automatically — handle them inside your custom component.
 
+### Opening file attachments (expo-sharing)
+
+By default tapping a file-attachment chip in a bubble calls `Linking.openURL`. For Expo apps that need to share or download local files, supply `onFileAttachmentPress`:
+
+```bash
+yarn add expo-sharing
+```
+
+```tsx
+import * as Sharing from 'expo-sharing';
+import { Linking } from 'react-native';
+import type { MessageFileAttachment } from 'movius-chats/lib/typescript/types';
+
+const handleFilePress = async (file: MessageFileAttachment) => {
+  const uri =
+    file.uri.startsWith('http') || file.uri.startsWith('file:')
+      ? file.uri
+      : `file://${file.uri}`;
+
+  const available = await Sharing.isAvailableAsync();
+  if (available) {
+    await Sharing.shareAsync(uri, { dialogTitle: file.name });
+  } else {
+    Linking.openURL(uri);
+  }
+};
+
+<ChatScreen
+  onFileAttachmentPress={handleFilePress}
+  // ...
+/>
+```
+
 ### Long-press on a message
 
 ```tsx
@@ -763,6 +807,8 @@ import type {
 | Messages appear in wrong order | Newest message must be at `messages[0]` (inverted FlatList) |
 | Feature buttons missing | Feature flags (`showAttachmentsButton`, etc.) default to `false` — pass `true` to show them |
 | Gallery does not swipe | Ensure `mediaItems` is an array; single `image`/`video` strings open the viewer for that single item |
+| File attachment tap does nothing | Default is `Linking.openURL`. For local files on iOS/Android use `onFileAttachmentPress` with `expo-sharing` |
+| Tapping × removes all previews | Supply `onRemovePreviewItem` — without it the fallback `closePreview` clears everything |
 
 ---
 

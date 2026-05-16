@@ -57,6 +57,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     previewData,
     previewItems,
     closePreview,
+    onRemovePreviewItem,
   } = useChatContext();
 
   const previewList = useMemo(() => {
@@ -147,6 +148,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         <FilePreview
           previews={previewList}
           closePreview={closePreview}
+          onRemoveItem={onRemovePreviewItem}
           CustomFileIcon={CustomFileIcon}
           CustomImagePreview={CustomImagePreview}
           CustomVideoPreview={CustomVideoPreview}
