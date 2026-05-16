@@ -13,8 +13,13 @@ const MessageStatus: React.FC<MessageStatusProps> = ({
   isCurrentUser,
   hasText,
   hasAudio,
+  hasGalleryMedia,
+  hasFileAttachments,
 }) => {
   const { theme, showMessageStatus } = useChatContext();
+  const mediaOverlay =
+    (hasGalleryMedia || hasFileAttachments) && !hasText && !hasAudio;
+
   return (
     <>
       {showMessageStatus && (
@@ -25,7 +30,9 @@ const MessageStatus: React.FC<MessageStatusProps> = ({
               ? tw`justify-end pb-1 ml-4`
               : hasAudio
                 ? tw`absolute right-3 bottom-3`
-                : tw`absolute right-3 bottom-4 bg-black/50 px-2 py-1 rounded-md`,
+                : mediaOverlay
+                  ? tw`absolute right-3 bottom-4 bg-black/50 px-2 py-1 rounded-md`
+                  : tw`absolute right-3 bottom-4 bg-black/50 px-2 py-1 rounded-md`,
           ]}
         >
           <Text

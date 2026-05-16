@@ -1,14 +1,14 @@
 import React from 'react';
-import { ChatScreenProps } from '../types';
+import { ChatScreenProps, MessageMediaItem } from '../types';
+/** Full-screen swipe viewer state */
+export interface MediaViewerGalleryState {
+    items: MessageMediaItem[];
+    initialIndex: number;
+}
 interface ChatContextType extends ChatScreenProps {
-    mediaUrl: {
-        imageUrl: string;
-        videoUrl: string;
-    };
-    setMediaUrl: (url: {
-        imageUrl: string;
-        videoUrl: string;
-    }) => void;
+    mediaViewerGallery: MediaViewerGalleryState | null;
+    setMediaViewerGallery: (items: MessageMediaItem[], initialIndex: number) => void;
+    clearMediaViewerGallery: () => void;
     isVideoPlaying: boolean;
     setIsVideoPlaying: (playing: boolean) => void;
 }

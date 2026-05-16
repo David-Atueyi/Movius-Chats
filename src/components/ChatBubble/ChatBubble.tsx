@@ -3,10 +3,13 @@ import { Image, Pressable, Text, View } from 'react-native';
 import tw from 'twrnc';
 import { ArrowBack2RoundedIcon } from '../../assets/Icons/ArrowBack2RoundedIcon';
 import { useChatContext } from '../../context/ChatContext';
+import { collectMediaItems } from '../../utils/messageMedia';
 import { withFontFamily } from '../../utils/theme';
 import MessageContent from './MessageContent';
 import MessageStatus from './MessageStatus';
 import { ChatBubbleProps } from './types';
+
+import type { MessageMediaItem } from '../../types';
 
 const ChatBubble: React.FC<ChatBubbleProps> = ({
   message,
@@ -19,20 +22,24 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     showAvatars,
     showUserNames,
     showBubbleTail,
-    setMediaUrl,
-    setIsVideoPlaying,
+    setMediaViewerGallery,
     isVideoPlaying,
   } = useChatContext();
 
-  const handleMediaPress = (type: 'image' | 'video', url: string) => {
-    setMediaUrl({
-      imageUrl: type === 'image' ? url : '',
-      videoUrl: type === 'video' ? url : '',
-    });
-    if (type === 'video') {
-      setIsVideoPlaying(true);
-    }
+  const mediaItems = collectMediaItems(message);
+
+  const handleGalleryOpen = (
+    items: MessageMediaItem[],
+    index: number
+  ) => {
+    setMediaViewerGallery(items, index);
   };
+
+  const hasFilesOnly =
+    (message.fileAttachments?.length ?? 0) > 0 &&
+    mediaItems.length === 0 &&
+    !message.text &&
+    !message.audio;
 
   return (
     <Pressable
@@ -120,22 +127,22 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         />
       )}
 
-      {/* Message Content */}
       <MessageContent
         message={message}
         isCurrentUser={isCurrentUser}
         isFirstInSequence={isFirstInSequence}
-        onMediaPress={handleMediaPress}
+        onGalleryOpen={handleGalleryOpen}
         isVideoPlaying={isVideoPlaying}
       />
 
-      {/* Message Status */}
       <MessageStatus
         time={message.time}
         status={isCurrentUser ? message.status : undefined}
         isCurrentUser={isCurrentUser}
         hasText={!!message.text}
         hasAudio={!!message.audio}
+        hasGalleryMedia={mediaItems.length > 0 && !message.text}
+        hasFileAttachments={hasFilesOnly}
       />
     </Pressable>
   );

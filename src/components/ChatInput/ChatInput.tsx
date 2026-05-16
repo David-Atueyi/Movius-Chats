@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, TextInput, View } from 'react-native';
 import tw from 'twrnc';
 import { CameraIcon } from '../../assets/Icons/CameraIcon';
@@ -55,8 +55,17 @@ const ChatInput: React.FC<ChatInputProps> = ({
     showVoiceRecordButton,
     placeholder,
     previewData,
+    previewItems,
     closePreview,
   } = useChatContext();
+
+  const previewList = useMemo(() => {
+    if (previewItems?.length) return previewItems;
+    if (previewData) return [previewData];
+    return [];
+  }, [previewItems, previewData]);
+
+  const hasPreviewAttachments = previewList.length > 0;
 
   const inputBarIconSize = theme?.sizes?.inputIconSize;
   const inputBarIconStyle = getInputBarIconStyle(inputBarIconSize);
@@ -103,7 +112,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const handleSendMessage = useCallback(() => {
     const trimmedText = inputText.trim();
 
-    if (!trimmedText && !previewData) {
+    if (!trimmedText && !hasPreviewAttachments) {
       return;
     }
 
@@ -118,7 +127,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     inputText,
     onSendMessage,
     currentUserId,
-    previewData,
+    hasPreviewAttachments,
     resetInputLayout,
   ]);
 
@@ -130,11 +139,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, [inputText, onTypingStart, onTypingEnd]);
 
+  const showSendButton = !!inputText.trim() || hasPreviewAttachments;
+
   return (
     <View style={tw`w-full px-2`}>
-      {previewData && (
+      {hasPreviewAttachments && (
         <FilePreview
-          previewData={previewData}
+          previews={previewList}
           closePreview={closePreview}
           CustomFileIcon={CustomFileIcon}
           CustomImagePreview={CustomImagePreview}
@@ -168,9 +179,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 ) : (
                   <EmojiFunnySquareIcon
                     style={inputBarIconStyle}
-                    color={
-                      theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
-                    }
+                    color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
                   />
                 )}
               </Pressable>
@@ -195,8 +204,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                     : 4,
                 },
                 {
-                  color:
-                    theme?.colors?.inputTextColor || 'rgba(0, 0, 0, 0.87)',
+                  color: theme?.colors?.inputTextColor || 'rgba(0, 0, 0, 0.87)',
                 },
               ],
               theme?.fontFamily
@@ -248,15 +256,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
               ...theme?.inputStyles?.sendButtonStyle,
             },
           ]}
-          onPress={
-            inputText.trim() || previewData
-              ? handleSendMessage
-              : onAudioRecordStart
-          }
+          onPress={showSendButton ? handleSendMessage : onAudioRecordStart}
           onLongPress={onAudioRecordStart}
           onPressOut={onAudioRecordEnd}
         >
-          {inputText.trim() ? (
+          {showSendButton ? (
             CustomSendIcon ? (
               <CustomSendIcon />
             ) : (

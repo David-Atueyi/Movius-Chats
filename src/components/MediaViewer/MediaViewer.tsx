@@ -1,106 +1,184 @@
-import React, { useRef, useState } from 'react';
-import { Modal, Pressable, Text, View } from 'react-native';
-import ImageViewer from 'react-native-image-zoom-viewer';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  FlatList,
+  Image,
+  Modal,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import Video, { VideoRef } from 'react-native-video';
 import tw from 'twrnc';
 import { LoadingIcon } from '../../assets/Icons/LoadingIcon';
 import { XIcon } from '../../assets/Icons/XIcon';
 import { useChatContext } from '../../context/ChatContext';
+import type { MessageMediaItem } from '../../types';
 import { withFontFamily } from '../../utils/theme';
-import { MediaViewerProps } from './types';
 
-const MediaViewer: React.FC<MediaViewerProps> = ({
-  imageUrl,
-  videoUrl,
-  onClose,
-}) => {
-  const { theme } = useChatContext();
-  const videoRef = useRef<VideoRef>(null);
-  const [videoIsLoading, setVideoIsLoading] = useState(false);
-  const [videoHasError, setVideoHasError] = useState(false);
+export interface MediaViewerProps {
+  gallery: { items: MessageMediaItem[]; initialIndex: number } | null;
+  onClose: () => void;
+}
 
-  if (!imageUrl && !videoUrl) return null;
+const MediaViewer: React.FC<MediaViewerProps> = ({ gallery, onClose }) => {
+  const { theme, setIsVideoPlaying } = useChatContext();
+  const listRef = useRef<FlatList<MessageMediaItem>>(null);
+  const [pageIndex, setPageIndex] = useState(0);
+  const { width, height: windowHeight } = useWindowDimensions();
+
+  useEffect(() => {
+    if (!gallery?.items.length) return;
+    setPageIndex(gallery.initialIndex);
+    requestAnimationFrame(() => {
+      try {
+        listRef.current?.scrollToIndex({
+          index: gallery.initialIndex,
+          animated: false,
+        });
+      } catch {
+        /* layout not ready */
+      }
+    });
+  }, [gallery?.initialIndex, gallery?.items]);
+
+  const onMomentumScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const idx = Math.round(e.nativeEvent.contentOffset.x / width);
+      setPageIndex(idx);
+      const item = gallery?.items[idx];
+      setIsVideoPlaying(item?.kind === 'video');
+    },
+    [gallery?.items, width, setIsVideoPlaying]
+  );
+
+  if (!gallery || gallery.items.length === 0) return null;
 
   return (
-    <Modal visible={!!imageUrl || !!videoUrl} transparent={true}>
-      <View
-        style={tw`top-0 bottom-0 left-0 right-0 bg-black/80 flex-1 absolute`}
-      >
+    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
+      <View style={[tw`flex-1 bg-black`, { width, height: windowHeight }]}>
         <Pressable
           onPress={onClose}
-          style={tw`absolute right-4 top-4 p-2 rounded-full bg-slate-100/70 z-10`}
+          style={tw`absolute right-4 top-12 z-20 p-2 rounded-full bg-slate-100/70`}
         >
           <XIcon style={tw`h-8 w-8`} />
         </Pressable>
 
-        {imageUrl && (
-          <ImageViewer
-            imageUrls={[{ url: imageUrl }]}
-            enableSwipeDown
-            onSwipeDown={onClose}
-            backgroundColor="rgba(0,0,0,0.8)"
-            enableImageZoom
-            onSave={() => imageUrl}
-            renderIndicator={() => <></>}
-          />
-        )}
-
-        {videoUrl && (
-          <View style={tw`justify-center items-center`}>
-            <Video
-              source={{ uri: videoUrl }}
-              ref={videoRef}
-              shutterColor="transparent"
-              controls={true}
-              style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: 8,
-                position: 'relative',
-                marginHorizontal: 48,
-              }}
-              controlsStyles={{
-                hideSettingButton: false,
-                hideNext: true,
-                hidePrevious: true,
-              }}
-              resizeMode="contain"
-              onLoadStart={() => {
-                setVideoIsLoading(true);
-                setVideoHasError(false);
-              }}
-              onLoad={() => setVideoIsLoading(false)}
-              onBuffer={({ isBuffering }) => setVideoIsLoading(isBuffering)}
-              onError={() => {
-                setVideoHasError(true);
-                setVideoIsLoading(false);
-              }}
-            />
-            {videoIsLoading && (
-              <View
-                style={tw`absolute inset-0 flex items-center justify-center bg-black/40 rounded-full`}
-              >
-                <LoadingIcon style={tw.style('h-12 w-12')} spinning />
-              </View>
-            )}
-            {videoHasError && (
-              <View
-                style={tw`absolute inset-0 flex items-center justify-center bg-red-500/60 p-2`}
-              >
-                <Text
-                  style={withFontFamily(
-                    tw`text-white font-bold`,
-                    theme?.fontFamily
-                  )}
-                >
-                  Failed to load video
-                </Text>
-              </View>
-            )}
+        {gallery.items.length > 1 && (
+          <View style={tw`absolute top-14 left-0 right-0 z-10 items-center`}>
+            <Text
+              style={withFontFamily(
+                tw`text-white/90 text-sm bg-black/40 px-3 py-1 rounded-full`,
+                theme?.fontFamily
+              )}
+            >
+              {pageIndex + 1} / {gallery.items.length}
+            </Text>
           </View>
         )}
+
+        <FlatList
+          ref={listRef}
+          data={gallery.items}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item, i) => `${item.uri}-${i}`}
+          initialScrollIndex={gallery.initialIndex}
+          getItemLayout={(_, index) => ({
+            length: width,
+            offset: width * index,
+            index,
+          })}
+          onMomentumScrollEnd={onMomentumScrollEnd}
+          onScrollToIndexFailed={({ index }) => {
+            setTimeout(() => {
+              listRef.current?.scrollToIndex({ index, animated: false });
+            }, 100);
+          }}
+          renderItem={({ item }) => (
+            <ViewerPage item={item} width={width} height={windowHeight} />
+          )}
+        />
       </View>
     </Modal>
+  );
+};
+
+const ViewerPage: React.FC<{
+  item: MessageMediaItem;
+  width: number;
+  height: number;
+}> = ({ item, width, height }) => {
+  const { theme } = useChatContext();
+  const videoRef = useRef<VideoRef>(null);
+  const [loading, setLoading] = useState(item.kind === 'video');
+  const [error, setError] = useState(false);
+
+  if (item.kind === 'image') {
+    return (
+      <View style={{ width, height, justifyContent: 'center' }}>
+        <Image
+          source={{ uri: item.uri }}
+          style={{ width, height }}
+          resizeMode="contain"
+        />
+      </View>
+    );
+  }
+
+  return (
+    <View
+      style={{
+        width,
+        height,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+      }}
+    >
+      <Video
+        source={{ uri: item.uri }}
+        ref={videoRef}
+        controls
+        shutterColor="transparent"
+        style={{
+          width: width - 32,
+          height: height * 0.55,
+          backgroundColor: '#000',
+        }}
+        resizeMode="contain"
+        onLoadStart={() => {
+          setLoading(true);
+          setError(false);
+        }}
+        onLoad={() => setLoading(false)}
+        onBuffer={({ isBuffering }) => setLoading(isBuffering)}
+        onError={() => {
+          setError(true);
+          setLoading(false);
+        }}
+      />
+      {loading && (
+        <View style={tw`absolute inset-0 items-center justify-center`}>
+          <LoadingIcon style={tw.style('h-14 w-14')} spinning />
+        </View>
+      )}
+      {error && (
+        <View style={tw`absolute inset-0 items-center justify-center px-6`}>
+          <Text
+            style={withFontFamily(
+              tw`text-white font-semibold`,
+              theme?.fontFamily
+            )}
+          >
+            Failed to load video
+          </Text>
+        </View>
+      )}
+    </View>
   );
 };
 
