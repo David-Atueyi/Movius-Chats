@@ -71,10 +71,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       });
       setSound(newSound);
     } catch (e) {
-      // react-native-sound can throw "resolveAssetSource is not a function"
-      // on New Architecture before the movius-chats postinstall patch is applied.
-      // The patch runs automatically on the next `npm install` / `bun install`.
-      // For now we degrade gracefully — the audio bubble renders but is silent.
       console.warn(
         '[movius-chats] AudioPlayer: Could not initialize react-native-sound.\n' +
           'Run `npx expo run:android` (or ios) after a fresh install to apply ' +
