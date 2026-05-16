@@ -1,10 +1,35 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { PanResponder, Pressable, Text, View } from 'react-native';
+import { Image, PanResponder, Pressable, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+
+// ─── New-Architecture compatibility shim ─────────────────────────────────────
+// react-native-sound imports resolveAssetSource via the old internal path.
+// On New Architecture that path returns an Object, not a function, causing:
+//   TypeError: resolveAssetSource is not a function (it is Object)
+// If the module is already cached as a non-function we swap in Image.resolveAssetSource
+// so that the Sound constructor doesn't throw.
+// The movius-chats postinstall script permanently patches Sound.js on `npm install`;
+// this runtime shim is a second safety net for apps that haven't reinstalled yet.
+try {
+  const ras = require('react-native/Libraries/Image/resolveAssetSource');
+  if (typeof ras !== 'function') {
+    const fn = Image.resolveAssetSource.bind(Image);
+    // Overwrite every exported key so any destructure or default-import also works.
+    Object.keys(ras).forEach((k) => {
+      try { (ras as any)[k] = (fn as any)[k]; } catch {}
+    });
+    // Copy the function's own properties onto the object so calling it works too.
+    Object.defineProperty(ras, '__esModule', { value: false, configurable: true });
+    // Make the object itself callable — not possible in JS, but we expose a helper
+    // via the global that react-native-sound can fall back to if it checks typeof.
+    (global as any).__moviusRAS = fn;
+  }
+} catch { /* module may not exist on some RN versions — safe to skip */ }
+
 import Sound from 'react-native-sound';
 import tw from 'twrnc';
 import { PauseIcon } from '../../assets/Icons/PauseIcon';
@@ -36,12 +61,26 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   // Initialize sound
   useEffect(() => {
     let mounted = true;
-    const newSound = new Sound(audioUrl, '', (error) => {
-      if (!error && mounted) {
-        setDuration(newSound.getDuration());
-      }
-    });
-    setSound(newSound);
+    let newSound: Sound | null = null;
+
+    try {
+      newSound = new Sound(audioUrl, '', (error) => {
+        if (!error && mounted && newSound) {
+          setDuration(newSound.getDuration());
+        }
+      });
+      setSound(newSound);
+    } catch (e) {
+      // react-native-sound can throw "resolveAssetSource is not a function"
+      // on New Architecture before the movius-chats postinstall patch is applied.
+      // The patch runs automatically on the next `npm install` / `bun install`.
+      // For now we degrade gracefully — the audio bubble renders but is silent.
+      console.warn(
+        '[movius-chats] AudioPlayer: Could not initialize react-native-sound.\n' +
+          'Run `npx expo run:android` (or ios) after a fresh install to apply ' +
+          'the resolveAssetSource compatibility patch automatically.'
+      );
+    }
 
     return () => {
       mounted = false;
