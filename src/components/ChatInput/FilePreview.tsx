@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import Video from 'react-native-video';
 import { FileIcon } from '../../assets/Icons/FileIcon';
 import { useChatContext } from '../../context/ChatContext';
@@ -21,6 +21,8 @@ function previewsToMediaItems(
 interface FilePreviewProps {
   previews: PreviewAttachment[];
   closePreview?: () => void;
+  /** Remove a single item by URI. When provided each card gets its own × button. */
+  onRemoveItem?: (uri: string) => void;
   CustomFileIcon?: React.ComponentType<{ style?: any }>;
   CustomImagePreview?: React.ComponentType<{ uri: string }>;
   CustomVideoPreview?: React.ComponentType<{ uri: string }>;
@@ -33,6 +35,7 @@ const FAN_OVERLAP = 18;
 const FilePreview: React.FC<FilePreviewProps> = ({
   previews,
   closePreview,
+  onRemoveItem,
   CustomFileIcon,
   CustomImagePreview,
   CustomVideoPreview,
@@ -102,6 +105,35 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     return null;
   };
 
+
+  const renderCloseBtn = (uri: string, counterRotate?: string) => (
+    <Pressable
+      onPress={() => (onRemoveItem ? onRemoveItem(uri) : closePreview?.())}
+      style={{
+        position: 'absolute',
+        zIndex: 50,
+        height: 22,
+        width: 22,
+        backgroundColor: 'rgba(0,0,0,0.55)',
+        right: -6,
+        top: -6,
+        borderRadius: 11,
+        justifyContent: 'center',
+        alignItems: 'center',
+        transform: counterRotate ? [{ rotate: counterRotate }] : undefined,
+      }}
+    >
+      <Text
+        style={withFontFamily(
+          { fontSize: 13, color: 'white', fontWeight: '700', lineHeight: 14 },
+          theme?.fontFamily
+        )}
+      >
+        ×
+      </Text>
+    </Pressable>
+  );
+
   const renderMediaSection = () => {
     if (media.length === 0) return null;
 
@@ -109,13 +141,13 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       const p = media[0];
       if (!p) return null;
       return (
-        <Pressable onPress={() => openGalleryAt(0)}>
+        <Pressable onPress={() => openGalleryAt(0)} style={{ position: 'relative' }}>
           {renderMediaThumb(p)}
+          {renderCloseBtn(p.uri)}
         </Pressable>
       );
     }
 
-    const showFan = media.length >= 2;
     const slice = media.slice(0, 3);
     const extraOnThird = media.length > 3 ? media.length - 3 : 0;
 
@@ -139,6 +171,18 @@ const FilePreview: React.FC<FilePreviewProps> = ({
                   ? '0deg'
                   : '10deg';
 
+          // Negate the card rotation so the × button stays visually upright
+          const counterRot =
+            slice.length === 2
+              ? idx === 0
+                ? '4deg'
+                : '-4deg'
+              : idx === 0
+                ? '10deg'
+                : idx === 1
+                  ? '0deg'
+                  : '-10deg';
+
           return (
             <Pressable
               key={`${p.uri}-${idx}`}
@@ -150,7 +194,8 @@ const FilePreview: React.FC<FilePreviewProps> = ({
               style={{
                 marginLeft: idx === 0 ? 0 : -FAN_OVERLAP,
                 zIndex: idx + 1,
-                transform: showFan ? [{ rotate: rot }] : undefined,
+                transform: [{ rotate: rot }],
+                position: 'relative',
               }}
             >
               <View style={{ position: 'relative' }}>
@@ -159,7 +204,10 @@ const FilePreview: React.FC<FilePreviewProps> = ({
                   <View
                     style={{
                       position: 'absolute',
-                      inset: 0,
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
                       borderRadius: 12,
                       backgroundColor: 'rgba(0,0,0,0.55)',
                       alignItems: 'center',
@@ -173,6 +221,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
                     </Text>
                   </View>
                 )}
+                {renderCloseBtn(p.uri, counterRot)}
               </View>
             </Pressable>
           );
@@ -180,6 +229,70 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       </View>
     );
   };
+
+  // Each doc card: minHeight 64 + gap 8. Show at most 3 before scrolling.
+  const DOC_CARD_H = 72; // 64 min + a bit of padding room
+  const docsMaxHeight = DOC_CARD_H * 3 + 8 * 2; // 3 cards + 2 gaps
+
+  const renderDocCard = (doc: PreviewAttachment, di: number) => (
+    <View
+      key={`${doc.uri}-${di}`}
+      style={{ position: 'relative' }}
+    >
+      <View
+        style={[
+          {
+            backgroundColor: 'white',
+            width: 240,
+            minHeight: 64,
+            borderRadius: 12,
+            flexDirection: 'row',
+            padding: 4,
+            gap: 4,
+            alignItems: 'center',
+          },
+          theme?.filePreviewStyle?.container,
+        ]}
+      >
+        <View
+          style={[
+            {
+              backgroundColor: '#d1d5db',
+              borderRadius: 8,
+              padding: 4,
+              justifyContent: 'center',
+              alignItems: 'center',
+            },
+            theme?.filePreviewStyle?.iconContainer,
+          ]}
+        >
+          {CustomFileIcon ? (
+            <CustomFileIcon />
+          ) : (
+            <FileIcon style={{ width: 40, height: 40 }} fill="white" />
+          )}
+        </View>
+        <View
+          style={[
+            {
+              backgroundColor: '#f3f4f6',
+              flex: 1,
+              borderRadius: 8,
+              justifyContent: 'center',
+              paddingHorizontal: 12,
+            },
+            theme?.filePreviewStyle?.nameContainer,
+          ]}
+        >
+          <TruncateFileName
+            fileName={doc.name || 'File'}
+            style={theme?.filePreviewStyle?.text}
+          />
+        </View>
+      </View>
+      {renderCloseBtn(doc.uri)}
+    </View>
+  );
 
   return (
     <View
@@ -195,87 +308,19 @@ const FilePreview: React.FC<FilePreviewProps> = ({
         theme?.filePreviewStyle?.root,
       ]}
     >
-      <Pressable
-        onPress={closePreview}
-        style={{
-          position: 'absolute',
-          zIndex: 50,
-          height: 22,
-          width: 22,
-          backgroundColor: 'rgba(255, 255, 255, 0.65)',
-          right: -4,
-          top: -4,
-          borderRadius: 11,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <Text
-          style={withFontFamily(
-            { fontSize: 11, color: 'black', fontWeight: '700' },
-            theme?.fontFamily
-          )}
-        >
-          ×
-        </Text>
-      </Pressable>
-
       <View style={{ gap: 8 }}>
         {renderMediaSection()}
-        {docs.map((doc, di) => (
-          <View
-            key={`${doc.uri}-${di}`}
-            style={[
-              {
-                backgroundColor: 'white',
-                width: 240,
-                minHeight: 64,
-                borderRadius: 12,
-                flexDirection: 'row',
-                padding: 4,
-                gap: 4,
-                alignItems: 'center',
-              },
-              theme?.filePreviewStyle?.container,
-            ]}
+        {docs.length > 0 && (
+          <ScrollView
+            scrollEnabled={docs.length > 3}
+            style={{ maxHeight: docsMaxHeight }}
+            showsVerticalScrollIndicator={docs.length > 3}
+            contentContainerStyle={{ gap: 8 }}
+            nestedScrollEnabled
           >
-            <View
-              style={[
-                {
-                  backgroundColor: '#d1d5db',
-                  borderRadius: 8,
-                  padding: 4,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                },
-                theme?.filePreviewStyle?.iconContainer,
-              ]}
-            >
-              {CustomFileIcon ? (
-                <CustomFileIcon />
-              ) : (
-                <FileIcon style={{ width: 40, height: 40 }} fill="white" />
-              )}
-            </View>
-            <View
-              style={[
-                {
-                  backgroundColor: '#f3f4f6',
-                  flex: 1,
-                  borderRadius: 8,
-                  justifyContent: 'center',
-                  paddingHorizontal: 12,
-                },
-                theme?.filePreviewStyle?.nameContainer,
-              ]}
-            >
-              <TruncateFileName
-                fileName={doc.name || 'File'}
-                style={theme?.filePreviewStyle?.text}
-              />
-            </View>
-          </View>
-        ))}
+            {docs.map((doc, di) => renderDocCard(doc, di))}
+          </ScrollView>
+        )}
       </View>
     </View>
   );
