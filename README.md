@@ -794,6 +794,7 @@ import type {
 
 | Symptom | Fix |
 |---------|-----|
+| `resolveAssetSource is not a function` | Auto-patched by movius-chats `postinstall`. If it still occurs, delete `node_modules`, reinstall, then rebuild native code |
 | `Native module not found` | Rebuild the app after install — run `pod install` (iOS) and rebuild Android |
 | Crashes in Expo Go | Use a development build — this package uses native modules not in Expo Go |
 | Audio silent on iOS | Add `[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil]` in your `AppDelegate` |
