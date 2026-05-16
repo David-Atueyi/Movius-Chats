@@ -1,8 +1,21 @@
 import { ImageStyle, TextStyle, ViewStyle } from 'react-native';
+/** Single image or video inside a message bubble (use `mediaItems` for albums). */
+export interface MessageMediaItem {
+    uri: string;
+    kind: 'image' | 'video';
+}
+/** PDFs, docs, etc. — shown as file rows in the bubble (not the image grid). */
+export interface MessageFileAttachment {
+    uri: string;
+    type: string;
+    name: string;
+}
 export interface Message {
     id: string;
     text?: string;
+    /** @deprecated Prefer `mediaItems` for multiple; kept for backward compatibility. */
     image?: string;
+    /** @deprecated Prefer `mediaItems` for multiple; kept for backward compatibility. */
     video?: string;
     audio?: string;
     senderId: string;
@@ -10,6 +23,19 @@ export interface Message {
     status: 'read' | 'delivered' | 'sent';
     senderName?: string;
     senderAvatar?: string;
+    /**
+     * Multiple images/videos in one bubble (WhatsApp-style grid).
+     * When non-empty, overrides single `image` / `video` for display.
+     */
+    mediaItems?: MessageMediaItem[];
+    /** Non-media attachments shown as downloadable/list rows in the bubble */
+    fileAttachments?: MessageFileAttachment[];
+}
+/** Input composer preview rows */
+export interface PreviewAttachment {
+    uri: string;
+    type: string;
+    name?: string;
 }
 export interface ChatScreenProps {
     messages: Message[];
@@ -32,11 +58,10 @@ export interface ChatScreenProps {
     onTypingStart?: () => void;
     onTypingEnd?: () => void;
     placeholder?: string;
-    previewData?: {
-        uri: string;
-        type: string;
-        name: string;
-    };
+    /** @deprecated Use `previewItems` for multiple selections */
+    previewData?: PreviewAttachment;
+    /** Multiple files in the composer — images/videos use spread preview; others use file chip(s) */
+    previewItems?: PreviewAttachment[];
     closePreview?: () => void;
     CustomFileIcon?: React.ComponentType<{
         style?: any;

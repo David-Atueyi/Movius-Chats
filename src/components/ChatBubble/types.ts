@@ -1,3 +1,4 @@
+import type { MessageMediaItem } from "../../types";
 import { Message } from "../../types";
 
 export interface ChatBubbleProps {
@@ -8,7 +9,7 @@ export interface ChatBubbleProps {
 }
 
 export interface MessageContentProps extends ChatBubbleProps {
-  onMediaPress: (type: "image" | "video", url: string) => void;
+  onGalleryOpen: (items: MessageMediaItem[], index: number) => void;
   isVideoPlaying?: boolean;
 }
 
@@ -18,4 +19,6 @@ export interface MessageStatusProps {
   isCurrentUser: boolean;
   hasText: boolean;
   hasAudio: boolean;
+  hasGalleryMedia?: boolean;
+  hasFileAttachments?: boolean;
 }

@@ -1,125 +1,57 @@
-import React from 'react';
-import { Image, Linking, Pressable, Text, View } from 'react-native';
-import Video, { VideoRef } from 'react-native-video';
+import React, { useMemo } from 'react';
+import { Linking, Pressable, Text, View } from 'react-native';
 import tw from 'twrnc';
-import { LoadingIcon } from '../../assets/Icons/LoadingIcon';
-import { PlayIcon } from '../../assets/Icons/PlayIcon';
 import { useChatContext } from '../../context/ChatContext';
-import { formatDuration } from '../../utils/datefunc';
+import { collectMediaItems } from '../../utils/messageMedia';
 import { getFontFamilyStyle, withFontFamily } from '../../utils/theme';
 import AudioPlayer from '../AudioPlayer/AudioPlayer';
+import { MediaGrid } from './MediaGrid';
 import { MessageContentProps } from './types';
 import ParsedText from 'react-native-parsed-text';
 
 const MessageContent: React.FC<MessageContentProps> = ({
   message,
-  onMediaPress,
+  onGalleryOpen,
   isVideoPlaying,
   isCurrentUser,
 }) => {
-  const {
-    theme,
-    showMessageStatus,
-    CustomPlayIcon,
-    renderCustomVideoBubbleError,
-  } = useChatContext();
-  const videoRef = React.useRef<VideoRef>(null);
-  const [duration, setDuration] = React.useState(0);
-  const [videoIsLoading, setVideoIsLoading] = React.useState(false);
-  const [videoHasError, setVideoHasError] = React.useState(false);
+  const { theme, showMessageStatus } = useChatContext();
+
+  const mediaItems = useMemo(
+    () => collectMediaItems(message),
+    [message]
+  );
 
   return (
     <View>
-      {message.image && (
-        <Pressable
-          onPress={() => onMediaPress('image', message.image as string)}
-          style={tw`w-60 h-80 my-2`}
-        >
-          <Image
-            source={{ uri: message.image }}
-            style={tw`w-full h-full rounded-lg`}
-            resizeMode="contain"
-          />
-        </Pressable>
+      {mediaItems.length > 0 && (
+        <MediaGrid items={mediaItems} onOpenGallery={onGalleryOpen} />
       )}
 
-      {message.video && (
+      {(message.fileAttachments ?? []).map((file, idx) => (
         <Pressable
-          onPress={() => onMediaPress('video', message.video as string)}
-          style={tw`w-60 h-80 my-2 justify-center items-center`}
-          disabled={videoIsLoading}
-        >
-          <Video
-            source={{ uri: message.video }}
-            ref={videoRef}
-            paused={true}
-            style={{
-              width: '100%',
-              height: '100%',
-              borderRadius: 8,
-              position: 'relative',
-            }}
-            resizeMode="cover"
-            onLoadStart={() => {
-              setVideoIsLoading(true);
-              setVideoHasError(false);
-            }}
-            onLoad={(data) => {
-              setDuration(data.duration);
-              setVideoIsLoading(false);
-            }}
-            onBuffer={({ isBuffering }) => setVideoIsLoading(isBuffering)}
-            onError={() => {
-              setVideoHasError(true);
-              setVideoIsLoading(false);
-            }}
-          />
-          {videoIsLoading ? (
-            <View
-              style={tw`absolute inset-0 flex items-center justify-center bg-black/40 rounded-full`}
-            >
-              <LoadingIcon style={tw.style('h-12 w-12')} spinning />
-            </View>
-          ) : videoHasError ? (
-            renderCustomVideoBubbleError ? (
-              renderCustomVideoBubbleError()
-            ) : (
-              <View
-                style={tw`absolute inset-0 flex items-center justify-center bg-red-500/60 p-2`}
-              >
-                <Text
-                  style={withFontFamily(
-                    tw`text-white font-bold`,
-                    theme?.fontFamily
-                  )}
-                >
-                  Failed to load video
-                </Text>
-              </View>
+          key={`${file.uri}-${idx}`}
+          onPress={() =>
+            Linking.openURL(
+              file.uri.startsWith('http') || file.uri.startsWith('file:')
+                ? file.uri
+                : `file://${file.uri}`
             )
-          ) : (
-            <>
-              <View style={tw`absolute bg-black/40 rounded-full`}>
-                {CustomPlayIcon ? (
-                  <CustomPlayIcon />
-                ) : (
-                  <PlayIcon
-                    style={tw.style('h-16 w-16')}
-                    color={theme?.colors?.audioPlayIconColor || 'white'}
-                  />
-                )}
-              </View>
-              <View
-                style={tw`absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded-md`}
-              >
-                <Text style={tw`text-white text-xs font-semibold`}>
-                  {formatDuration(duration)}
-                </Text>
-              </View>
-            </>
-          )}
+          }
+          style={tw`my-1.5 py-2 px-3 rounded-lg bg-black/10 max-w-[220px]`}
+        >
+          <Text
+            style={withFontFamily(
+              tw`text-xs font-semibold`,
+              theme?.fontFamily
+            )}
+            numberOfLines={2}
+          >
+            📎 {file.name}
+          </Text>
+          <Text style={tw`text-[10px] opacity-70 mt-0.5`}>{file.type}</Text>
         </Pressable>
-      )}
+      ))}
 
       {message.audio && (
         <View style={tw`my-2`}>

@@ -1,5 +1,18 @@
 import { ImageStyle, TextStyle, ViewStyle } from 'react-native';
 
+/** Single image or video inside a message bubble (use `mediaItems` for albums). */
+export interface MessageMediaItem {
+  uri: string;
+  kind: 'image' | 'video';
+}
+
+/** PDFs, docs, etc. — shown as file rows in the bubble (not the image grid). */
+export interface MessageFileAttachment {
+  uri: string;
+  type: string;
+  name: string;
+}
+
 export interface Message {
   id: string;
   text?: string;
@@ -11,6 +24,14 @@ export interface Message {
   status: 'read' | 'delivered' | 'sent';
   senderName?: string;
   senderAvatar?: string;
+  mediaItems?: MessageMediaItem[];
+  fileAttachments?: MessageFileAttachment[];
+}
+
+export interface PreviewAttachment {
+  uri: string;
+  type: string;
+  name?: string;
 }
 
 export interface ChatScreenProps {
@@ -24,9 +45,7 @@ export interface ChatScreenProps {
   onAudioRecordStart?: () => void;
   onCameraPress?: () => void;
 
-  /** iOS only: header/status-bar offset for KeyboardAvoidingView. Android uses full keyboard height on the input bar. */
   keyboardVerticalOffset?: number;
-  /** Set true if your screen already handles keyboard insets. */
   disableKeyboardAvoiding?: boolean;
 
   // Typing indicators and input
@@ -34,7 +53,8 @@ export interface ChatScreenProps {
   onTypingStart?: () => void;
   onTypingEnd?: () => void;
   placeholder?: string;
-  previewData?: { uri: string; type: string; name: string };
+  previewData?: PreviewAttachment;
+  previewItems?: PreviewAttachment[];
   closePreview?: () => void;
   CustomFileIcon?: React.ComponentType<{ style?: any }>;
   CustomImagePreview?: React.ComponentType<{ uri: string }>;
@@ -59,7 +79,6 @@ export interface ChatScreenProps {
       readIconColor?: string;
     };
     sizes?: {
-      /** Emoji, attachment, and camera icons only (not send/mic). Twrnc class or pixels. */
       inputIconSize?: string | number;
     };
     bubbleStyle?: {

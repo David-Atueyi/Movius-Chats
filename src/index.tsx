@@ -15,9 +15,8 @@ const ChatScreenContent = () => {
     messages,
     currentUserId,
     onMessageLongPress,
-    mediaUrl,
-    setMediaUrl,
-    setIsVideoPlaying,
+    mediaViewerGallery,
+    clearMediaViewerGallery,
     typingUsers,
     onSendMessage,
     onTypingStart,
@@ -102,14 +101,7 @@ const ChatScreenContent = () => {
         {inputSection}
       </View>
 
-      <MediaViewer
-        imageUrl={mediaUrl.imageUrl}
-        videoUrl={mediaUrl.videoUrl}
-        onClose={() => {
-          setMediaUrl({ imageUrl: '', videoUrl: '' });
-          setIsVideoPlaying(false);
-        }}
-      />
+      <MediaViewer gallery={mediaViewerGallery} onClose={clearMediaViewerGallery} />
     </View>
   );
 
