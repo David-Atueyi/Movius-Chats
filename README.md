@@ -1,127 +1,180 @@
 # movius-chats
 
-A highly customizable, feature-rich chat UI for **React Native**. Drop in a single `ChatScreen` component to get message bubbles, WhatsApp-style media grids, audio/video playback, a full-screen swipe gallery, typing indicators, file attachment previews, and a smart input bar — with deep theming and custom component hooks.
+A customizable React Native chat UI library. One `ChatScreen` component: message bubbles, WhatsApp-style media grids, audio playback, voice recording, composer previews, typing indicators, and a full-screen media gallery — with per-side theming and replaceable UI pieces.
 
 **npm:** [`movius-chats`](https://www.npmjs.com/package/movius-chats)  
-**Repository:** [github.com/David-Atueyi/Movius-Chats](https://github.com/David-Atueyi/Movius-Chats)
+**Repo:** [github.com/David-Atueyi/Movius-Chats](https://github.com/David-Atueyi/Movius-Chats)
+
+This package is built for **plain React Native** (CLI / bare workflow). It does **not** depend on any Expo module.
 
 ---
 
 ## Table of contents
 
-- [Requirements & compatibility](#requirements--compatibility)
-- [Installation](#installation)
-- [Quick start](#quick-start)
-- [Data model](#data-model)
-  - [Message](#message)
-  - [MessageMediaItem](#messagemediaitem)
-  - [MessageFileAttachment](#messagefileattachment)
-  - [PreviewAttachment](#previewattachment)
-- [Message list ordering](#message-list-ordering)
-- [ChatScreen API](#chatscreen-api)
-  - [Core props](#core-props)
-  - [Feature flags](#feature-flags)
-  - [Input & typing](#input--typing)
-  - [Attachment preview (composer)](#attachment-preview-composer)
-  - [Theme](#theme)
-  - [Custom components & icons](#custom-components--icons)
-- [Usage examples](#usage-examples)
-  - [Basic text chat](#basic-text-chat)
-  - [Multi-image / video album bubble](#multi-image--video-album-bubble)
-  - [File attachment bubble](#file-attachment-bubble)
-  - [Audio message bubble](#audio-message-bubble)
-  - [Composer attachment preview (single or multiple)](#composer-attachment-preview-single-or-multiple)
-  - [Send button vs microphone](#send-button-vs-microphone)
-  - [Typing indicators](#typing-indicators)
-  - [Custom theme](#custom-theme)
-  - [Font family (all text)](#font-family-all-text)
-  - [Keyboard avoiding](#keyboard-avoiding)
-  - [Custom input bar](#custom-input-bar)
-  - [Opening file attachments (expo-sharing)](#opening-file-attachments-expo-sharing)
-  - [Long-press on a message](#long-press-on-a-message)
-- [Full-screen gallery viewer](#full-screen-gallery-viewer)
-- [Architecture overview](#architecture-overview)
-- [TypeScript types](#typescript-types)
-- [Troubleshooting](#troubleshooting)
-- [Publishing a new version](#publishing-a-new-version)
-- [License](#license)
+1. [What is included](#what-is-included)
+2. [Package layout](#package-layout)
+3. [Dependencies](#dependencies)
+4. [Installation](#installation)
+5. [Quick start](#quick-start)
+6. [Message data model](#message-data-model)
+7. [Message list order](#message-list-order)
+8. [ChatScreen API](#chatscreen-api)
+9. [Voice recording](#voice-recording)
+10. [Audio message bubbles](#audio-message-bubbles)
+11. [Media grids & gallery](#media-grids--gallery)
+12. [Composer attachment preview](#composer-attachment-preview)
+13. [Theme & styling](#theme--styling)
+14. [Keyboard behavior](#keyboard-behavior)
+15. [Custom components & icons](#custom-components--icons)
+16. [TypeScript](#typescript)
+17. [Troubleshooting](#troubleshooting)
+18. [Publishing](#publishing)
+19. [License](#license)
 
 ---
 
-## Requirements & compatibility
+## What is included
 
-| Dependency | Role |
-|------------|------|
-| `react` ≥ 16.8 | Peer dependency |
-| `react-native` | Peer dependency |
-| `react-native-reanimated` | Audio scrubber animation (peer) |
-| `react-native-sound` | Voice message playback |
+| Feature | Implementation |
+|---------|----------------|
+| Text messages | `react-native-parsed-text` (URLs tappable) |
+| Image / video albums | `MediaGrid` — 1 / 2 / 3 / 4+ layout, 320px height |
+| Full-screen viewer | `MediaViewer` — swipe, counter, selective video autoplay |
+| Audio messages | `react-native-video` (hidden player) + waveform UI |
+| Playback speed | 1x → 1.5x → 2x while playing |
+| Voice recording | `react-native-audio-record` (optional peer) |
+| File attachments | Tappable rows; default `Linking.openURL` |
+| Typing indicator | Up to 2 avatars + `+N` badge |
+| Input bar | Growing text field, emoji / clip / camera / send / mic |
+| Status icons | Sent / delivered / read checkmarks |
+| Theming | Separate `sent*` / `received*` colors for most bubble parts |
+
+---
+
+## Package layout
+
+```
+src/
+├── index.tsx                 # ChatScreen entry
+├── types/index.ts            # Message, ChatScreenProps, recorder types
+├── context/
+│   ├── ChatContext.tsx       # Props + gallery state
+│   └── AudioContext.tsx      # One audio plays at a time
+├── hooks/
+│   ├── useKeyboardInset.ts   # Keyboard height → input margin
+│   └── useVoiceRecorder.ts   # Mic capture (audio-record + fs)
+├── utils/
+│   ├── bubbleTheme.ts        # sent/received color helpers
+│   ├── messageMedia.ts       # collectMediaItems()
+│   ├── theme.ts              # fontFamily, input icon size
+│   └── datefunc.ts           # formatDuration()
+├── assets/Icons/             # SVG icons (play, mic, tail, etc.)
+└── components/
+    ├── ChatBubble/           # Bubble, content, status, media grid
+    ├── ChatInput/            # Input, FilePreview, voice gestures
+    ├── AudioPlayer/          # WhatsApp-style audio UI
+    ├── MediaViewer/          # Full-screen gallery modal
+    ├── TypingComponent/
+    └── VoiceRecorder/        # Normal + long-press recording UI
+```
+
+Published build output: `lib/commonjs`, `lib/module`, `lib/typescript`.
+
+---
+
+## Dependencies
+
+### Bundled (installed with movius-chats)
+
+| Package | Use |
+|---------|-----|
+| `react-native-video` | Video thumbnails, gallery video, **audio playback** |
 | `react-native-svg` | Built-in icons |
-| `react-native-video` | Video thumbnails + full-screen video |
-| `react-native-parsed-text` | Tappable URLs in text messages |
-| `twrnc` | Internal Tailwind-style utilities |
+| `react-native-parsed-text` | Link detection in text |
+| `twrnc` | Internal styles |
 
-**Not compatible with Expo Go** — native modules require a development build or bare RN project.
+### Peer dependencies (your app must install)
+
+| Package | Required |
+|---------|----------|
+| `react` ≥ 16.8 | Yes |
+| `react-native` | Yes |
+| `react-native-reanimated` | Yes (voice recorder animations) |
+
+### Optional peers (voice recording only)
+
+| Package | Use |
+|---------|-----|
+| `react-native-audio-record` | Record microphone |
+| `react-native-fs` | Delete cancelled recording files |
+
+If these are missing, the UI still renders; starting a recording logs an install hint.
+
+**There is no `react-native-sound`, `expo-av`, `expo-file-system`, or other Expo package in this library.**
 
 ---
 
 ## Installation
 
-### 1. Install the package
+### 1. Install movius-chats
 
 ```bash
-npm install movius-chats
-# or
 yarn add movius-chats
-# or
-bun add movius-chats
+# or: npm install movius-chats
+# or: bun add movius-chats
 ```
 
-### 2. Install peer / native dependencies
+### 2. Install peers
 
 ```bash
-npm install react-native-reanimated react-native-sound react-native-svg react-native-video twrnc
+yarn add react-native-reanimated react-native-video react-native-svg
 ```
 
-### 3. Configure Reanimated
+`react-native-video` and `react-native-svg` are also pulled in as movius-chats dependencies, but your app should list compatible versions and link native code.
 
-Add the Reanimated plugin **last** in `babel.config.js`:
+### 3. Reanimated (Babel)
+
+Put this plugin **last** in `babel.config.js`:
 
 ```js
 module.exports = {
   presets: ['module:metro-react-native-babel-preset'],
   plugins: [
-    // other plugins
+    // ...other plugins
     'react-native-reanimated/plugin',
   ],
 };
 ```
 
-### 4. Rebuild native code
+### 4. Voice recording (optional)
 
-**React Native CLI:**
+```bash
+yarn add react-native-audio-record react-native-fs
+```
 
-   ```bash
+**iOS** — add to `Info.plist`:
+
+```xml
+<key>NSMicrophoneUsageDescription</key>
+<string>This app needs the microphone to record voice messages.</string>
+```
+
+**Android** — ensure `RECORD_AUDIO` is in `AndroidManifest.xml` (often added by the audio-record library).
+
+Then rebuild native apps:
+
+```bash
 cd ios && pod install && cd ..
 npx react-native run-ios
 npx react-native run-android
 ```
 
-**Expo development build:**
+### 5. Android keyboard
 
-   ```bash
-npx expo prebuild
-npx expo run:ios   # or run:android
-```
+In `android/app/src/main/AndroidManifest.xml` on your main activity:
 
-### 5. Android keyboard mode (Expo)
-
-In `app.json` / `app.config.js` add:
-
-```json
-"android": {
-  "softwareKeyboardLayoutMode": "resize"
-}
+```xml
+android:windowSoftInputMode="adjustResize"
 ```
 
 ---
@@ -131,20 +184,20 @@ In `app.json` / `app.config.js` add:
 ```tsx
 import React, { useState } from 'react';
 import { Platform, SafeAreaView, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ChatScreen from 'movius-chats';
 import type { Message } from 'movius-chats/lib/typescript/types';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default function MyChatScreen() {
+export default function ChatDetailScreen() {
   const insets = useSafeAreaInsets();
-  const currentUserId = 'user-1';
+  const currentUserId = '1';
   const [messages, setMessages] = useState<Message[]>([]);
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
-    <ChatScreen
-      messages={messages}
+        <ChatScreen
+          messages={messages}
           currentUserId={currentUserId}
           onSendMessage={({ text, senderId }) => {
             setMessages((prev) => [
@@ -161,12 +214,9 @@ export default function MyChatScreen() {
               ...prev,
             ]);
           }}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 44 : 0}
-      showAvatars
+          keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
           showBubbleTail
           showMessageStatus
-          showAttachmentsButton
-          showCameraButton
           showVoiceRecordButton
         />
       </View>
@@ -175,241 +225,156 @@ export default function MyChatScreen() {
 }
 ```
 
----
-
-## Data model
-
-### Message
-
-Every item in the `messages` array must match this shape:
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | `string` | Yes | Unique message id |
-| `senderId` | `string` | Yes | User id of the sender |
-| `time` | `string` | Yes | Display time string — you format this (e.g. `"2:30 PM"`) |
-| `status` | `'sent' \| 'delivered' \| 'read'` | Yes | Shown only for current user's messages |
-| `text` | `string` | No | Plain text; URLs auto-linked |
-| `audio` | `string` | No | Audio file URI — renders a playable audio bubble |
-| `image` | `string` | No | Single image URI (legacy; prefer `mediaItems`) |
-| `video` | `string` | No | Single video URI (legacy; prefer `mediaItems`) |
-| `mediaItems` | `MessageMediaItem[]` | No | Album of images/videos — renders a WhatsApp-style grid |
-| `fileAttachments` | `MessageFileAttachment[]` | No | PDFs, docs, etc. — rendered as tappable file rows |
-| `senderName` | `string` | No | Shown when `showUserNames` is true |
-| `senderAvatar` | `string` | No | Avatar image URI; falls back to first letter of `senderName` |
-
-A message can combine fields (e.g. `text` + `mediaItems`).
-
-### MessageMediaItem
-
-```ts
-interface MessageMediaItem {
-  uri: string;
-  kind: 'image' | 'video';
-}
-```
-
-Used in `message.mediaItems` for multi-media bubbles.
-
-### MessageFileAttachment
-
-```ts
-interface MessageFileAttachment {
-  uri: string;
-  type: string; // MIME type, e.g. "application/pdf"
-  name: string;
-}
-```
-
-Each attachment is shown as a tappable chip that opens the file via `Linking.openURL`.
-
-### PreviewAttachment
-
-```ts
-interface PreviewAttachment {
-  uri: string;
-  type: string; // MIME type
-  name?: string;
-}
-```
-
-Used in `previewData` / `previewItems` for the composer preview strip above the input.
+Wrap the screen in `flex: 1`. Load custom fonts in **your** app before passing `theme.fontFamily`.
 
 ---
 
-## Message list ordering
+## Message data model
 
-`ChatScreen` uses an **inverted** `FlatList`. The **newest message must be at index `0`**:
+### `Message`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Unique id |
+| `senderId` | `string` | Who sent it |
+| `time` | `string` | Display time (you format it) |
+| `status` | `'sent' \| 'delivered' \| 'read'` | Checkmarks on **your** messages only |
+| `text` | `string` | Body text |
+| `audio` | `string` | Audio file URI |
+| `image` | `string` | Single image (legacy; prefer `mediaItems`) |
+| `video` | `string` | Single video (legacy) |
+| `mediaItems` | `MessageMediaItem[]` | Album in one bubble |
+| `fileAttachments` | `MessageFileAttachment[]` | PDF, doc, etc. |
+| `senderName` | `string` | Group name + audio avatar initial |
+| `senderAvatar` | `string` | Image URI for audio bubble avatar |
+
+### `MessageMediaItem`
 
 ```ts
-setMessages((prev) => [newMessage, ...prev]); // correct
+{ uri: string; kind: 'image' | 'video' }
 ```
 
-Consecutive messages from the same sender are grouped — avatars and tails appear only on the first message in each group.
+### `MessageFileAttachment`
+
+```ts
+{ uri: string; type: string; name: string }
+```
+
+### `PreviewAttachment` (composer)
+
+```ts
+{ uri: string; type: string; name?: string }
+```
+
+### `RecordingResult` (`onAudioRecordEnd`)
+
+```ts
+{ uri: string; duration: number; mimeType?: string; size?: number }
+```
+
+---
+
+## Message list order
+
+The list is **inverted**. Newest message must be **index 0**:
+
+```ts
+setMessages((prev) => [newMessage, ...prev]);
+```
+
+Avatars and bubble tails show only on the **first** message in a consecutive run from the same `senderId`.
 
 ---
 
 ## ChatScreen API
 
-`ChatScreen` is the **default export** from `movius-chats`.
+Default export: `ChatScreen`. All props are optional except `messages`, `currentUserId`, and `onSendMessage`.
 
-### Core props
+### Core
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `messages` | `Message[]` | Yes | Message array, newest first |
-| `currentUserId` | `string` | Yes | Logged-in user id — controls bubble alignment and status icons |
-| `onSendMessage` | `(msg: Omit<Message, 'id' \| 'time' \| 'status'>) => void` | Yes | Called when the user taps send |
-| `onMessageLongPress` | `(message: Message) => void` | No | Called on long-press of a bubble |
-| `placeholder` | `string` | No | Input placeholder text (default: `"Message"`) |
-| `keyboardVerticalOffset` | `number` | No | **iOS only** — header + status bar height offset for `KeyboardAvoidingView`. Android lifts the input by the full keyboard height automatically. Default: `0` |
-| `disableKeyboardAvoiding` | `boolean` | No | Set `true` if your screen already handles keyboard avoidance |
+| Prop | Type | Description |
+|------|------|-------------|
+| `messages` | `Message[]` | Newest first |
+| `currentUserId` | `string` | Sent vs received layout |
+| `onSendMessage` | `(Omit<Message, 'id' \| 'time' \| 'status'>) => void` | Send button |
+| `onMessageLongPress` | `(message: Message) => void` | Long-press bubble |
+| `placeholder` | `string` | Input placeholder (default `"Message"`) |
+| `keyboardVerticalOffset` | `number` | **iOS only** — passed to `KeyboardAvoidingView` |
+| `disableKeyboardAvoiding` | `boolean` | Turn off built-in keyboard lift |
 
-### Feature flags
+### Feature flags (default `false`)
 
-All default to `false` (hidden) unless explicitly set to `true`:
+`showAvatars`, `showUserNames`, `showBubbleTail`, `showMessageStatus`, `showEmojiButton`, `showAttachmentsButton`, `showCameraButton`, `showVoiceRecordButton`
+
+### Callbacks
 
 | Prop | Description |
 |------|-------------|
-| `showAvatars` | Avatar (or initial letter) on received bubbles and typing row |
-| `showUserNames` | Sender name above received bubbles |
-| `showBubbleTail` | WhatsApp-style corner tail on first bubble in a sequence |
-| `showMessageStatus` | Timestamp + checkmark icons on sent messages |
-| `showEmojiButton` | Emoji button in the input bar (UI only — wire your own picker via `CustomEmojiIcon`) |
-| `showAttachmentsButton` | Paperclip icon — triggers `onAttachmentPress` |
-| `showCameraButton` | Camera icon when input is empty — triggers `onCameraPress` |
-| `showVoiceRecordButton` | Mic icon when there is no text and no preview; becomes send icon otherwise |
+| `onTypingStart` / `onTypingEnd` | Input text empty ↔ non-empty |
+| `onAttachmentPress` | Paperclip — open your picker |
+| `onCameraPress` | Camera icon |
+| `onAudioRecordStart` | Recording began |
+| `onAudioRecordEnd` | `(RecordingResult?) => void` when done or cancelled |
+| `onFileAttachmentPress` | File chip in bubble (default: `Linking.openURL`) |
 
-### Input & typing
+### Composer preview
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `onTypingStart` | `() => void` | Called when the text input becomes non-empty |
-| `onTypingEnd` | `() => void` | Called when the text input is cleared |
-| `onAttachmentPress` | `() => void` | Paperclip tapped — open your file/image picker |
-| `onCameraPress` | `() => void` | Camera icon tapped — open camera |
-| `onAudioRecordStart` | `() => void` | Mic pressed / long-pressed — start recording |
-| `onAudioRecordEnd` | `() => void` | Mic released — stop recording, upload, add message |
-| `onFileAttachmentPress` | `(file: MessageFileAttachment) => void` | Tapped a file-attachment chip in a bubble. Defaults to `Linking.openURL`. Supply this to use `expo-sharing` or a custom downloader. |
-| `typingUsers` | `{ id: string; avatar: string; name: string }[]` | Users currently typing (current user is excluded from display) |
+| Prop | Description |
+|------|-------------|
+| `previewItems` | Multiple attachments before send |
+| `previewData` | Single attachment (legacy) |
+| `onRemovePreviewItem` | `(uri) => void` — remove **one** card by URI |
+| `closePreview` | Clears all if `onRemovePreviewItem` not set |
 
-### Attachment preview (composer)
+When preview or text exists, the **send** icon shows instead of the mic.
 
-Show a preview strip above the input before the user taps send.
+### Voice recorder customization
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `previewItems` | `PreviewAttachment[]` | **Multiple** attachments — images/videos shown as a fanned spread; documents shown as file chips |
-| `previewData` | `PreviewAttachment` | **Single** attachment (kept for backward compatibility; `previewItems` takes precedence) |
-| `closePreview` | `() => void` | Fallback called when no `onRemovePreviewItem` is provided |
-| `onRemovePreviewItem` | `(uri: string) => void` | Called with the URI of whichever card the user tapped × on — removes only that item |
+| Prop | Type |
+|------|------|
+| `renderVoiceRecorder` | `(VoiceRecorderExposedState) => ReactNode` — replace entire recorder UI |
+| `voiceRecorderProps` | `VoiceRecorderConfig` — `maxDuration`, lock, slide-to-cancel, etc. |
+| `voiceRecorderStyles` | `VoiceRecorderStyleOverrides` |
+| `recordingUIProps` | Colors/sizes for timer, lock pill, recorder play/pause |
 
-**Per-item removal:** Every media thumbnail and every document chip shows its own × button. When `onRemovePreviewItem` is provided, tapping × on a card calls it with that card's URI so you can filter it out of your state. `closePreview` is only used as a fallback when `onRemovePreviewItem` is not supplied.
+### Typing
 
-When any preview is present, the send button appears regardless of text content.
-
-### Theme
-
-All keys are optional. Pass a `theme` object to `ChatScreen`:
-
-```ts
- theme?: {
-  fontFamily?: string;    // applied to every Text element in the package
-
-    colors?: {
-      sentMessageTailColor?: string;
-      receivedMessageTailColor?: string;
-      timestamp?: string;
-    inputsIconsColor?: string;    // emoji, clip, camera icons
-    sendIconsColor?: string;      // send / mic icons
-      placeholderTextColor?: string;
-    inputTextColor?: string;
-      audioPlayIconColor?: string;
-      audioPauseIconColor?: string;
-      videoPlayIconColor?: string;
-    sentIconColor?: string;
-    deliveredIconColor?: string;
-    readIconColor?: string;
-  };
-
-  sizes?: {
-    // Applies only to emoji, paperclip, and camera icons (not send/mic)
-    inputIconSize?: string | number;  // number = px, string = twrnc class e.g. "h-8 w-8"
-  };
-
-    bubbleStyle?: {
-      sent?: ViewStyle;
-      received?: ViewStyle;
-      avatarTextStyle?: TextStyle;
-      userNameStyle?: TextStyle;
-      avatarImageStyle?: ImageStyle;
-      typingContainerStyle?: ViewStyle;
-      additionalTypingUsersContainerStyle?: ViewStyle;
-      additionalTypingUsersTextStyle?: TextStyle;
-    };
-
-    messageStyle?: {
-      sentTextStyle?: TextStyle;
-      receivedTextStyle?: TextStyle;
-      audioPlayButtonStyle?: ViewStyle;
-      audioKnobStyle?: ViewStyle;
-      progressBarStyle?: ViewStyle;
-      activeProgressBarStyle?: ViewStyle;
-      audioDurationStyle?: TextStyle;
-    };
-
-    inputStyles?: {
-    inputSectionContainerStyle?: ViewStyle;   // outer row (input + send button)
-    inputContainerStyle?: ViewStyle;          // the pill/rounded box
-    sendButtonStyle?: ViewStyle;              // the round send/mic button
-  };
-
-    filePreviewStyle?: {
-      root?: ViewStyle;
-      container?: ViewStyle;
-      iconContainer?: ViewStyle;
-      nameContainer?: ViewStyle;
-      text?: TextStyle;
-    };
-}
-```
-
-### Custom components & icons
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `renderCustomInput` | `() => React.ReactNode` | Replace the entire input bar |
-| `renderCustomTyping` | `() => React.ReactNode` | Replace the typing bubble content |
-| `renderCustomVideoBubbleError` | `() => React.ReactNode` | Replace the inline video error state |
-| `CustomEmojiIcon` | `() => React.ReactNode` | Emoji button icon |
-| `CustomAttachmentIcon` | `() => React.ReactNode` | Paperclip icon |
-| `CustomCameraIcon` | `() => React.ReactNode` | Camera icon |
-| `CustomSendIcon` | `() => React.ReactNode` | Send button icon |
-| `CustomMicrophoneIcon` | `() => React.ReactNode` | Microphone icon |
-| `CustomPlayIcon` | `() => React.ReactNode` | Play icon in audio and video |
-| `CustomPauseIcon` | `() => React.ReactNode` | Pause icon in audio player |
-| `CustomFileIcon` | `React.ComponentType<{ style?: any }>` | Icon inside document file chips |
-| `CustomImagePreview` | `React.ComponentType<{ uri: string }>` | Replaces the composer image thumbnail |
-| `CustomVideoPreview` | `React.ComponentType<{ uri: string }>` | Replaces the composer video thumbnail |
+| Prop | Type |
+|------|------|
+| `typingUsers` | `{ id, avatar, name }[]` |
 
 ---
 
-## Usage examples
+## Voice recording
 
-### Basic text chat
+Requires **`react-native-audio-record`** and **`react-native-fs`** in the host app, plus a **native rebuild**.
+
+### Gestures
+
+| Action | Result |
+|--------|--------|
+| **Tap** mic | Normal bar: trash, timer, waveform, play/pause preview, send |
+| **Long-press** mic | Hold mode: “slide to cancel”, lock column above send |
+| Slide **left** | Cancel (file deleted via `react-native-fs`) |
+| Slide **up** to lock | Switches to normal bar (`lockSlideDistance` in `recordingUIProps`) |
+| **Release** without slide | Auto-send (`onAudioRecordEnd`) |
+
+### Wiring
 
 ```tsx
 <ChatScreen
-  messages={messages}
-  currentUserId="user-1"
-  onSendMessage={({ text, senderId }) => {
+  showVoiceRecordButton
+  onAudioRecordEnd={(result) => {
+    if (!result) return;
     setMessages((prev) => [
       {
         id: String(Date.now()),
-        text,
-        senderId,
-        time: '10:00 AM',
+        senderId: currentUserId,
+        audio: result.uri,
+        time: '10:56 PM',
         status: 'sent',
+        senderAvatar: myAvatarUri,
+        senderName: myDisplayName,
       },
       ...prev,
     ]);
@@ -417,364 +382,226 @@ All keys are optional. Pass a `theme` object to `ChatScreen`:
 />
 ```
 
-### Multi-image / video album bubble
+### Custom recorder UI
 
-Use `mediaItems` in the `Message` object. The bubble renders a WhatsApp-style grid:
+```tsx
+renderVoiceRecorder={(state) => (
+  <MyRecorder
+    duration={state.duration}
+    onStop={state.stopRecording}
+    onCancel={state.cancelRecording}
+  />
+)}
+```
+
+---
+
+## Audio message bubbles
+
+WhatsApp-style row inside the bubble:
+
+| Side | Layout (left → right) |
+|------|------------------------|
+| **Sent** | Avatar or speed pill → play/pause → waveform |
+| **Received** | play/pause → waveform → avatar or speed pill |
+
+| State | Avatar slot |
+|-------|-------------|
+| Idle / finished | `senderAvatar` or first letter of `senderName` |
+| Playing | Pill showing **1x**, **1.5x**, or **2x** (tap to cycle) |
+| Ended | Avatar again |
+
+- Waveform bars with scrubber dot; tap or drag to seek  
+- Duration under the waveform  
+- Play/pause is icon-only (no filled circle)  
+- Only one audio plays at a time (`AudioContext`)  
+- Video in the gallery pauses other audio  
+
+```tsx
+{
+  id: 'a1',
+  senderId: '2',
+  audio: 'file:///data/user/0/.../voice.wav',
+  senderAvatar: 'https://cdn.example.com/u2.jpg',
+  senderName: 'Alex',
+  time: '10:23 pm',
+  status: 'read',
+}
+```
+
+---
+
+## Media grids & gallery
+
+### Grid (`mediaItems`)
 
 | Count | Layout | Height |
 |-------|--------|--------|
-| 1 | Single full-width tile (cover) | 320 px |
-| 2 | Side by side, two equal columns | 320 px |
-| 3 | One on top (55%), two below (45%) | 320 px |
-| 4+ | 2 × 2 grid; bottom-right cell shows `+N` overlay | 320 px |
+| 1 | Full width, cover | 320px |
+| 2 | Two columns | 320px |
+| 3 | One top, two bottom | 320px |
+| 4+ | 2×2, `+N` on last cell | 320px |
 
-All layouts share the same fixed height so multi-image bubbles stay visually consistent with single-image bubbles. Tapping any cell opens the full-screen swipe gallery.
+Tap opens `MediaViewer`. Thumbnail `Video` uses `pointerEvents="none"` so presses reach the parent.
 
-```tsx
-const message: Message = {
-  id: '1',
-  senderId: 'user-2',
-  time: '11:00 AM',
-  status: 'read',
-  mediaItems: [
-    { uri: 'https://example.com/photo1.jpg', kind: 'image' },
-    { uri: 'https://example.com/photo2.jpg', kind: 'image' },
-    { uri: 'https://example.com/clip.mp4',   kind: 'video' },
-  ],
-};
-```
+### Gallery behavior
 
-Legacy single-item syntax still works and is merged automatically:
+- Horizontal `FlatList`, `n / total` header  
+- **Videos** play only if that video was the tapped item and the page is active  
+- Tapping an **image** in a mixed album does not start other videos  
+- Composer video previews **do** autoplay in the small preview card  
 
-```tsx
-// These are equivalent for display purposes
-{ image: 'https://...' }
-{ mediaItems: [{ uri: 'https://...', kind: 'image' }] }
-```
+### Legacy single fields
 
-### File attachment bubble
+`image` and `video` on `Message` are merged into `mediaItems` internally via `collectMediaItems()`.
 
-```tsx
-const message: Message = {
-  id: '2',
-  senderId: 'user-1',
-  time: '11:05 AM',
-  status: 'delivered',
-  fileAttachments: [
-    {
-      uri: 'https://example.com/report.pdf',
-      type: 'application/pdf',
-      name: 'Q2 Report.pdf',
-    },
-  ],
-  text: 'Here is the report',
-};
-```
+---
 
-Each attachment renders as a tappable row. By default tapping calls `Linking.openURL(uri)`. Supply `onFileAttachmentPress` to override this with your own handler (e.g. `expo-sharing`).
+## Composer attachment preview
 
-### Audio message bubble
-
-```tsx
-const message: Message = {
-  id: '3',
-  senderId: 'user-2',
-  audio: 'file:///path/to/recording.m4a',
-  time: '11:10 AM',
-  status: 'read',
-};
-```
-
-The audio player has a scrubable progress bar, a play/pause button, and a duration counter.  
-Only one audio message plays at a time — starting a new one automatically stops the previous one.
-
-### Composer attachment preview (single or multiple)
-
-Use `previewItems` (array) for multi-select, or `previewData` (single) for back-compat:
+Controlled from your app state:
 
 ```tsx
 const [previews, setPreviews] = useState<PreviewAttachment[]>([]);
 
 <ChatScreen
   previewItems={previews}
-  closePreview={() => setPreviews([])}
-  // Remove only the card whose × was tapped:
   onRemovePreviewItem={(uri) =>
-    setPreviews((prev) => prev.filter((p) => p.uri !== uri))
+    setPreviews((p) => p.filter((x) => x.uri !== uri))
   }
-  onAttachmentPress={async () => {
-    const picked = await myPicker.pick(); // returns an array
-    setPreviews(
-      picked.map((f) => ({ uri: f.uri, type: f.type, name: f.name }))
-    );
-  }}
-  onSendMessage={({ text, senderId }) => {
-    const media = previews
-      .filter((p) => p.type.startsWith('image/') || p.type.startsWith('video/'))
-      .map((p) => ({
-        uri: p.uri,
-        kind: p.type.startsWith('video/') ? 'video' : 'image',
-      } as MessageMediaItem));
-
-    const files = previews
-      .filter((p) => !p.type.startsWith('image/') && !p.type.startsWith('video/'))
-      .map((p) => ({ uri: p.uri, type: p.type, name: p.name ?? 'file' }));
-
-    setMessages((prev) => [
-      {
-        id: String(Date.now()),
-        senderId,
-        time: '...',
-        status: 'sent',
-        text: text || undefined,
-        mediaItems: media.length ? media : undefined,
-        fileAttachments: files.length ? files : undefined,
-      },
-      ...prev,
-    ]);
-
-    setPreviews([]);
-  }}
+  onAttachmentPress={openYourDocumentPicker}
+  onSendMessage={handleSend}
 />
 ```
 
-Preview UI:
-- **1 image/video** — single thumbnail with × in the top-right corner.
-- **2–3 images/videos** — overlapping fan spread; each card has its own ×.
-- **4+ images/videos** — fan of 3 with a `+N` badge; each visible card has its own ×.
-- **Documents** — file chips, each with their own ×. If more than 3 documents are selected the list becomes scrollable.
+| Preview type | UI |
+|--------------|-----|
+| 1 image/video | Single thumb + × |
+| 2–3 media | Fanned stack, × on each |
+| 4+ media | Fan of 3 + `+N`, × per visible card |
+| Documents | Chips; scrollable after 3 |
 
-Tapping × on any card calls `onRemovePreviewItem(uri)` for that specific file. When the last item is removed the preview strip disappears automatically.
+Use any picker you want (`react-native-document-picker`, `react-native-image-picker`, etc.) — movius-chats only displays `previewItems`.
 
-### Send button vs microphone
+---
 
-The send button (green circle, right of input) shows:
+## Theme & styling
 
-| Condition | Icon shown |
-|-----------|------------|
-| Input has text | Send icon |
-| `previewItems` / `previewData` is set | Send icon |
-| Neither, `showVoiceRecordButton` true | Microphone icon |
-| Neither, `showVoiceRecordButton` false | Send icon |
+Pass `theme` to `ChatScreen`. `theme.fontFamily` applies to **all** `Text` in the package (load the font in your app first).
 
-No extra work needed — the package handles this automatically.
+### `theme.colors` — per side (`sent*` / `received*`)
 
-### Typing indicators
+| Keys | Used for |
+|------|----------|
+| `sentTimestampColor` / `receivedTimestampColor` | Message & file timestamps |
+| `sentMessageTextColor` / `receivedMessageTextColor` | Bubble text |
+| `sentBubbleBackgroundColor` / `receivedBubbleBackgroundColor` | Bubble background |
+| `sentMessageTailColor` / `receivedMessageTailColor` | Corner tail (`ArrowBack2RoundedIcon`) |
+| `sentFileAttachmentBackground` / `receivedFileAttachmentBackground` | File chip |
+| `sentFileAttachmentTextColor` / `receivedFileAttachmentTextColor` | File name |
+| `sentFileAttachmentSubtitleColor` / `receivedFileAttachmentSubtitleColor` | MIME line |
+| `sentAudioWaveformColor` / `receivedAudioWaveformColor` | Inactive waveform bars |
+| `sentAudioWaveformActiveColor` / `receivedAudioWaveformActiveColor` | Active bars + scrubber |
+| `sentAudioTimestampColor` / `receivedAudioTimestampColor` | Duration under waveform |
+| `sentAudioPlayIconColor` / `receivedAudioPlayIconColor` | Play icon |
+| `sentAudioPauseIconColor` / `receivedAudioPauseIconColor` | Pause icon |
+| `sentAudioSpeedTextColor` / `receivedAudioSpeedTextColor` | **1x / 1.5x / 2x** pill text |
+| `sentMediaTimestampBackground` / `receivedMediaTimestampBackground` | Timestamp pill on file-only bubbles |
 
-```tsx
-const [typingUsers, setTypingUsers] = useState([]);
+**Not themeable:** image/video-only messages (no text, no audio) always use **white** (`#ffffff`) for the timestamp text.
 
-// When your socket receives "user X is typing":
-setTypingUsers([{ id: 'user-2', avatar: 'https://...', name: 'Alex' }]);
+### Shared colors
 
-<ChatScreen
-  typingUsers={typingUsers}
-  onTypingStart={() => socket.emit('typing-start')}
-  onTypingEnd={() => socket.emit('typing-end')}
-/>
-```
+`inputsIconsColor`, `sendIconsColor`, `placeholderTextColor`, `inputTextColor`, `sentIconColor`, `deliveredIconColor`, `readIconColor`, `videoPlayIconColor`
 
-Up to two avatars are shown side-by-side; additional users appear as a `+N` badge.
+### `theme.sizes`
 
-### Custom theme
+`inputIconSize` — number (px) or twrnc class string; affects **emoji, paperclip, camera only** (not send/mic).
+
+### `theme.bubbleStyle`
+
+`sent`, `received`, `avatarTextStyle`, `userNameStyle`, `avatarImageStyle`, typing styles.
+
+### `theme.messageStyle`
+
+Text styles, file attachment styles, `progressBarStyle`, `activeProgressBarStyle`, `audioDurationStyle`, `audioSpeedButtonStyle`, `audioSpeedTextStyle`, media timestamp container styles.
+
+### `theme.inputStyles` / `theme.filePreviewStyle`
+
+Input row, send button, preview strip.
+
+### Example
 
 ```tsx
 <ChatScreen
   theme={{
-    fontFamily: 'Outfit-Regular',
+    fontFamily: 'Inter-Regular',
     colors: {
-      sentMessageTailColor: '#007AFF',
-      receivedMessageTailColor: '#E5E5EA',
-      timestamp: '#8E8E93',
-      inputsIconsColor: '#6C808E',
-      sendIconsColor: '#FFFFFF',
-      inputTextColor: '#000000',
-      readIconColor: '#34C759',
+      sentBubbleBackgroundColor: '#005C4B',
+      receivedBubbleBackgroundColor: '#1F2C34',
+      sentAudioSpeedTextColor: '#FFFFFF',
+      receivedAudioSpeedTextColor: '#E5E7EB',
+      sentAudioWaveformActiveColor: '#53BDEB',
+      receivedAudioWaveformActiveColor: '#53BDEB',
     },
-    bubbleStyle: {
-      sent: { backgroundColor: '#007AFF' },
-      received: { backgroundColor: '#E5E5EA' },
-    },
-    messageStyle: {
-      sentTextStyle: { color: '#FFFFFF' },
-      receivedTextStyle: { color: '#000000' },
-    },
-    inputStyles: {
-      inputContainerStyle: { backgroundColor: '#F2F2F7' },
-      sendButtonStyle: { backgroundColor: '#007AFF' },
-    },
-    sizes: {
-      inputIconSize: 22,  // emoji, clip, camera only — not send/mic
-    },
+    sizes: { inputIconSize: 22 },
   }}
 />
 ```
 
-### Font family (all text)
+---
 
-`theme.fontFamily` applies to **every** `Text` element inside the package: bubble text, timestamps, sender names, audio duration, typing label, file names, error messages, and the input field.
+## Keyboard behavior
 
-**You must load the font in your app before using it.** The package only sets the style name.
+Built into `ChatScreen`:
 
-**Expo `expo-font` plugin approach:**
+| Platform | Behavior |
+|----------|----------|
+| **Android** | `useKeyboardInset` sets `marginBottom` on the input row (= keyboard height) |
+| **iOS** | Same inset **plus** `KeyboardAvoidingView` with `behavior="padding"` and `keyboardVerticalOffset` |
 
-In `app.json`:
-
-```json
-"plugins": [
-  ["expo-font", {
-    "fonts": ["./assets/fonts/Outfit-Regular.ttf"]
-  }]
-]
-```
-
-Then pass the font name (usually the file name without `.ttf`):
-
-```tsx
-theme={{ fontFamily: 'Outfit-Regular' }}
-```
-
-**Expo `useFonts` hook approach (custom name):**
-
-```tsx
-import { useFonts } from 'expo-font';
-
-const [loaded] = useFonts({
-  'my-custom-font': require('./assets/fonts/MyFont.ttf'),
-});
-
-if (!loaded) return null;
-
-return <ChatScreen theme={{ fontFamily: 'my-custom-font' }} />;
-```
-
-### Keyboard avoiding
-
-The package lifts the input bar automatically when the keyboard opens:
-
-- **Android** — full keyboard height via a keyboard listener, applied as `marginBottom` on the input row.
-- **iOS** — `KeyboardAvoidingView` with `behavior="padding"` plus the same keyboard listener.
-
-In your screen:
-
-```tsx
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const insets = useSafeAreaInsets();
-
-<View style={{ flex: 1 }}>
-  <ChatScreen
-    keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 44 : 0}
-    // ...
-  />
-</View>
-```
-
-If your screen or navigator already handles the keyboard (e.g. wraps in its own `KeyboardAvoidingView`), pass `disableKeyboardAvoiding`:
+If your navigator already avoids the keyboard:
 
 ```tsx
 <ChatScreen disableKeyboardAvoiding />
 ```
 
-### Custom input bar
+---
+
+## Custom components & icons
+
+| Prop | Replaces |
+|------|----------|
+| `renderCustomInput` | Entire input + recorder (you handle preview yourself) |
+| `renderCustomTyping` | “Typing…” content |
+| `renderCustomVideoBubbleError` | Inline video error in grid |
+| `renderVoiceRecorder` | Built-in recorder bars |
+| `CustomEmojiIcon` | Emoji button |
+| `CustomAttachmentIcon` | Paperclip |
+| `CustomCameraIcon` | Camera |
+| `CustomSendIcon` | Send |
+| `CustomMicrophoneIcon` | Mic |
+| `CustomPlayIcon` / `CustomPauseIcon` | Audio (and related) playback |
+| `CustomFileIcon` | Document chip icon |
+| `CustomImagePreview` / `CustomVideoPreview` | Composer thumbnails |
+
+### File attachments without Expo
+
+Default tap uses React Native `Linking.openURL`. For local files or share sheets, use your own module in the host app:
 
 ```tsx
-<ChatScreen
-  renderCustomInput={() => <MyOwnComposer onSend={handleSend} />}
-/>
-```
-
-When `renderCustomInput` is provided the default `ChatInput` is not mounted. Preview props (`previewItems`, `closePreview`) are not wired automatically — handle them inside your custom component.
-
-### Opening file attachments (expo-sharing)
-
-By default tapping a file-attachment chip in a bubble calls `Linking.openURL`. For Expo apps that need to share or download local files, supply `onFileAttachmentPress`:
-
-   ```bash
-yarn add expo-sharing
-```
-
-```tsx
-import * as Sharing from 'expo-sharing';
 import { Linking } from 'react-native';
-import type { MessageFileAttachment } from 'movius-chats/lib/typescript/types';
+// or: react-native-share, react-native-blob-util, etc.
 
-const handleFilePress = async (file: MessageFileAttachment) => {
-  const uri =
-    file.uri.startsWith('http') || file.uri.startsWith('file:')
-      ? file.uri
-      : `file://${file.uri}`;
-
-  const available = await Sharing.isAvailableAsync();
-  if (available) {
-    await Sharing.shareAsync(uri, { dialogTitle: file.name });
-  } else {
-    Linking.openURL(uri);
-  }
-};
-
-<ChatScreen
-  onFileAttachmentPress={handleFilePress}
-  // ...
-/>
-```
-
-### Long-press on a message
-
-```tsx
-<ChatScreen
-  onMessageLongPress={(message) => {
-    // show action sheet: reply, copy, delete, etc.
-    Alert.alert(message.id, message.text ?? '');
-  }}
-/>
+onFileAttachmentPress={async (file) => {
+  const uri = file.uri.startsWith('file://') ? file.uri : `file://${file.uri}`;
+  await Linking.openURL(uri);
+}}
 ```
 
 ---
 
-## Full-screen gallery viewer
-
-Tapping any image or video in a bubble opens a full-screen modal viewer:
-
-- **Horizontal swipe** (`FlatList` paginated) moves between items in the same message.
-- **Counter** `n / total` shown at the top when there are multiple items.
-- **Images** fill the screen (`resizeMode: contain`).
-- **Videos** use native controls (play, pause, seek, full-screen).
-- **Close** with the × button in the top-right corner.
-
-The viewer opens automatically — no extra code needed in your app.
-
----
-
-## Architecture overview
-
-```
-ChatScreen
-├── AudioProvider           one audio plays at a time (context)
-├── ChatProvider            all props + gallery state (context)
-│
-├── FlatList (inverted)
-│   └── ChatBubble          per message
-│       ├── MediaGrid       WhatsApp-style 1/2/3/4+ image-video grid
-│       ├── MessageContent  file chips, audio player, parsed text
-│       └── MessageStatus   timestamp + sent/delivered/read icons
-│
-├── ChatInput (optional)
-│   ├── TextInput           auto-grows, resets on clear or send
-│   ├── EmojiFunnySquareIcon / PaperClipIcon / CameraIcon
-│   │    (sized by theme.sizes.inputIconSize — not send/mic)
-│   ├── PaperPlaneIcon / MicrophoneIcon (fixed size)
-│   └── FilePreview         fan spread for images/videos, chips for docs
-│
-└── MediaViewer             full-screen horizontal pager (Modal)
-    └── ViewerPage          Image (contain) or Video (native controls)
-```
-
----
-
-## TypeScript types
-
-Import all types from the build output:
+## TypeScript
 
 ```ts
 import ChatScreen from 'movius-chats';
@@ -784,34 +611,37 @@ import type {
   MessageMediaItem,
   MessageFileAttachment,
   PreviewAttachment,
+  RecordingResult,
   ChatScreenProps,
+  VoiceRecorderExposedState,
+  VoiceRecorderConfig,
+  VoiceRecorderStyleOverrides,
+  RecordingUIProps,
 } from 'movius-chats/lib/typescript/types';
 ```
+
+Source types while developing against the repo: `movius-chats/src/types` (field `"react-native": "src"` in package.json).
 
 ---
 
 ## Troubleshooting
 
-| Symptom | Fix |
-|---------|-----|
-| `resolveAssetSource is not a function` | Auto-patched by movius-chats `postinstall`. If it still occurs, delete `node_modules`, reinstall, then rebuild native code |
-| `Native module not found` | Rebuild the app after install — run `pod install` (iOS) and rebuild Android |
-| Crashes in Expo Go | Use a development build — this package uses native modules not in Expo Go |
-| Audio silent on iOS | Add `[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil]` in your `AppDelegate` |
-| Video/audio URL not loading | Check URI scheme (`https://`, `file://`) and `INTERNET` permission on Android |
-| Reanimated worklet error | Move `'react-native-reanimated/plugin'` to the **last** position in Babel plugins |
-| Font has no effect | Load the font in your app first (Expo: `expo-font` plugin or `useFonts`); use the exact registered name |
-| Input icon size not changing | `inputIconSize` only affects emoji, clip, and camera — not the send or mic button |
-| Input doesn't return to pill shape | Happens when text is deleted character by character. In the latest version the layout resets when the field empties and on send |
-| Keyboard overlaps input (Android) | Add `"softwareKeyboardLayoutMode": "resize"` to `app.json`; wrap `ChatScreen` in `flex: 1` |
-| Keyboard offset wrong (iOS) | Tune `keyboardVerticalOffset` — it should equal your header height + status bar height |
-| Messages appear in wrong order | Newest message must be at `messages[0]` (inverted FlatList) |
-| Feature buttons missing | Feature flags (`showAttachmentsButton`, etc.) default to `false` — pass `true` to show them |
-| Gallery does not swipe | Ensure `mediaItems` is an array; single `image`/`video` strings open the viewer for that single item |
-| File attachment tap does nothing | Default is `Linking.openURL`. For local files on iOS/Android use `onFileAttachmentPress` with `expo-sharing` |
-| Tapping × removes all previews | Supply `onRemovePreviewItem` — without it the fallback `closePreview` clears everything |
+| Problem | What to do |
+|---------|------------|
+| `Cannot read property 'init' of null` | Install `react-native-audio-record`, run `pod install`, **rebuild** the app |
+| Recording never starts | Mic permission; iOS `NSMicrophoneUsageDescription`; Android `RECORD_AUDIO` |
+| No audio playback | Ensure `react-native-video` is linked; URI must be `file://` or `http(s)://` |
+| `NoSuchMethodError` `DefaultLoadControl` (Android) | Force `androidx.media3` to **1.3.1** in the app `android/build.gradle` `resolutionStrategy` |
+| Reanimated error | `react-native-reanimated/plugin` must be **last** in Babel plugins |
+| Font not applied | Register font in the **host** app; pass exact `fontFamily` string |
+| `inputIconSize` ignored on send/mic | By design |
+| Keyboard covers input (Android) | `android:windowSoftInputMode="adjustResize"`; parent `flex: 1` |
+| × clears all previews | Implement `onRemovePreviewItem` |
+| Wrong audio avatar | Set `senderAvatar` and `senderName` on the `Message` |
+| Messages upside down | Newest at `messages[0]` |
 
 ---
+
 
 ## License
 
