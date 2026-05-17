@@ -35,26 +35,43 @@ export interface VoiceRecorderConfig {
     recordingQuality?: string;
     animationDuration?: number;
 }
-/** Style overrides for each section of the recording UI. */
 export interface VoiceRecorderStyleOverrides {
     container?: ViewStyle;
+    normalBar?: ViewStyle;
+    longPressBar?: ViewStyle;
     timer?: TextStyle;
     waveform?: ViewStyle;
-    micButton?: ViewStyle;
     slideText?: TextStyle;
     lockContainer?: ViewStyle;
+    lockPill?: ViewStyle;
     trashButton?: ViewStyle;
+    playPauseButton?: ViewStyle;
+    sendButton?: ViewStyle;
+    holdMicButton?: ViewStyle;
 }
-/** Color / size tweaks for the default recording UI. */
 export interface RecordingUIProps {
     iconSize?: number;
     recordingIconSize?: number;
     sendIconSize?: number;
     timerTextStyle?: TextStyle;
+    timerColor?: string;
     waveformColor?: string;
     recordingBackground?: string;
     cancelTextColor?: string;
-    micPulseColor?: string;
+    longPressMicColor?: string;
+    containerBorderTopColor?: string;
+    containerBorderTopWidth?: number;
+    playPauseIconColor?: string;
+    playPauseIconSize?: number;
+    playPauseButtonBackground?: string;
+    lockPillBackground?: string;
+    lockIconColor?: string;
+    chevronIconColor?: string;
+    lockPillActiveBorderColor?: string;
+    lockPillGap?: number;
+    lockPillMarginBottom?: number;
+    lockSlideDistance?: number;
+    recordingSendButtonBackground?: string;
 }
 /** Single image or video inside a message bubble (use `mediaItems` for albums). */
 export interface MessageMediaItem {
@@ -96,13 +113,9 @@ export interface ChatScreenProps {
     onAudioRecordStart?: () => void;
     onCameraPress?: () => void;
     onFileAttachmentPress?: (file: MessageFileAttachment) => void;
-    /** Replace the default recording UI with a fully custom component. */
     renderVoiceRecorder?: (state: VoiceRecorderExposedState) => React.ReactNode;
-    /** Feature flags / limits for the built-in recorder. */
     voiceRecorderProps?: VoiceRecorderConfig;
-    /** Style overrides for the built-in recording UI sections. */
     voiceRecorderStyles?: VoiceRecorderStyleOverrides;
-    /** Color and size tweaks for the built-in recording UI. */
     recordingUIProps?: RecordingUIProps;
     keyboardVerticalOffset?: number;
     disableKeyboardAvoiding?: boolean;
@@ -132,25 +145,42 @@ export interface ChatScreenProps {
         colors?: {
             sentMessageTailColor?: string;
             receivedMessageTailColor?: string;
-            timestamp?: string;
-            inputsIconsColor?: string;
-            sendIconsColor?: string;
-            placeholderTextColor?: string;
-            audioPlayIconColor?: string;
-            audioPauseIconColor?: string;
-            videoPlayIconColor?: string;
-            /** Inactive (unplayed) waveform bar color */
-            audioWaveformColor?: string;
-            /** Active (played) waveform bar color */
-            audioWaveformActiveColor?: string;
-            /** Playback-time text color for sent audio messages */
+            sentTimestampColor?: string;
+            receivedTimestampColor?: string;
+            sentMediaTimestampColor?: string;
+            receivedMediaTimestampColor?: string;
+            sentMediaTimestampBackground?: string;
+            receivedMediaTimestampBackground?: string;
+            sentMessageTextColor?: string;
+            receivedMessageTextColor?: string;
+            sentBubbleBackgroundColor?: string;
+            receivedBubbleBackgroundColor?: string;
+            sentFileAttachmentBackground?: string;
+            receivedFileAttachmentBackground?: string;
+            sentFileAttachmentTextColor?: string;
+            receivedFileAttachmentTextColor?: string;
+            sentFileAttachmentSubtitleColor?: string;
+            receivedFileAttachmentSubtitleColor?: string;
+            sentAudioWaveformColor?: string;
+            receivedAudioWaveformColor?: string;
+            sentAudioWaveformActiveColor?: string;
+            receivedAudioWaveformActiveColor?: string;
             sentAudioTimestampColor?: string;
-            /** Playback-time text color for received audio messages */
             receivedAudioTimestampColor?: string;
+            sentAudioPlayIconColor?: string;
+            receivedAudioPlayIconColor?: string;
+            sentAudioPauseIconColor?: string;
+            receivedAudioPauseIconColor?: string;
+            sentAudioPlayButtonBackground?: string;
+            receivedAudioPlayButtonBackground?: string;
+            videoPlayIconColor?: string;
             inputTextColor?: string;
             sentIconColor?: string;
             deliveredIconColor?: string;
             readIconColor?: string;
+            inputsIconsColor?: string;
+            sendIconsColor?: string;
+            placeholderTextColor?: string;
         };
         sizes?: {
             inputIconSize?: string | number;
@@ -168,6 +198,14 @@ export interface ChatScreenProps {
         messageStyle?: {
             sentTextStyle?: TextStyle;
             receivedTextStyle?: TextStyle;
+            sentFileAttachmentStyle?: ViewStyle;
+            receivedFileAttachmentStyle?: ViewStyle;
+            sentFileAttachmentTextStyle?: TextStyle;
+            receivedFileAttachmentTextStyle?: TextStyle;
+            sentFileAttachmentSubtitleStyle?: TextStyle;
+            receivedFileAttachmentSubtitleStyle?: TextStyle;
+            sentMediaTimestampContainerStyle?: ViewStyle;
+            receivedMediaTimestampContainerStyle?: ViewStyle;
             audioPlayButtonStyle?: ViewStyle;
             audioKnobStyle?: ViewStyle;
             progressBarStyle?: ViewStyle;

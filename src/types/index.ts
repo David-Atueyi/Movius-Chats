@@ -152,8 +152,6 @@ export interface ChatScreenProps {
       receivedMessageTailColor?: string;
       sentTimestampColor?: string;
       receivedTimestampColor?: string;
-      sentMediaTimestampColor?: string;
-      receivedMediaTimestampColor?: string;
       sentMediaTimestampBackground?: string;
       receivedMediaTimestampBackground?: string;
       sentMessageTextColor?: string;

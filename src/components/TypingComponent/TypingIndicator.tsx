@@ -1,6 +1,6 @@
 import { Image, Text, View } from 'react-native';
 import tw from 'twrnc';
-import { MessageTailReceivedIcon } from '../../assets/Icons/MessageTailReceivedIcon';
+import { ArrowBack2RoundedIcon } from '../../assets/Icons/ArrowBack2RoundedIcon';
 import { useChatContext } from '../../context/ChatContext';
 import { withFontFamily } from '../../utils/theme';
 
@@ -95,31 +95,30 @@ export const TypingIndicator = ({
           )}
         </View>
       )}
-      <View style={tw`relative`}>
-        {showBubbleTail && (
-          <MessageTailReceivedIcon
-            style={tw.style('absolute -top-1 -left-3.5 w-6 h-6')}
-            color={theme?.colors?.receivedMessageTailColor || 'white'}
-          />
-        )}
-        <View
-          style={[
-            tw`px-2 my-1 bg-white rounded-tl-none rounded-lg`,
-            theme?.bubbleStyle?.typingContainerStyle,
-          ]}
-        >
-          {renderCustomTyping ? (
-            renderCustomTyping()
-          ) : (
-            <View style={tw`flex-row items-center py-3 px-2 justify-center`}>
-              <Text
-                style={withFontFamily(tw`text-gray-600`, theme?.fontFamily)}
-              >
-                Typing...
-              </Text>
-            </View>
+      {showBubbleTail && (
+        <ArrowBack2RoundedIcon
+          style={tw.style(
+            'w-6 h-6 rotate-180 fill-white mt-[1.25px] translate-x-1.5'
           )}
-        </View>
+          color={theme?.colors?.receivedMessageTailColor || 'white'}
+        />
+      )}
+
+      <View
+        style={[
+          tw`px-2 my-1 bg-white rounded-tl-none rounded-lg`,
+          theme?.bubbleStyle?.typingContainerStyle,
+        ]}
+      >
+        {renderCustomTyping ? (
+          renderCustomTyping()
+        ) : (
+          <View style={tw`flex-row items-center py-3 px-2 justify-center`}>
+            <Text style={withFontFamily(tw`text-gray-600`, theme?.fontFamily)}>
+              Typing...
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );

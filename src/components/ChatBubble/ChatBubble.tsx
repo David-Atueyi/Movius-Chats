@@ -1,8 +1,7 @@
 import React from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import tw from 'twrnc';
-import { MessageTailReceivedIcon } from '../../assets/Icons/MessageTailReceivedIcon';
-import { MessageTailSentIcon } from '../../assets/Icons/MessageTailSentIcon';
+import { ArrowBack2RoundedIcon } from '../../assets/Icons/ArrowBack2RoundedIcon';
 import { useChatContext } from '../../context/ChatContext';
 import { collectMediaItems } from '../../utils/messageMedia';
 import { getBubbleBackgroundColor } from '../../utils/bubbleTheme';
@@ -118,20 +117,21 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
       )}
 
       {/* Bubble Tail */}
-      {isFirstInSequence && showBubbleTail &&
-        (isCurrentUser ? (
-          <MessageTailSentIcon
-            style={tw.style('absolute -top-1 -right-3.5 w-6 h-6')}
-            color={
-              theme?.colors?.sentMessageTailColor || 'rgba(34, 197, 94, 1)'
-            }
-          />
-        ) : (
-          <MessageTailReceivedIcon
-            style={tw.style('absolute -top-1 -left-3.5 w-6 h-6')}
-            color={theme?.colors?.receivedMessageTailColor || 'white'}
-          />
-        ))}
+      {isFirstInSequence && showBubbleTail && (
+        <ArrowBack2RoundedIcon
+          style={tw.style(
+            'absolute -top-1 w-6 h-6',
+            isCurrentUser
+              ? 'rotate-90 -right-3.5'
+              : 'rotate-180 -left-3.5 mt-[1.25px]'
+          )}
+          color={
+            isCurrentUser
+              ? theme?.colors?.sentMessageTailColor || 'rgba(34, 197, 94, 1)'
+              : theme?.colors?.receivedMessageTailColor || 'white'
+          }
+        />
+      )}
 
       <MessageContent
         message={message}

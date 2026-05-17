@@ -101,7 +101,7 @@ module.exports = {
 
 **React Native CLI:**
 
-```bash
+   ```bash
 cd ios && pod install && cd ..
 npx react-native run-ios
 npx react-native run-android
@@ -109,7 +109,7 @@ npx react-native run-android
 
 **Expo development build:**
 
-```bash
+   ```bash
 npx expo prebuild
 npx expo run:ios   # or run:android
 ```
@@ -143,8 +143,8 @@ export default function MyChatScreen() {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
-        <ChatScreen
-          messages={messages}
+    <ChatScreen
+      messages={messages}
           currentUserId={currentUserId}
           onSendMessage={({ text, senderId }) => {
             setMessages((prev) => [
@@ -162,7 +162,7 @@ export default function MyChatScreen() {
             ]);
           }}
           keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 44 : 0}
-          showAvatars
+      showAvatars
           showBubbleTail
           showMessageStatus
           showAttachmentsButton
@@ -313,20 +313,20 @@ When any preview is present, the send button appears regardless of text content.
 All keys are optional. Pass a `theme` object to `ChatScreen`:
 
 ```ts
-theme?: {
+ theme?: {
   fontFamily?: string;    // applied to every Text element in the package
 
-  colors?: {
-    sentMessageTailColor?: string;
-    receivedMessageTailColor?: string;
-    timestamp?: string;
+    colors?: {
+      sentMessageTailColor?: string;
+      receivedMessageTailColor?: string;
+      timestamp?: string;
     inputsIconsColor?: string;    // emoji, clip, camera icons
     sendIconsColor?: string;      // send / mic icons
-    placeholderTextColor?: string;
+      placeholderTextColor?: string;
     inputTextColor?: string;
-    audioPlayIconColor?: string;
-    audioPauseIconColor?: string;
-    videoPlayIconColor?: string;
+      audioPlayIconColor?: string;
+      audioPauseIconColor?: string;
+      videoPlayIconColor?: string;
     sentIconColor?: string;
     deliveredIconColor?: string;
     readIconColor?: string;
@@ -337,40 +337,40 @@ theme?: {
     inputIconSize?: string | number;  // number = px, string = twrnc class e.g. "h-8 w-8"
   };
 
-  bubbleStyle?: {
-    sent?: ViewStyle;
-    received?: ViewStyle;
-    avatarTextStyle?: TextStyle;
-    userNameStyle?: TextStyle;
-    avatarImageStyle?: ImageStyle;
-    typingContainerStyle?: ViewStyle;
-    additionalTypingUsersContainerStyle?: ViewStyle;
-    additionalTypingUsersTextStyle?: TextStyle;
-  };
+    bubbleStyle?: {
+      sent?: ViewStyle;
+      received?: ViewStyle;
+      avatarTextStyle?: TextStyle;
+      userNameStyle?: TextStyle;
+      avatarImageStyle?: ImageStyle;
+      typingContainerStyle?: ViewStyle;
+      additionalTypingUsersContainerStyle?: ViewStyle;
+      additionalTypingUsersTextStyle?: TextStyle;
+    };
 
-  messageStyle?: {
-    sentTextStyle?: TextStyle;
-    receivedTextStyle?: TextStyle;
-    audioPlayButtonStyle?: ViewStyle;
-    audioKnobStyle?: ViewStyle;
-    progressBarStyle?: ViewStyle;
-    activeProgressBarStyle?: ViewStyle;
-    audioDurationStyle?: TextStyle;
-  };
+    messageStyle?: {
+      sentTextStyle?: TextStyle;
+      receivedTextStyle?: TextStyle;
+      audioPlayButtonStyle?: ViewStyle;
+      audioKnobStyle?: ViewStyle;
+      progressBarStyle?: ViewStyle;
+      activeProgressBarStyle?: ViewStyle;
+      audioDurationStyle?: TextStyle;
+    };
 
-  inputStyles?: {
+    inputStyles?: {
     inputSectionContainerStyle?: ViewStyle;   // outer row (input + send button)
     inputContainerStyle?: ViewStyle;          // the pill/rounded box
     sendButtonStyle?: ViewStyle;              // the round send/mic button
   };
 
-  filePreviewStyle?: {
-    root?: ViewStyle;
-    container?: ViewStyle;
-    iconContainer?: ViewStyle;
-    nameContainer?: ViewStyle;
-    text?: TextStyle;
-  };
+    filePreviewStyle?: {
+      root?: ViewStyle;
+      container?: ViewStyle;
+      iconContainer?: ViewStyle;
+      nameContainer?: ViewStyle;
+      text?: TextStyle;
+    };
 }
 ```
 
@@ -690,7 +690,7 @@ When `renderCustomInput` is provided the default `ChatInput` is not mounted. Pre
 
 By default tapping a file-attachment chip in a bubble calls `Linking.openURL`. For Expo apps that need to share or download local files, supply `onFileAttachmentPress`:
 
-```bash
+   ```bash
 yarn add expo-sharing
 ```
 

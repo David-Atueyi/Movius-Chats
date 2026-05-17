@@ -1,15 +1,15 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import tw from 'twrnc';
-import { withFontFamily } from '../../utils/theme';
+import { CheckAllIcon } from '../../assets/Icons/CheckAllIcon';
+import { CheckIcon } from '../../assets/Icons/CheckIcon';
+import { useChatContext } from '../../context/ChatContext';
 import {
   getMediaTimestampColor,
   getMediaTimestampContainerStyle,
   getMessageTimestampColor,
 } from '../../utils/bubbleTheme';
-import { CheckAllIcon } from '../../assets/Icons/CheckAllIcon';
-import { CheckIcon } from '../../assets/Icons/CheckIcon';
-import { useChatContext } from '../../context/ChatContext';
+import { withFontFamily } from '../../utils/theme';
 import { MessageStatusProps } from './types';
 
 const MessageStatus: React.FC<MessageStatusProps> = ({
@@ -22,12 +22,16 @@ const MessageStatus: React.FC<MessageStatusProps> = ({
   hasFileAttachments,
 }) => {
   const { theme, showMessageStatus } = useChatContext();
+  const galleryOnlyOverlay =
+    hasGalleryMedia && !hasText && !hasAudio;
   const mediaOverlay =
     (hasGalleryMedia || hasFileAttachments) && !hasText && !hasAudio;
 
-  const timestampColor = mediaOverlay
-    ? getMediaTimestampColor(theme, isCurrentUser)
-    : getMessageTimestampColor(theme, isCurrentUser);
+  const timestampColor = galleryOnlyOverlay
+    ? '#ffffff'
+    : mediaOverlay
+      ? getMediaTimestampColor(theme, isCurrentUser)
+      : getMessageTimestampColor(theme, isCurrentUser);
 
   return (
     <>

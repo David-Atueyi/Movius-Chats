@@ -1,6 +1,6 @@
 {
   "name": "movius-chats",
-  "version": "1.4.1",
+  "version": "1.4.3",
   "description": "A highly customizable, feature-rich chat interface component for React Native applications",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -26,7 +26,7 @@
     "clean": "rimraf lib",
     "release": "release-it",
     "example": "yarn --cwd example",
-    "postinstall": "node scripts/patchSound.js"
+    "postinstall": "echo 'movius-chats ready'"
   },
   "repository": {
     "type": "git",
@@ -49,20 +49,19 @@
     "react": ">=16.8.0",
     "react-native": "*",
     "react-native-reanimated": "*",
-    "expo-av": "*",
-    "expo-file-system": "*"
+    "react-native-audio-record": "*",
+    "react-native-fs": "*"
   },
   "peerDependenciesMeta": {
-    "expo-av": {
+    "react-native-audio-record": {
       "optional": true
     },
-    "expo-file-system": {
+    "react-native-fs": {
       "optional": true
     }
   },
   "dependencies": {
     "react-native-parsed-text": "^0.0.22",
-    "react-native-sound": "^0.11.2",
     "react-native-svg": "15.2.0",
     "react-native-video": "^6.9.1",
     "twrnc": "^4.6.1"

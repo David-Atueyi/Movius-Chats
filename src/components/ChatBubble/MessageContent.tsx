@@ -1,19 +1,19 @@
 import React, { useMemo } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
+import ParsedText from 'react-native-parsed-text';
 import tw from 'twrnc';
 import { useChatContext } from '../../context/ChatContext';
-import { collectMediaItems } from '../../utils/messageMedia';
 import {
   getFileAttachmentBackground,
   getFileAttachmentSubtitleColor,
   getFileAttachmentTextColor,
   getMessageTextColor,
 } from '../../utils/bubbleTheme';
+import { collectMediaItems } from '../../utils/messageMedia';
 import { getFontFamilyStyle, withFontFamily } from '../../utils/theme';
 import AudioPlayer from '../AudioPlayer/AudioPlayer';
 import { MediaGrid } from './MediaGrid';
 import { MessageContentProps } from './types';
-import ParsedText from 'react-native-parsed-text';
 
 const MessageContent: React.FC<MessageContentProps> = ({
   message,
@@ -23,10 +23,7 @@ const MessageContent: React.FC<MessageContentProps> = ({
 }) => {
   const { theme, showMessageStatus, onFileAttachmentPress } = useChatContext();
 
-  const mediaItems = useMemo(
-    () => collectMediaItems(message),
-    [message]
-  );
+  const mediaItems = useMemo(() => collectMediaItems(message), [message]);
 
   return (
     <View>

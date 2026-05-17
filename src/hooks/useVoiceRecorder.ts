@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { PermissionsAndroid, Platform } from 'react-native';
 import { RecordingResult } from '../types';
 
 export type RecordingStatus = 'idle' | 'recording' | 'paused';
@@ -7,6 +8,26 @@ interface UseVoiceRecorderOptions {
   maxDuration?: number;
   onRecordStart?: () => void;
   onRecordEnd?: (result: RecordingResult) => void;
+}
+
+async function requestMicPermission(): Promise<boolean> {
+  if (Platform.OS === 'android') {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+        {
+          title: 'Microphone Permission',
+          message: 'This app needs access to your microphone to record audio.',
+          buttonPositive: 'OK',
+        }
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    } catch {
+      return false;
+    }
+  }
+  // iOS: permissions are handled natively by AVFoundation when recording starts
+  return true;
 }
 
 export function useVoiceRecorder({
@@ -21,7 +42,6 @@ export function useVoiceRecorder({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const durationRef = useRef(0);
 
-  // Keep callback refs stable so the PanResponder (created once) always calls the latest version
   const onRecordEndRef = useRef(onRecordEnd);
   onRecordEndRef.current = onRecordEnd;
   const onRecordStartRef = useRef(onRecordStart);
@@ -37,67 +57,62 @@ export function useVoiceRecorder({
   }, []);
 
   const startTimer = useCallback(
-    (onMaxDuration: () => void) => {
+    (onMax: () => void) => {
       stopTimer();
       timerRef.current = setInterval(() => {
         durationRef.current += 1;
         setDuration(durationRef.current);
-        if (durationRef.current >= maxDurationRef.current) {
-          onMaxDuration();
-        }
+        if (durationRef.current >= maxDurationRef.current) onMax();
       }, 1000);
     },
     [stopTimer]
   );
 
   const startRecording = useCallback(async () => {
-    let Audio: any;
+    let AudioRecord: any;
     try {
-      Audio = require('expo-av').Audio;
+      AudioRecord = require('react-native-audio-record').default;
     } catch {
       console.error(
-        '[movius-chats] Voice recording requires expo-av. ' +
-          'Install it with: bun add expo-av'
+        '[movius-chats] Voice recording requires react-native-audio-record. ' +
+          'Install it: yarn add react-native-audio-record'
       );
       return;
     }
 
-    try {
-      const { status: permStatus } = await Audio.requestPermissionsAsync();
-      if (permStatus !== 'granted') {
-        console.warn('[movius-chats] Microphone permission denied.');
-        return;
-      }
+    const granted = await requestMicPermission();
+    if (!granted) {
+      console.warn('[movius-chats] Microphone permission denied.');
+      return;
+    }
 
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
+    try {
+      AudioRecord.init({
+        sampleRate: 16000,
+        channels: 1,
+        bitsPerSample: 16,
+        audioSource: 6,
+        wavFile: `movius_rec_${Date.now()}.wav`,
       });
 
-      const recording = new Audio.Recording();
-      await recording.prepareToRecordAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-      await recording.startAsync();
-
-      recordingRef.current = recording;
+      AudioRecord.start();
+      recordingRef.current = AudioRecord;
       durationRef.current = 0;
       setDuration(0);
       setStatus('recording');
 
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      startTimer(() => stopRecording());
+      startTimer(() => stopRecordingRef.current());
 
       onRecordStartRef.current?.();
     } catch (e) {
       console.warn('[movius-chats] Failed to start recording:', e);
     }
-  }, [startTimer]); // stopRecording defined below — used via ref
+  }, [startTimer]);
 
   const pauseRecording = useCallback(async () => {
     if (!recordingRef.current) return;
     try {
-      await recordingRef.current.pauseAsync();
+      recordingRef.current.stop();
       setStatus('paused');
       stopTimer();
     } catch (e) {
@@ -108,16 +123,14 @@ export function useVoiceRecorder({
   const resumeRecording = useCallback(async () => {
     if (!recordingRef.current) return;
     try {
-      await recordingRef.current.startAsync();
+      recordingRef.current.start();
       setStatus('recording');
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      startTimer(() => stopRecording());
+      startTimer(() => stopRecordingRef.current());
     } catch (e) {
       console.warn('[movius-chats] Failed to resume:', e);
     }
   }, [startTimer]);
 
-  // Exposed as a stable ref so the timer callback (closed at creation) can call it
   const stopRecordingImpl = useCallback(async (): Promise<RecordingResult | null> => {
     const rec = recordingRef.current;
     if (!rec) return null;
@@ -130,20 +143,13 @@ export function useVoiceRecorder({
     setDuration(0);
 
     try {
-      await rec.stopAndUnloadAsync();
-      const uri = rec.getURI() as string | null;
+      const uri: string = await rec.stop();
       if (!uri) return null;
 
-      let durMs = capturedDuration * 1000;
-      try {
-        const st = await rec.getStatusAsync();
-        if (st?.durationMillis) durMs = st.durationMillis;
-      } catch {}
-
       const result: RecordingResult = {
-        uri,
-        duration: Math.max(1, Math.round(durMs / 1000)),
-        mimeType: 'audio/m4a',
+        uri: uri.startsWith('file://') ? uri : `file://${uri}`,
+        duration: Math.max(1, capturedDuration),
+        mimeType: 'audio/wav',
       };
 
       onRecordEndRef.current?.(result);
@@ -154,14 +160,10 @@ export function useVoiceRecorder({
     }
   }, [stopTimer]);
 
-  // Stable ref so the timer closure can call the latest implementation
   const stopRecordingRef = useRef(stopRecordingImpl);
   stopRecordingRef.current = stopRecordingImpl;
 
-  const stopRecording = useCallback(
-    () => stopRecordingRef.current(),
-    []
-  );
+  const stopRecording = useCallback(() => stopRecordingRef.current(), []);
 
   const cancelRecording = useCallback(async () => {
     const rec = recordingRef.current;
@@ -173,12 +175,12 @@ export function useVoiceRecorder({
 
     if (rec) {
       try {
-        await rec.stopAndUnloadAsync();
-        const uri = rec.getURI() as string | null;
+        const uri: string = await rec.stop();
         if (uri) {
           try {
-            const { deleteAsync } = require('expo-file-system');
-            await deleteAsync(uri, { idempotent: true });
+            const RNFS = require('react-native-fs');
+            const path = uri.startsWith('file://') ? uri.slice(7) : uri;
+            await RNFS.unlink(path);
           } catch {}
         }
       } catch {}
@@ -188,7 +190,7 @@ export function useVoiceRecorder({
   useEffect(() => {
     return () => {
       stopTimer();
-      recordingRef.current?.stopAndUnloadAsync().catch(() => {});
+      try { recordingRef.current?.stop(); } catch {}
     };
   }, [stopTimer]);
 

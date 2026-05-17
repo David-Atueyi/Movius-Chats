@@ -24,17 +24,9 @@ export function getMediaTimestampColor(
 ): string {
   const c = colors(theme);
   if (isCurrentUser) {
-    return (
-      c?.sentMediaTimestampColor ??
-      c?.sentTimestampColor ??
-      '#ffffff'
-    );
+    return c?.sentTimestampColor ?? 'rgba(255, 255, 255, 0.75)';
   }
-  return (
-    c?.receivedMediaTimestampColor ??
-    c?.receivedTimestampColor ??
-    '#ffffff'
-  );
+  return c?.receivedTimestampColor ?? 'rgba(107, 114, 128, 0.85)';
 }
 
 export function getMediaTimestampContainerStyle(
@@ -44,8 +36,8 @@ export function getMediaTimestampContainerStyle(
   const base = { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 };
   const c = colors(theme);
   const bg = isCurrentUser
-    ? c?.sentMediaTimestampBackground ?? 'rgba(0,0,0,0.45)'
-    : c?.receivedMediaTimestampBackground ?? 'rgba(0,0,0,0.45)';
+    ? (c?.sentMediaTimestampBackground ?? 'rgba(0,0,0,0.45)')
+    : (c?.receivedMediaTimestampBackground ?? 'rgba(0,0,0,0.45)');
 
   const custom = isCurrentUser
     ? theme?.messageStyle?.sentMediaTimestampContainerStyle
@@ -161,9 +153,7 @@ export function getMessageTextColor(
   isCurrentUser: boolean
 ): string | undefined {
   const c = colors(theme);
-  return isCurrentUser
-    ? c?.sentMessageTextColor
-    : c?.receivedMessageTextColor;
+  return isCurrentUser ? c?.sentMessageTextColor : c?.receivedMessageTextColor;
 }
 
 export function getBubbleBackgroundColor(

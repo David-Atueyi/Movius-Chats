@@ -15,6 +15,8 @@ interface NormalRecordingProps {
     enablePauseResume?: boolean;
     voiceRecorderStyles?: VoiceRecorderStyleOverrides;
     recordingUIProps?: RecordingUIProps;
+    CustomPlayIcon?: () => React.ReactNode;
+    CustomPauseIcon?: () => React.ReactNode;
 }
 export declare const NormalRecording: React.FC<NormalRecordingProps>;
 export {};
