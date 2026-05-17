@@ -95,14 +95,15 @@ const MessageContent: React.FC<MessageContentProps> = ({
       ))}
 
       {message.audio && (
-        <View style={tw`my-2`}>
-          <AudioPlayer
-            audioUrl={message.audio}
-            audioId={message.id}
-            isVideoPlaying={isVideoPlaying as boolean}
-            isCurrentUser={isCurrentUser}
-          />
-        </View>
+        <AudioPlayer
+          audioUrl={message.audio}
+          audioId={message.id}
+          isVideoPlaying={isVideoPlaying as boolean}
+          isCurrentUser={isCurrentUser}
+          senderAvatar={message.senderAvatar}
+          senderName={message.senderName}
+          reserveStatusSpace={!message.text}
+        />
       )}
 
       {message.text && (

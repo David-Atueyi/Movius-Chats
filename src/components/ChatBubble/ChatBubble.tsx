@@ -116,8 +116,8 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
           style={tw.style(
             'absolute -top-1 w-6 h-6',
             isCurrentUser
-              ? 'rotate-90 -right-3.5'
-              : 'rotate-180 -left-3.5 mt-[1.25px]'
+              ? 'rotate-90 -right-3.5 mt-[1.259px]'
+              : 'rotate-180 -left-3.5 mt-[1.259px]'
           )}
           color={
             isCurrentUser

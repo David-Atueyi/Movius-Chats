@@ -148,6 +148,17 @@ export function getAudioPlayButtonBackground(
   return c?.receivedAudioPlayButtonBackground ?? 'rgba(0,0,0,0.08)';
 }
 
+export function getAudioSpeedTextColor(
+  theme: Theme | undefined,
+  isCurrentUser: boolean
+): string {
+  const c = colors(theme);
+  if (isCurrentUser) {
+    return c?.sentAudioSpeedTextColor ?? '#ffffff';
+  }
+  return c?.receivedAudioSpeedTextColor ?? '#e5e7eb';
+}
+
 export function getMessageTextColor(
   theme: Theme | undefined,
   isCurrentUser: boolean

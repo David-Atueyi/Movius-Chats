@@ -176,6 +176,8 @@ export interface ChatScreenProps {
       receivedAudioPauseIconColor?: string;
       sentAudioPlayButtonBackground?: string;
       receivedAudioPlayButtonBackground?: string;
+      sentAudioSpeedTextColor?: string;
+      receivedAudioSpeedTextColor?: string;
       videoPlayIconColor?: string;
       inputTextColor?: string;
       sentIconColor?: string;
@@ -214,6 +216,8 @@ export interface ChatScreenProps {
       progressBarStyle?: ViewStyle;
       activeProgressBarStyle?: ViewStyle;
       audioDurationStyle?: TextStyle;
+      audioSpeedButtonStyle?: ViewStyle;
+      audioSpeedTextStyle?: TextStyle;
     };
     inputStyles?: {
       inputSectionContainerStyle?: ViewStyle;
