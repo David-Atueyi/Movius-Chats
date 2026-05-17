@@ -63,6 +63,7 @@ const MessageContent: React.FC<MessageContentProps> = ({
             audioUrl={message.audio}
             audioId={message.id}
             isVideoPlaying={isVideoPlaying as boolean}
+            isCurrentUser={isCurrentUser}
           />
         </View>
       )}

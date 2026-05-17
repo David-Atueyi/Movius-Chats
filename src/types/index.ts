@@ -75,6 +75,14 @@ export interface ChatScreenProps {
       audioPlayIconColor?: string;
       audioPauseIconColor?: string;
       videoPlayIconColor?: string;
+      /** Inactive (unplayed) waveform bar color */
+      audioWaveformColor?: string;
+      /** Active (played) waveform bar color */
+      audioWaveformActiveColor?: string;
+      /** Playback-time text color for sent audio messages */
+      sentAudioTimestampColor?: string;
+      /** Playback-time text color for received audio messages */
+      receivedAudioTimestampColor?: string;
       inputTextColor?: string;
       sentIconColor?: string;
       deliveredIconColor?: string;
