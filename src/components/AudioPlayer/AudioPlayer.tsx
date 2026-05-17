@@ -6,7 +6,6 @@ import { PauseIcon } from '../../assets/Icons/PauseIcon';
 import { PlayIcon } from '../../assets/Icons/PlayIcon';
 import { useAudio } from '../../context/AudioContext';
 import { useChatContext } from '../../context/ChatContext';
-import { formatDuration } from '../../utils/datefunc';
 import {
   getAudioDurationColor,
   getAudioPauseIconColor,
@@ -14,6 +13,7 @@ import {
   getAudioPlayIconColor,
   getAudioWaveformColors,
 } from '../../utils/bubbleTheme';
+import { formatDuration } from '../../utils/datefunc';
 import { withFontFamily } from '../../utils/theme';
 import { AudioPlayerProps } from './types';
 
@@ -26,7 +26,7 @@ function generateWaveform(url: string, count: number): number[] {
     h = ((h << 5) + h + url.charCodeAt(i)) | 0;
   }
   return Array.from({ length: count }, (_, i) => {
-    h = (Math.imul(h ^ (h >>> 16), 0x45d9f3b + i * 31337)) | 0;
+    h = Math.imul(h ^ (h >>> 16), 0x45d9f3b + i * 31337) | 0;
     h = h ^ (h >>> 13);
     return 0.18 + ((Math.abs(h) % 100) / 100) * 0.82;
   });
@@ -49,7 +49,10 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const waveformWidth = useRef(0);
   const seekPendingRef = useRef<number | null>(null);
 
-  const waveform = useMemo(() => generateWaveform(audioUrl, WAVEFORM_BARS), [audioUrl]);
+  const waveform = useMemo(
+    () => generateWaveform(audioUrl, WAVEFORM_BARS),
+    [audioUrl]
+  );
 
   const { inactive: inactiveBarColor, active: activeBarColor } =
     getAudioWaveformColors(theme, isCurrentUser);
@@ -59,21 +62,17 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const playButtonBg = getAudioPlayButtonBackground(theme, isCurrentUser);
 
   const shouldPause =
-    isVideoPlaying ||
-    (!!currentlyPlayingId && currentlyPlayingId !== audioId);
+    isVideoPlaying || (!!currentlyPlayingId && currentlyPlayingId !== audioId);
 
   const effectivePlaying = isPlaying && !shouldPause;
 
-  const handleLoad = useCallback(
-    (data: { duration: number }) => {
-      setDuration(data.duration);
-      if (seekPendingRef.current !== null) {
-        videoRef.current?.seek(seekPendingRef.current);
-        seekPendingRef.current = null;
-      }
-    },
-    []
-  );
+  const handleLoad = useCallback((data: { duration: number }) => {
+    setDuration(data.duration);
+    if (seekPendingRef.current !== null) {
+      videoRef.current?.seek(seekPendingRef.current);
+      seekPendingRef.current = null;
+    }
+  }, []);
 
   const handleProgress = useCallback(
     ({ currentTime: t }: { currentTime: number }) => {
@@ -100,7 +99,13 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       setCurrentlyPlayingId(audioId);
       setIsPlaying(true);
     }
-  }, [effectivePlaying, shouldPause, currentlyPlayingId, audioId, setCurrentlyPlayingId]);
+  }, [
+    effectivePlaying,
+    shouldPause,
+    currentlyPlayingId,
+    audioId,
+    setCurrentlyPlayingId,
+  ]);
 
   const seekTo = useCallback(
     (x: number) => {
@@ -160,10 +165,14 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           ]}
         >
           {effectivePlaying ? (
-            CustomPauseIcon ? <CustomPauseIcon /> : (
+            CustomPauseIcon ? (
+              <CustomPauseIcon />
+            ) : (
               <PauseIcon style={tw.style('h-5 w-5')} color={pauseIconColor} />
             )
-          ) : CustomPlayIcon ? <CustomPlayIcon /> : (
+          ) : CustomPlayIcon ? (
+            <CustomPlayIcon />
+          ) : (
             <PlayIcon style={tw.style('h-5 w-5')} color={playIconColor} />
           )}
         </Pressable>
@@ -171,10 +180,16 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         <View style={{ flex: 1 }}>
           <View
             style={[
-              { height: WAVEFORM_H, flexDirection: 'row', alignItems: 'flex-end' },
+              {
+                height: WAVEFORM_H,
+                flexDirection: 'row',
+                alignItems: 'flex-end',
+              },
               theme?.messageStyle?.progressBarStyle,
             ]}
-            onLayout={(e) => { waveformWidth.current = e.nativeEvent.layout.width; }}
+            onLayout={(e) => {
+              waveformWidth.current = e.nativeEvent.layout.width;
+            }}
             {...panResponder.panHandlers}
           >
             {waveform.map((amp, i) => {
@@ -188,9 +203,13 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                       marginHorizontal: 1,
                       height: Math.max(3, Math.round(amp * WAVEFORM_H)),
                       borderRadius: 2,
-                      backgroundColor: active ? activeBarColor : inactiveBarColor,
+                      backgroundColor: active
+                        ? activeBarColor
+                        : inactiveBarColor,
                     },
-                    active ? theme?.messageStyle?.activeProgressBarStyle : undefined,
+                    active
+                      ? theme?.messageStyle?.activeProgressBarStyle
+                      : undefined,
                   ]}
                 />
               );
@@ -199,7 +218,11 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
           <Text
             style={withFontFamily(
-              [tw`text-[10px] mt-0.5`, { color: timestampColor }, theme?.messageStyle?.audioDurationStyle],
+              [
+                tw`text-[10px] mt-0.5`,
+                { color: timestampColor },
+                theme?.messageStyle?.audioDurationStyle,
+              ],
               theme?.fontFamily
             )}
           >

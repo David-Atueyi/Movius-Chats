@@ -3,8 +3,8 @@ import { Image, Pressable, Text, View } from 'react-native';
 import tw from 'twrnc';
 import { ArrowBack2RoundedIcon } from '../../assets/Icons/ArrowBack2RoundedIcon';
 import { useChatContext } from '../../context/ChatContext';
-import { collectMediaItems } from '../../utils/messageMedia';
 import { getBubbleBackgroundColor } from '../../utils/bubbleTheme';
+import { collectMediaItems } from '../../utils/messageMedia';
 import { withFontFamily } from '../../utils/theme';
 import MessageContent from './MessageContent';
 import MessageStatus from './MessageStatus';
@@ -29,10 +29,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
   const mediaItems = collectMediaItems(message);
 
-  const handleGalleryOpen = (
-    items: MessageMediaItem[],
-    index: number
-  ) => {
+  const handleGalleryOpen = (items: MessageMediaItem[], index: number) => {
     setMediaViewerGallery(items, index);
   };
 
@@ -59,10 +56,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
           borderRadius: 8,
           ...(getBubbleBackgroundColor(theme, isCurrentUser)
             ? {
-                backgroundColor: getBubbleBackgroundColor(
-                  theme,
-                  isCurrentUser
-                ),
+                backgroundColor: getBubbleBackgroundColor(theme, isCurrentUser),
               }
             : {}),
           ...(isCurrentUser
