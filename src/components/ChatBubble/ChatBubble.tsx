@@ -1,9 +1,11 @@
 import React from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import tw from 'twrnc';
-import { ArrowBack2RoundedIcon } from '../../assets/Icons/ArrowBack2RoundedIcon';
+import { MessageTailReceivedIcon } from '../../assets/Icons/MessageTailReceivedIcon';
+import { MessageTailSentIcon } from '../../assets/Icons/MessageTailSentIcon';
 import { useChatContext } from '../../context/ChatContext';
 import { collectMediaItems } from '../../utils/messageMedia';
+import { getBubbleBackgroundColor } from '../../utils/bubbleTheme';
 import { withFontFamily } from '../../utils/theme';
 import MessageContent from './MessageContent';
 import MessageStatus from './MessageStatus';
@@ -56,6 +58,14 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
             : tw`bg-white`,
         {
           borderRadius: 8,
+          ...(getBubbleBackgroundColor(theme, isCurrentUser)
+            ? {
+                backgroundColor: getBubbleBackgroundColor(
+                  theme,
+                  isCurrentUser
+                ),
+              }
+            : {}),
           ...(isCurrentUser
             ? theme?.bubbleStyle?.sent
             : theme?.bubbleStyle?.received),
@@ -108,24 +118,20 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
       )}
 
       {/* Bubble Tail */}
-      {isFirstInSequence && showBubbleTail && (
-        <ArrowBack2RoundedIcon
-          style={tw.style(
-            'absolute -top-1 w-6 h-6 ',
-            isCurrentUser ? '-right-3.5 mt-[1.24px]' : '-left-3.5 mt-[1.25px]',
-            {
-              transform: [{ rotate: isCurrentUser ? '90deg' : '180deg' }],
+      {isFirstInSequence && showBubbleTail &&
+        (isCurrentUser ? (
+          <MessageTailSentIcon
+            style={tw.style('absolute -top-1 -right-3.5 w-6 h-6')}
+            color={
+              theme?.colors?.sentMessageTailColor || 'rgba(34, 197, 94, 1)'
             }
-          )}
-          color={
-            isCurrentUser
-              ? `${
-                  theme?.colors?.sentMessageTailColor || 'rgba(34, 197, 94,1)'
-                }`
-              : `${theme?.colors?.receivedMessageTailColor || 'white'}`
-          }
-        />
-      )}
+          />
+        ) : (
+          <MessageTailReceivedIcon
+            style={tw.style('absolute -top-1 -left-3.5 w-6 h-6')}
+            color={theme?.colors?.receivedMessageTailColor || 'white'}
+          />
+        ))}
 
       <MessageContent
         message={message}

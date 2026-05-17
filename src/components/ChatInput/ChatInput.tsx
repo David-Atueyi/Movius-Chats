@@ -18,8 +18,11 @@ import { EmojiFunnySquareIcon } from '../../assets/Icons/EmojiFunnySquareIcon';
 import { MicrophoneIcon } from '../../assets/Icons/MicrophoneIcon';
 import { PaperClipIcon } from '../../assets/Icons/PaperClipIcon';
 import { PaperPlaneIcon } from '../../assets/Icons/PaperPlaneIcon';
+import { AnimatedHoldMic } from '../VoiceRecorder/AnimatedHoldMic';
+import { LockSlideColumn } from '../VoiceRecorder/LockSlideColumn';
 import { LongPressRecording } from '../VoiceRecorder/LongPressRecording';
 import { NormalRecording } from '../VoiceRecorder/NormalRecording';
+import { getRecordingContainerStyle } from '../VoiceRecorder/recordingContainerStyle';
 import { useChatContext } from '../../context/ChatContext';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import { RecordingResult, VoiceRecorderExposedState } from '../../types';
@@ -42,7 +45,7 @@ const MIC_ICON_CLASS = 'h-8 w-8';
 // Long-press / swipe thresholds (px)
 const LONG_PRESS_MS = 500;
 const CANCEL_THRESHOLD_X = -70; // slide left to cancel
-const LOCK_THRESHOLD_Y = -80; // slide up to lock
+const DEFAULT_LOCK_SLIDE_DISTANCE = 72; // slide up to lock (matches lock pill)
 
 type VoiceMode = 'idle' | 'normal' | 'longPress' | 'locked';
 
@@ -88,6 +91,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
     voiceRecorderStyles,
     recordingUIProps,
     renderVoiceRecorder,
+    CustomPlayIcon,
+    CustomPauseIcon,
   } = useChatContext();
 
   // ── Preview list ───────────────────────────────────────────────────────────
@@ -164,9 +169,16 @@ const ChatInput: React.FC<ChatInputProps> = ({
     setVoiceModeState(mode);
   }, []);
 
-  // Track slide position for the long-press UI feedback
+  const lockSlideDistance =
+    recordingUIProps?.lockSlideDistance ?? DEFAULT_LOCK_SLIDE_DISTANCE;
+  const lockSlideDistanceRef = useRef(lockSlideDistance);
+  lockSlideDistanceRef.current = lockSlideDistance;
+
+  // Track finger position for long-press UI feedback
   const [slideX, setSlideX] = useState(0);
+  const [slideY, setSlideY] = useState(0);
   const slideXRef = useRef(0);
+  const slideYRef = useRef(0);
 
   const onRecordEnd = useCallback(
     (result: RecordingResult) => {
@@ -198,7 +210,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
     recorderRef.current.cancelRecording();
     setVoiceMode('idle');
     setSlideX(0);
+    setSlideY(0);
     slideXRef.current = 0;
+    slideYRef.current = 0;
   }, [setVoiceMode]);
 
   // Stable refs for PanResponder closures
@@ -221,7 +235,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
         onPanResponderGrant: () => {
           isLongPressActiveRef.current = false;
           slideXRef.current = 0;
+          slideYRef.current = 0;
           setSlideX(0);
+          setSlideY(0);
 
           longPressTimerRef.current = setTimeout(async () => {
             isLongPressActiveRef.current = true;
@@ -234,14 +250,22 @@ const ChatInput: React.FC<ChatInputProps> = ({
           if (!isLongPressActiveRef.current) return;
 
           slideXRef.current = gestureState.dx;
+          slideYRef.current = gestureState.dy;
           setSlideX(gestureState.dx);
+          setSlideY(gestureState.dy);
 
-          // Auto-lock when finger slides far enough up
+          const enableLock =
+            voiceRecorderProps?.enableLockRecording !== false;
+
+          // Lock only after sliding up to the lock pill (not on tiny movements)
           if (
-            gestureState.dy < LOCK_THRESHOLD_Y &&
+            enableLock &&
+            gestureState.dy <= -lockSlideDistanceRef.current &&
             voiceModeRef.current === 'longPress'
           ) {
             setVoiceMode('locked');
+            slideYRef.current = -lockSlideDistanceRef.current;
+            setSlideY(-lockSlideDistanceRef.current);
           }
         },
 
@@ -279,6 +303,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
     [] // Intentional: all values accessed via refs
   );
 
+  const recordingSendBg =
+    recordingUIProps?.recordingSendButtonBackground ??
+    (theme?.inputStyles?.sendButtonStyle?.backgroundColor as string) ??
+    '#16a34a';
+  const recordingSendFg = theme?.colors?.sendIconsColor ?? '#ffffff';
+  const holdMicColor = recordingUIProps?.longPressMicColor ?? '#ef4444';
+
+  const recordingContainerStyle = getRecordingContainerStyle(
+    voiceRecorderStyles,
+    recordingUIProps
+  );
+
   // ── Render recording UI ───────────────────────────────────────────────────
   if (voiceMode !== 'idle') {
     const exposedState: VoiceRecorderExposedState = {
@@ -286,7 +322,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       isPaused: recorder.isPaused,
       duration: recorder.duration,
       isLocked: voiceMode === 'locked',
-      slideOffset: { x: slideX, y: 0 },
+      slideOffset: { x: slideX, y: slideY },
       waveformData: [],
       startRecording: recorder.startRecording,
       stopRecording: recorder.stopRecording,
@@ -295,43 +331,91 @@ const ChatInput: React.FC<ChatInputProps> = ({
       cancelRecording: handleCancelVoice,
     };
 
-    const sendBg =
-      (theme?.inputStyles?.sendButtonStyle?.backgroundColor as string) ??
-      '#16a34a';
-    const sendFg = theme?.colors?.sendIconsColor ?? '#ffffff';
-
     return (
       <View style={tw`w-full px-2`}>
-        {renderVoiceRecorder ? (
-          renderVoiceRecorder(exposedState)
-        ) : voiceMode === 'longPress' ? (
-          <LongPressRecording
-            duration={recorder.duration}
-            slideX={slideX}
-            containerHeight={INPUT_BAR_SHELL_HEIGHT}
-            fontFamily={theme?.fontFamily}
-            voiceRecorderStyles={voiceRecorderStyles}
-            recordingUIProps={recordingUIProps}
-          />
-        ) : (
-          // 'normal' or 'locked' → show the full controls bar
-          <NormalRecording
-            isRecording={recorder.isRecording}
-            isPaused={recorder.isPaused}
-            duration={recorder.duration}
-            onCancel={handleCancelVoice}
-            onSend={handleSendVoice}
-            onPause={recorder.pauseRecording}
-            onResume={recorder.resumeRecording}
-            enablePauseResume={voiceRecorderProps?.enablePauseResume ?? true}
-            containerHeight={INPUT_BAR_SHELL_HEIGHT}
-            fontFamily={theme?.fontFamily}
-            sendButtonColor={sendBg}
-            sendIconColor={sendFg}
-            voiceRecorderStyles={voiceRecorderStyles}
-            recordingUIProps={recordingUIProps}
+        {hasPreviewAttachments && (
+          <FilePreview
+            previews={previewList}
+            closePreview={closePreview}
+            onRemoveItem={onRemovePreviewItem}
+            CustomFileIcon={CustomFileIcon}
+            CustomImagePreview={CustomImagePreview}
+            CustomVideoPreview={CustomVideoPreview}
+            inputHeight={inputHeight.height}
           />
         )}
+
+        <View style={recordingContainerStyle}>
+          {renderVoiceRecorder ? (
+            renderVoiceRecorder(exposedState)
+          ) : voiceMode === 'longPress' ? (
+            <View
+              style={[
+                tw`flex-row items-end gap-2`,
+                theme?.inputStyles?.inputSectionContainerStyle,
+              ]}
+            >
+              <LongPressRecording
+                duration={recorder.duration}
+                slideX={slideX}
+                containerHeight={INPUT_BAR_SHELL_HEIGHT}
+                fontFamily={theme?.fontFamily}
+                voiceRecorderStyles={voiceRecorderStyles}
+                recordingUIProps={recordingUIProps}
+              />
+
+              <View style={{ alignItems: 'center' }}>
+                <LockSlideColumn
+                  slideY={slideY}
+                  lockSlideDistance={lockSlideDistance}
+                  recordingUIProps={recordingUIProps}
+                  voiceRecorderStyles={voiceRecorderStyles}
+                />
+                <View
+                  {...micPanResponder.panHandlers}
+                  style={[
+                    tw`rounded-full justify-center items-center`,
+                    {
+                      height: INPUT_BAR_SHELL_HEIGHT,
+                      width: INPUT_BAR_SHELL_HEIGHT,
+                      backgroundColor: recordingSendBg,
+                    },
+                    voiceRecorderStyles?.holdMicButton,
+                    theme?.inputStyles?.sendButtonStyle,
+                  ]}
+                >
+                  <AnimatedHoldMic
+                    color={holdMicColor}
+                    size={
+                      recordingUIProps?.recordingIconSize ??
+                      recordingUIProps?.iconSize ??
+                      28
+                    }
+                  />
+                </View>
+              </View>
+            </View>
+          ) : (
+            <NormalRecording
+              isRecording={recorder.isRecording}
+              isPaused={recorder.isPaused}
+              duration={recorder.duration}
+              onCancel={handleCancelVoice}
+              onSend={handleSendVoice}
+              onPause={recorder.pauseRecording}
+              onResume={recorder.resumeRecording}
+              enablePauseResume={voiceRecorderProps?.enablePauseResume ?? true}
+              containerHeight={INPUT_BAR_SHELL_HEIGHT}
+              fontFamily={theme?.fontFamily}
+              sendButtonColor={recordingSendBg}
+              sendIconColor={recordingSendFg}
+              voiceRecorderStyles={voiceRecorderStyles}
+              recordingUIProps={recordingUIProps}
+              CustomPlayIcon={CustomPlayIcon}
+              CustomPauseIcon={CustomPauseIcon}
+            />
+          )}
+        </View>
       </View>
     );
   }

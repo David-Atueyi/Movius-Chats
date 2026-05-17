@@ -3,6 +3,12 @@ import { Linking, Pressable, Text, View } from 'react-native';
 import tw from 'twrnc';
 import { useChatContext } from '../../context/ChatContext';
 import { collectMediaItems } from '../../utils/messageMedia';
+import {
+  getFileAttachmentBackground,
+  getFileAttachmentSubtitleColor,
+  getFileAttachmentTextColor,
+  getMessageTextColor,
+} from '../../utils/bubbleTheme';
 import { getFontFamilyStyle, withFontFamily } from '../../utils/theme';
 import AudioPlayer from '../AudioPlayer/AudioPlayer';
 import { MediaGrid } from './MediaGrid';
@@ -42,18 +48,52 @@ const MessageContent: React.FC<MessageContentProps> = ({
               );
             }
           }}
-          style={tw`my-1.5 py-2 px-3 rounded-lg bg-black/10 max-w-[220px]`}
+          style={[
+            tw`my-1.5 py-2 px-3 rounded-lg max-w-[220px]`,
+            {
+              backgroundColor: getFileAttachmentBackground(
+                theme,
+                isCurrentUser
+              ),
+            },
+            isCurrentUser
+              ? theme?.messageStyle?.sentFileAttachmentStyle
+              : theme?.messageStyle?.receivedFileAttachmentStyle,
+          ]}
         >
           <Text
             style={withFontFamily(
-              tw`text-xs font-semibold`,
+              [
+                tw`text-xs font-semibold`,
+                {
+                  color: getFileAttachmentTextColor(theme, isCurrentUser),
+                },
+                isCurrentUser
+                  ? theme?.messageStyle?.sentFileAttachmentTextStyle
+                  : theme?.messageStyle?.receivedFileAttachmentTextStyle,
+              ],
               theme?.fontFamily
             )}
             numberOfLines={2}
           >
             📎 {file.name}
           </Text>
-          <Text style={tw`text-[10px] opacity-70 mt-0.5`}>{file.type}</Text>
+          <Text
+            style={withFontFamily(
+              [
+                tw`text-[10px] mt-0.5`,
+                {
+                  color: getFileAttachmentSubtitleColor(theme, isCurrentUser),
+                },
+                isCurrentUser
+                  ? theme?.messageStyle?.sentFileAttachmentSubtitleStyle
+                  : theme?.messageStyle?.receivedFileAttachmentSubtitleStyle,
+              ],
+              theme?.fontFamily
+            )}
+          >
+            {file.type}
+          </Text>
         </Pressable>
       ))}
 
@@ -78,6 +118,9 @@ const MessageContent: React.FC<MessageContentProps> = ({
               isCurrentUser
                 ? theme?.messageStyle?.sentTextStyle
                 : theme?.messageStyle?.receivedTextStyle,
+              getMessageTextColor(theme, isCurrentUser)
+                ? { color: getMessageTextColor(theme, isCurrentUser) }
+                : undefined,
             ],
             theme?.fontFamily
           )}

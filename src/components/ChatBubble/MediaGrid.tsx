@@ -84,7 +84,7 @@ const VideoThumbCell: React.FC<{
             ) : (
               <PlayIcon
                 style={tw.style('h-10 w-10')}
-                color={theme?.colors?.audioPlayIconColor || 'white'}
+                color={theme?.colors?.videoPlayIconColor || 'white'}
               />
             )}
           </View>

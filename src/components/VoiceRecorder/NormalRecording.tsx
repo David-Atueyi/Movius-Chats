@@ -26,6 +26,8 @@ interface NormalRecordingProps {
   enablePauseResume?: boolean;
   voiceRecorderStyles?: VoiceRecorderStyleOverrides;
   recordingUIProps?: RecordingUIProps;
+  CustomPlayIcon?: () => React.ReactNode;
+  CustomPauseIcon?: () => React.ReactNode;
 }
 
 export const NormalRecording: React.FC<NormalRecordingProps> = ({
@@ -43,12 +45,18 @@ export const NormalRecording: React.FC<NormalRecordingProps> = ({
   enablePauseResume = true,
   voiceRecorderStyles,
   recordingUIProps,
+  CustomPlayIcon,
+  CustomPauseIcon,
 }) => {
   const waveColor = recordingUIProps?.waveformColor ?? 'rgba(0,0,0,0.45)';
   const cancelColor = recordingUIProps?.cancelTextColor ?? '#ef4444';
-  const timerColor = '#374151';
+  const timerColor = recordingUIProps?.timerColor ?? '#374151';
   const bg = recordingUIProps?.recordingBackground ?? 'transparent';
-  const timerTextStyle = recordingUIProps?.timerTextStyle;
+  const playPauseBg =
+    recordingUIProps?.playPauseButtonBackground ?? 'rgba(0,0,0,0.08)';
+  const playPauseIconColor =
+    recordingUIProps?.playPauseIconColor ?? '#374151';
+  const playPauseSize = recordingUIProps?.playPauseIconSize ?? 18;
 
   return (
     <View
@@ -56,15 +64,14 @@ export const NormalRecording: React.FC<NormalRecordingProps> = ({
         {
           flexDirection: 'row',
           alignItems: 'center',
-          height: containerHeight,
+          minHeight: containerHeight,
           paddingHorizontal: 4,
           backgroundColor: bg,
           gap: 8,
         },
-        voiceRecorderStyles?.container,
+        voiceRecorderStyles?.normalBar,
       ]}
     >
-      {/* ── Cancel / Trash ── */}
       <Pressable
         onPress={onCancel}
         style={[
@@ -81,12 +88,14 @@ export const NormalRecording: React.FC<NormalRecordingProps> = ({
         hitSlop={6}
       >
         <TrashIcon
-          style={{ width: containerHeight * 0.44, height: containerHeight * 0.44 }}
+          style={{
+            width: containerHeight * 0.44,
+            height: containerHeight * 0.44,
+          }}
           color={cancelColor}
         />
       </Pressable>
 
-      {/* ── Timer ── */}
       <Text
         style={[
           {
@@ -97,13 +106,12 @@ export const NormalRecording: React.FC<NormalRecordingProps> = ({
             fontFamily,
           },
           voiceRecorderStyles?.timer,
-          timerTextStyle,
+          recordingUIProps?.timerTextStyle,
         ]}
       >
         {formatDuration(duration)}
       </Text>
 
-      {/* ── Waveform ── */}
       <WaveformAnimation
         isActive={isRecording && !isPaused}
         color={waveColor}
@@ -111,43 +119,62 @@ export const NormalRecording: React.FC<NormalRecordingProps> = ({
         style={[{ flex: 1 }, voiceRecorderStyles?.waveform]}
       />
 
-      {/* ── Pause / Resume ── */}
       {enablePauseResume && (
         <Pressable
           onPress={isPaused ? onResume : onPause}
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: 'rgba(0,0,0,0.08)',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
+          style={[
+            {
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: playPauseBg,
+              justifyContent: 'center',
+              alignItems: 'center',
+            },
+            voiceRecorderStyles?.playPauseButton,
+          ]}
           hitSlop={6}
         >
           {isPaused ? (
-            <PlayIcon style={{ width: 18, height: 18 }} color="#374151" />
+            CustomPlayIcon ? (
+              <CustomPlayIcon />
+            ) : (
+              <PlayIcon
+                style={{ width: playPauseSize, height: playPauseSize }}
+                color={playPauseIconColor}
+              />
+            )
+          ) : CustomPauseIcon ? (
+            <CustomPauseIcon />
           ) : (
-            <PauseIcon style={{ width: 18, height: 18 }} color="#374151" />
+            <PauseIcon
+              style={{ width: playPauseSize, height: playPauseSize }}
+              color={playPauseIconColor}
+            />
           )}
         </Pressable>
       )}
 
-      {/* ── Send ── */}
       <Pressable
         onPress={onSend}
-        style={{
-          width: containerHeight,
-          height: containerHeight,
-          borderRadius: containerHeight / 2,
-          backgroundColor: sendButtonColor,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
+        style={[
+          {
+            width: containerHeight,
+            height: containerHeight,
+            borderRadius: containerHeight / 2,
+            backgroundColor: sendButtonColor,
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+          voiceRecorderStyles?.sendButton,
+        ]}
         hitSlop={4}
       >
         <PaperPlaneIcon
-          style={{ width: containerHeight * 0.44, height: containerHeight * 0.44 }}
+          style={{
+            width: containerHeight * 0.44,
+            height: containerHeight * 0.44,
+          }}
           color={sendIconColor}
         />
       </Pressable>

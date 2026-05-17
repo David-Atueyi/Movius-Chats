@@ -2,6 +2,11 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import tw from 'twrnc';
 import { withFontFamily } from '../../utils/theme';
+import {
+  getMediaTimestampColor,
+  getMediaTimestampContainerStyle,
+  getMessageTimestampColor,
+} from '../../utils/bubbleTheme';
 import { CheckAllIcon } from '../../assets/Icons/CheckAllIcon';
 import { CheckIcon } from '../../assets/Icons/CheckIcon';
 import { useChatContext } from '../../context/ChatContext';
@@ -20,6 +25,10 @@ const MessageStatus: React.FC<MessageStatusProps> = ({
   const mediaOverlay =
     (hasGalleryMedia || hasFileAttachments) && !hasText && !hasAudio;
 
+  const timestampColor = mediaOverlay
+    ? getMediaTimestampColor(theme, isCurrentUser)
+    : getMessageTimestampColor(theme, isCurrentUser);
+
   return (
     <>
       {showMessageStatus && (
@@ -31,21 +40,19 @@ const MessageStatus: React.FC<MessageStatusProps> = ({
               : hasAudio
                 ? tw`absolute right-3 bottom-3`
                 : mediaOverlay
-                  ? tw`absolute right-3 bottom-4 bg-black/50 px-2 py-1 rounded-md`
-                  : tw`absolute right-3 bottom-4 bg-black/50 px-2 py-1 rounded-md`,
+                  ? [
+                      tw`absolute right-3 bottom-4`,
+                      getMediaTimestampContainerStyle(theme, isCurrentUser),
+                    ]
+                  : [
+                      tw`absolute right-3 bottom-4`,
+                      getMediaTimestampContainerStyle(theme, isCurrentUser),
+                    ],
           ]}
         >
           <Text
             style={withFontFamily(
-              [
-                tw`text-xs`,
-                {
-                  color:
-                    hasText || hasAudio
-                      ? theme?.colors?.timestamp || 'rgba(107, 114, 128, 0.7)'
-                      : 'white',
-                },
-              ],
+              [tw`text-xs`, { color: timestampColor }],
               theme?.fontFamily
             )}
           >

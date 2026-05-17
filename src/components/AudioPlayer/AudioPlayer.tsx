@@ -25,6 +25,13 @@ import { PlayIcon } from '../../assets/Icons/PlayIcon';
 import { useAudio } from '../../context/AudioContext';
 import { useChatContext } from '../../context/ChatContext';
 import { formatDuration } from '../../utils/datefunc';
+import {
+  getAudioDurationColor,
+  getAudioPauseIconColor,
+  getAudioPlayButtonBackground,
+  getAudioPlayIconColor,
+  getAudioWaveformColors,
+} from '../../utils/bubbleTheme';
 import { withFontFamily } from '../../utils/theme';
 import { AudioPlayerProps } from './types';
 
@@ -73,20 +80,12 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   // Pre-compute waveform shape once per URL
   const waveform = useMemo(() => generateWaveform(audioUrl, WAVEFORM_BARS), [audioUrl]);
 
-  // ── Resolved colors (sent vs received defaults) ─────────────────────────
-  const inactiveBarColor =
-    theme?.colors?.audioWaveformColor ??
-    (isCurrentUser ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.20)');
-
-  const activeBarColor =
-    theme?.colors?.audioWaveformActiveColor ??
-    (isCurrentUser ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.60)');
-
-  const timestampColor =
-    (isCurrentUser
-      ? theme?.colors?.sentAudioTimestampColor
-      : theme?.colors?.receivedAudioTimestampColor) ??
-    (isCurrentUser ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.45)');
+  const { inactive: inactiveBarColor, active: activeBarColor } =
+    getAudioWaveformColors(theme, isCurrentUser);
+  const timestampColor = getAudioDurationColor(theme, isCurrentUser);
+  const playIconColor = getAudioPlayIconColor(theme, isCurrentUser);
+  const pauseIconColor = getAudioPauseIconColor(theme, isCurrentUser);
+  const playButtonBg = getAudioPlayButtonBackground(theme, isCurrentUser);
 
   // ── Initialize sound ────────────────────────────────────────────────────
   useEffect(() => {
@@ -205,7 +204,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         <Pressable
           onPress={togglePlay}
           style={[
-            tw`bg-black/35 rounded-full p-2 shrink-0`,
+            tw`rounded-full p-2 shrink-0`,
+            { backgroundColor: playButtonBg },
             theme?.messageStyle?.audioPlayButtonStyle,
           ]}
         >
@@ -213,13 +213,13 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             CustomPauseIcon ? <CustomPauseIcon /> : (
               <PauseIcon
                 style={tw.style('h-5 w-5')}
-                color={theme?.colors?.audioPauseIconColor || 'white'}
+                color={pauseIconColor}
               />
             )
           ) : CustomPlayIcon ? <CustomPlayIcon /> : (
             <PlayIcon
               style={tw.style('h-5 w-5')}
-              color={theme?.colors?.audioPlayIconColor || 'white'}
+              color={playIconColor}
             />
           )}
         </Pressable>
