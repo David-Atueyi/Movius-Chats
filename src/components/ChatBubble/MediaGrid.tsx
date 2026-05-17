@@ -42,12 +42,15 @@ const VideoThumbCell: React.FC<{
   const [error, setError] = React.useState(false);
 
   return (
-    <View style={[cellStyle, roundedStyle]}>
+    <View style={[cellStyle, roundedStyle]} pointerEvents="none">
       <Video
         source={{ uri }}
         ref={videoRef}
         paused
         muted
+        playInBackground={false}
+        playWhenInactive={false}
+        pointerEvents="none"
         style={[roundedStyle, { width: '100%', height: '100%' }]}
         resizeMode="cover"
         onLoadStart={() => {

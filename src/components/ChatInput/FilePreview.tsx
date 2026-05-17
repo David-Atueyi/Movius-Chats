@@ -98,6 +98,9 @@ const FilePreview: React.FC<FilePreviewProps> = ({
             muted
             repeat
             paused={false}
+            pointerEvents="none"
+            playInBackground={false}
+            playWhenInactive={false}
           />
         </View>
       );

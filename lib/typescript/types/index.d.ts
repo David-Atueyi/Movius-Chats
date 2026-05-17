@@ -1,4 +1,61 @@
 import { ImageStyle, TextStyle, ViewStyle } from 'react-native';
+/** Returned by the recorder when a recording successfully completes. */
+export interface RecordingResult {
+    uri: string;
+    duration: number;
+    size?: number;
+    mimeType?: string;
+}
+/** Passed to `renderVoiceRecorder` so a custom UI has full control. */
+export interface VoiceRecorderExposedState {
+    isRecording: boolean;
+    isPaused: boolean;
+    duration: number;
+    isLocked: boolean;
+    slideOffset: {
+        x: number;
+        y: number;
+    };
+    waveformData: number[];
+    startRecording: () => void;
+    stopRecording: () => Promise<RecordingResult | null>;
+    pauseRecording: () => void;
+    resumeRecording: () => void;
+    cancelRecording: () => void;
+}
+/** Feature flags / limits for the built-in recorder. */
+export interface VoiceRecorderConfig {
+    maxDuration?: number;
+    enableSlideToCancel?: boolean;
+    enableLockRecording?: boolean;
+    enableWaveform?: boolean;
+    autoSendOnRelease?: boolean;
+    enablePauseResume?: boolean;
+    recordingFormat?: string;
+    recordingQuality?: string;
+    animationDuration?: number;
+}
+/** Style overrides for each section of the recording UI. */
+export interface VoiceRecorderStyleOverrides {
+    container?: ViewStyle;
+    timer?: TextStyle;
+    waveform?: ViewStyle;
+    micButton?: ViewStyle;
+    slideText?: TextStyle;
+    lockContainer?: ViewStyle;
+    trashButton?: ViewStyle;
+}
+/** Color / size tweaks for the default recording UI. */
+export interface RecordingUIProps {
+    iconSize?: number;
+    recordingIconSize?: number;
+    sendIconSize?: number;
+    timerTextStyle?: TextStyle;
+    waveformColor?: string;
+    recordingBackground?: string;
+    cancelTextColor?: string;
+    micPulseColor?: string;
+}
 /** Single image or video inside a message bubble (use `mediaItems` for albums). */
 export interface MessageMediaItem {
     uri: string;
@@ -35,10 +92,18 @@ export interface ChatScreenProps {
     onSendMessage: (message: Omit<Message, 'id' | 'time' | 'status'>) => void;
     onMessageLongPress?: (message: Message) => void;
     onAttachmentPress?: () => void;
-    onAudioRecordEnd?: () => void;
+    onAudioRecordEnd?: (audio?: RecordingResult) => void;
     onAudioRecordStart?: () => void;
     onCameraPress?: () => void;
     onFileAttachmentPress?: (file: MessageFileAttachment) => void;
+    /** Replace the default recording UI with a fully custom component. */
+    renderVoiceRecorder?: (state: VoiceRecorderExposedState) => React.ReactNode;
+    /** Feature flags / limits for the built-in recorder. */
+    voiceRecorderProps?: VoiceRecorderConfig;
+    /** Style overrides for the built-in recording UI sections. */
+    voiceRecorderStyles?: VoiceRecorderStyleOverrides;
+    /** Color and size tweaks for the built-in recording UI. */
+    recordingUIProps?: RecordingUIProps;
     keyboardVerticalOffset?: number;
     disableKeyboardAvoiding?: boolean;
     typingUsers?: Array<{
