@@ -26,23 +26,33 @@ export interface MediaViewerProps {
 const MediaViewer: React.FC<MediaViewerProps> = ({ gallery, onClose }) => {
   const { theme, setIsVideoPlaying } = useChatContext();
   const listRef = useRef<FlatList<MessageMediaItem>>(null);
-  const [pageIndex, setPageIndex] = useState(0);
+  const initialIndex = gallery?.initialIndex ?? 0;
+  const [pageIndex, setPageIndex] = useState(initialIndex);
   const { width, height: windowHeight } = useWindowDimensions();
 
   useEffect(() => {
     if (!gallery?.items.length) return;
-    setPageIndex(gallery.initialIndex);
+    const idx = gallery.initialIndex;
+    setPageIndex(idx);
+    const item = gallery.items[idx];
+    setIsVideoPlaying(item?.kind === 'video');
+
     requestAnimationFrame(() => {
       try {
         listRef.current?.scrollToIndex({
-          index: gallery.initialIndex,
+          index: idx,
           animated: false,
         });
       } catch {
         /* layout not ready */
       }
     });
-  }, [gallery?.initialIndex, gallery?.items]);
+  }, [gallery?.initialIndex, gallery?.items, setIsVideoPlaying]);
+
+  const handleClose = useCallback(() => {
+    setIsVideoPlaying(false);
+    onClose();
+  }, [onClose, setIsVideoPlaying]);
 
   const onMomentumScrollEnd = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -57,10 +67,16 @@ const MediaViewer: React.FC<MediaViewerProps> = ({ gallery, onClose }) => {
   if (!gallery || gallery.items.length === 0) return null;
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible
+      transparent
+      animationType="fade"
+      onRequestClose={handleClose}
+      statusBarTranslucent
+    >
       <View style={[tw`flex-1 bg-black`, { width, height: windowHeight }]}>
         <Pressable
-          onPress={onClose}
+          onPress={handleClose}
           style={tw`absolute right-4 top-12 z-20 p-2 rounded-full bg-slate-100/70`}
         >
           <XIcon style={tw`h-8 w-8`} />
@@ -87,6 +103,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({ gallery, onClose }) => {
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item, i) => `${item.uri}-${i}`}
           initialScrollIndex={gallery.initialIndex}
+          extraData={pageIndex}
           getItemLayout={(_, index) => ({
             length: width,
             offset: width * index,
@@ -98,8 +115,14 @@ const MediaViewer: React.FC<MediaViewerProps> = ({ gallery, onClose }) => {
               listRef.current?.scrollToIndex({ index, animated: false });
             }, 100);
           }}
-          renderItem={({ item }) => (
-            <ViewerPage item={item} width={width} height={windowHeight} />
+          renderItem={({ item, index }) => (
+            <ViewerPage
+              item={item}
+              width={width}
+              height={windowHeight}
+              isActive={index === pageIndex}
+              autoPlayVideo={index === initialIndex && item.kind === 'video'}
+            />
           )}
         />
       </View>
@@ -111,11 +134,17 @@ const ViewerPage: React.FC<{
   item: MessageMediaItem;
   width: number;
   height: number;
-}> = ({ item, width, height }) => {
+  isActive: boolean;
+  /** Only true for the item the user tapped — not other pages in the album */
+  autoPlayVideo: boolean;
+}> = ({ item, width, height, isActive, autoPlayVideo }) => {
   const { theme } = useChatContext();
   const videoRef = useRef<VideoRef>(null);
   const [loading, setLoading] = useState(item.kind === 'video');
   const [error, setError] = useState(false);
+
+  const shouldPlayVideo =
+    item.kind === 'video' && isActive && autoPlayVideo;
 
   if (item.kind === 'image') {
     return (
@@ -143,7 +172,10 @@ const ViewerPage: React.FC<{
         source={{ uri: item.uri }}
         ref={videoRef}
         controls
+        paused={!shouldPlayVideo}
         shutterColor="transparent"
+        playInBackground={false}
+        playWhenInactive={false}
         style={{
           width: width - 32,
           height: height * 0.55,
@@ -162,7 +194,10 @@ const ViewerPage: React.FC<{
         }}
       />
       {loading && (
-        <View style={tw`absolute inset-0 items-center justify-center`}>
+        <View
+          style={tw`absolute inset-0 items-center justify-center`}
+          pointerEvents="none"
+        >
           <LoadingIcon style={tw.style('h-14 w-14')} spinning />
         </View>
       )}

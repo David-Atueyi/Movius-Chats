@@ -3,6 +3,7 @@ import { Image, Pressable, Text, View } from 'react-native';
 import tw from 'twrnc';
 import { ArrowBack2RoundedIcon } from '../../assets/Icons/ArrowBack2RoundedIcon';
 import { useChatContext } from '../../context/ChatContext';
+import { getBubbleBackgroundColor } from '../../utils/bubbleTheme';
 import { collectMediaItems } from '../../utils/messageMedia';
 import { withFontFamily } from '../../utils/theme';
 import MessageContent from './MessageContent';
@@ -28,10 +29,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
   const mediaItems = collectMediaItems(message);
 
-  const handleGalleryOpen = (
-    items: MessageMediaItem[],
-    index: number
-  ) => {
+  const handleGalleryOpen = (items: MessageMediaItem[], index: number) => {
     setMediaViewerGallery(items, index);
   };
 
@@ -56,6 +54,11 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
             : tw`bg-white`,
         {
           borderRadius: 8,
+          ...(getBubbleBackgroundColor(theme, isCurrentUser)
+            ? {
+                backgroundColor: getBubbleBackgroundColor(theme, isCurrentUser),
+              }
+            : {}),
           ...(isCurrentUser
             ? theme?.bubbleStyle?.sent
             : theme?.bubbleStyle?.received),
@@ -111,18 +114,15 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
       {isFirstInSequence && showBubbleTail && (
         <ArrowBack2RoundedIcon
           style={tw.style(
-            'absolute -top-1 w-6 h-6 ',
-            isCurrentUser ? '-right-3.5 mt-[1.24px]' : '-left-3.5 mt-[1.25px]',
-            {
-              transform: [{ rotate: isCurrentUser ? '90deg' : '180deg' }],
-            }
+            'absolute -top-1 w-6 h-6',
+            isCurrentUser
+              ? 'rotate-90 -right-3.5'
+              : 'rotate-180 -left-3.5 mt-[1.25px]'
           )}
           color={
             isCurrentUser
-              ? `${
-                  theme?.colors?.sentMessageTailColor || 'rgba(34, 197, 94,1)'
-                }`
-              : `${theme?.colors?.receivedMessageTailColor || 'white'}`
+              ? theme?.colors?.sentMessageTailColor || 'rgba(34, 197, 94, 1)'
+              : theme?.colors?.receivedMessageTailColor || 'white'
           }
         />
       )}

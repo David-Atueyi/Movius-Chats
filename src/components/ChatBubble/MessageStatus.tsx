@@ -1,10 +1,15 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import tw from 'twrnc';
-import { withFontFamily } from '../../utils/theme';
 import { CheckAllIcon } from '../../assets/Icons/CheckAllIcon';
 import { CheckIcon } from '../../assets/Icons/CheckIcon';
 import { useChatContext } from '../../context/ChatContext';
+import {
+  getMediaTimestampColor,
+  getMediaTimestampContainerStyle,
+  getMessageTimestampColor,
+} from '../../utils/bubbleTheme';
+import { withFontFamily } from '../../utils/theme';
 import { MessageStatusProps } from './types';
 
 const MessageStatus: React.FC<MessageStatusProps> = ({
@@ -17,8 +22,16 @@ const MessageStatus: React.FC<MessageStatusProps> = ({
   hasFileAttachments,
 }) => {
   const { theme, showMessageStatus } = useChatContext();
+  const galleryOnlyOverlay =
+    hasGalleryMedia && !hasText && !hasAudio;
   const mediaOverlay =
     (hasGalleryMedia || hasFileAttachments) && !hasText && !hasAudio;
+
+  const timestampColor = galleryOnlyOverlay
+    ? '#ffffff'
+    : mediaOverlay
+      ? getMediaTimestampColor(theme, isCurrentUser)
+      : getMessageTimestampColor(theme, isCurrentUser);
 
   return (
     <>
@@ -31,21 +44,19 @@ const MessageStatus: React.FC<MessageStatusProps> = ({
               : hasAudio
                 ? tw`absolute right-3 bottom-3`
                 : mediaOverlay
-                  ? tw`absolute right-3 bottom-4 bg-black/50 px-2 py-1 rounded-md`
-                  : tw`absolute right-3 bottom-4 bg-black/50 px-2 py-1 rounded-md`,
+                  ? [
+                      tw`absolute right-3 bottom-4`,
+                      getMediaTimestampContainerStyle(theme, isCurrentUser),
+                    ]
+                  : [
+                      tw`absolute right-3 bottom-4`,
+                      getMediaTimestampContainerStyle(theme, isCurrentUser),
+                    ],
           ]}
         >
           <Text
             style={withFontFamily(
-              [
-                tw`text-xs`,
-                {
-                  color:
-                    hasText || hasAudio
-                      ? theme?.colors?.timestamp || 'rgba(107, 114, 128, 0.7)'
-                      : 'white',
-                },
-              ],
+              [tw`text-xs`, { color: timestampColor }],
               theme?.fontFamily
             )}
           >

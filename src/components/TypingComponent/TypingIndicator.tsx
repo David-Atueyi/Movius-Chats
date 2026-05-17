@@ -97,10 +97,10 @@ export const TypingIndicator = ({
       )}
       {showBubbleTail && (
         <ArrowBack2RoundedIcon
-          style={tw.style('w-6 h-6 fill-white mt-[1.25px]', {
-            transform: [{ rotate: '180deg' }, { translateX: 6 }],
-          })}
-          color={`${theme?.colors?.receivedMessageTailColor || 'white'}`}
+          style={tw.style(
+            'w-6 h-6 rotate-180 fill-white mt-[1.25px] translate-x-1.5'
+          )}
+          color={theme?.colors?.receivedMessageTailColor || 'white'}
         />
       )}
 
