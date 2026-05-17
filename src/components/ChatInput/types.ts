@@ -1,4 +1,4 @@
-import { Message } from '../../types';
+import { Message, RecordingResult } from '../../types';
 
 export interface ChatInputProps {
   onSendMessage: (message: Omit<Message, 'id' | 'time' | 'status'>) => void;
@@ -7,7 +7,7 @@ export interface ChatInputProps {
   onAttachmentPress?: () => void;
   onCameraPress?: () => void;
   onAudioRecordStart?: () => void;
-  onAudioRecordEnd?: () => void;
+  onAudioRecordEnd?: (audio?: RecordingResult) => void;
   placeholder?: string;
   previewData?: { uri: string; type: string; name: string };
   closePreview?: () => void;
