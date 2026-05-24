@@ -20,9 +20,8 @@ import { AudioPlayerProps, PLAYBACK_RATES, PlaybackRate } from './types';
 
 type ChatTheme = ChatScreenProps['theme'];
 
-const WAVEFORM_BARS = 40;
-const WAVEFORM_H = 28;
-const KNOB_SIZE = 10;
+const WAVEFORM_BARS = 34;
+const WAVEFORM_H = 34;
 const AVATAR_SIZE = 42;
 
 function generateWaveform(url: string, count: number): number[] {
@@ -33,7 +32,7 @@ function generateWaveform(url: string, count: number): number[] {
   return Array.from({ length: count }, (_, i) => {
     h = Math.imul(h ^ (h >>> 16), 0x45d9f3b + i * 31337) | 0;
     h = h ^ (h >>> 13);
-    return 0.15 + ((Math.abs(h) % 100) / 100) * 0.85;
+    return 0.18 + ((Math.abs(h) % 100) / 100) * 0.82;
   });
 }
 
@@ -160,8 +159,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const durationColor = getAudioDurationColor(theme, isCurrentUser);
   const playIconColor = getAudioPlayIconColor(theme, isCurrentUser);
   const pauseIconColor = getAudioPauseIconColor(theme, isCurrentUser);
-  const scrubberColor = activeBarColor;
-
   const shouldPause =
     isVideoPlaying || (!!currentlyPlayingId && currentlyPlayingId !== audioId);
   const effectivePlaying = isPlaying && !shouldPause;
@@ -269,7 +266,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const waveformBlock = (
     <View style={[tw`flex-1 min-w-0`, reserveStatusSpace && showMessageStatus && tw`pr-14`]}>
       <View
-        style={{ height: WAVEFORM_H + KNOB_SIZE / 2, justifyContent: 'flex-end' }}
+        style={{ height: WAVEFORM_H }}
         onLayout={(e) => setWaveformW(e.nativeEvent.layout.width)}
       >
         <View
@@ -289,37 +286,20 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             return (
               <View
                 key={i}
-                style={{
-                  flex: 1,
-                  marginHorizontal: 0.5,
-                  height: Math.max(3, Math.round(amp * WAVEFORM_H)),
-                  borderRadius: 1.5,
-                  backgroundColor: active ? activeBarColor : inactiveBarColor,
-                }}
+                style={[
+                  {
+                    flex: 1,
+                    marginHorizontal: 1,
+                    height: Math.max(3, Math.round(amp * WAVEFORM_H)),
+                    borderRadius: 2,
+                    backgroundColor: active ? activeBarColor : inactiveBarColor,
+                  },
+                  active ? theme?.messageStyle?.activeProgressBarStyle : undefined,
+                ]}
               />
             );
           })}
         </View>
-        {duration > 0 && waveformW > 0 && (
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              left: Math.max(
-                0,
-                Math.min(
-                  progress * waveformW - KNOB_SIZE / 2,
-                  waveformW - KNOB_SIZE
-                )
-              ),
-              bottom: WAVEFORM_H / 2 - KNOB_SIZE / 2,
-              width: KNOB_SIZE,
-              height: KNOB_SIZE,
-              borderRadius: KNOB_SIZE / 2,
-              backgroundColor: scrubberColor,
-            }}
-          />
-        )}
       </View>
       <Text
         style={withFontFamily(

@@ -34,7 +34,7 @@ export const TypingIndicator = ({
   return (
     <View style={tw`my-1 max-w-[75%] self-start flex-row`}>
       {showAvatars && (
-        <View style={tw`flex-row`}>
+        <View style={tw`flex-row mr-2`}>
           {displayedUsers.map((user, index) => (
             <View
               key={user.id}
@@ -98,7 +98,7 @@ export const TypingIndicator = ({
       {showBubbleTail && (
         <ArrowBack2RoundedIcon
           style={tw.style(
-            'w-6 h-6 rotate-180 fill-white mt-[1.25px] translate-x-1.5'
+            'w-6 h-6 rotate-180 mt-[1.26px]'
           )}
           color={theme?.colors?.receivedMessageTailColor || 'white'}
         />
