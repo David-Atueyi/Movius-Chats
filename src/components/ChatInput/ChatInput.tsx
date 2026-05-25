@@ -181,11 +181,19 @@ const ChatInput: React.FC<ChatInputProps> = ({
     recorderRef.current.cancelRecording();
   }, []);
 
+  const handleFlowPause = useCallback(() => {
+    recorderRef.current.pauseRecording();
+  }, []);
+
+  const handleFlowResume = useCallback(() => {
+    recorderRef.current.resumeRecording();
+  }, []);
+
   // Theme colors / sizing for flow
   const recordingPrimary =
     recordingUIProps?.recordingSendButtonBackground ??
     (theme?.inputStyles?.sendButtonStyle?.backgroundColor as string) ??
-    '#22C55E';
+    '#16A34A';
   const recordingBackground =
     recordingUIProps?.recordingBackground ?? '#0B141A';
   const recordingTimerColor =
@@ -216,11 +224,138 @@ const ChatInput: React.FC<ChatInputProps> = ({
     ? renderVoiceRecorder(exposedState)
     : null;
 
-  const showFlowMicSpacer = !showSendButton && showVoiceRecordButton;
+  // ── Inline render helpers ──────────────────────────────────────────────────
+  const renderInputPill = () => (
+    <View
+      style={[
+        tw`flex-1 flex-row bg-white overflow-hidden px-3.5`,
+        {
+          minHeight: INPUT_BAR_SHELL_HEIGHT,
+          borderRadius: isCompactInput ? 9999 : 24,
+          alignItems: isCompactInput ? 'center' : 'flex-end',
+        },
+        theme?.inputStyles?.inputContainerStyle,
+      ]}
+    >
+      {showEmojiButton && (
+        <View style={iconSlotStyle}>
+          <Pressable>
+            {CustomEmojiIcon ? (
+              <CustomEmojiIcon />
+            ) : (
+              <EmojiFunnySquareIcon
+                style={inputBarIconStyle}
+                color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
+              />
+            )}
+          </Pressable>
+        </View>
+      )}
+
+      <TextInput
+        key={`chat-input-${inputResetKey}`}
+        value={inputText}
+        onChangeText={handleChangeText}
+        placeholder={placeholder || 'Message'}
+        style={withFontFamily(
+          [
+            tw`bg-transparent flex-1 pl-2`,
+            Platform.OS === 'ios' ? tw`text-[17px]` : tw`text-[16px]`,
+            {
+              minHeight: MIN_INPUT_HEIGHT,
+              maxHeight: MAX_INPUT_HEIGHT,
+              paddingVertical: isCompactInput ? 0 : 8,
+              marginVertical: isCompactInput
+                ? (INPUT_BAR_SHELL_HEIGHT - MIN_INPUT_HEIGHT) / 2
+                : 4,
+            },
+            {
+              color: theme?.colors?.inputTextColor || 'rgba(0, 0, 0, 0.87)',
+            },
+          ],
+          theme?.fontFamily
+        )}
+        placeholderTextColor={
+          theme?.colors?.placeholderTextColor || 'rgba(0, 0, 0, 0.4)'
+        }
+        multiline
+        textAlignVertical={
+          inputHeight.isMultiline && inputText.length > 0 ? 'top' : 'center'
+        }
+        onContentSizeChange={handleContentSizeChange}
+      />
+
+      <View style={[tw`flex-row items-center gap-4`, iconSlotStyle]}>
+        {showAttachmentsButton && (
+          <Pressable onPress={onAttachmentPress}>
+            {CustomAttachmentIcon ? (
+              <CustomAttachmentIcon />
+            ) : (
+              <PaperClipIcon
+                style={inputBarIconStyle}
+                color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
+              />
+            )}
+          </Pressable>
+        )}
+        {showCameraButton && !inputText.trim() && (
+          <Pressable onPress={onCameraPress}>
+            {CustomCameraIcon ? (
+              <CustomCameraIcon />
+            ) : (
+              <CameraIcon
+                style={inputBarIconStyle}
+                color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
+              />
+            )}
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
+
+  const renderSendButton = () => (
+    <Pressable
+      onPress={handleSendMessage}
+      style={[
+        tw`rounded-full justify-center items-center`,
+        {
+          height: INPUT_BAR_SHELL_HEIGHT,
+          width: INPUT_BAR_SHELL_HEIGHT,
+          backgroundColor: '#16a34a',
+          ...theme?.inputStyles?.sendButtonStyle,
+        },
+      ]}
+    >
+      {CustomSendIcon ? (
+        <CustomSendIcon />
+      ) : (
+        <PaperPlaneIcon
+          style={tw.style(SEND_ICON_CLASS)}
+          color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
+        />
+      )}
+    </Pressable>
+  );
+
+  const renderCustomVoiceTrigger = () =>
+    CustomMicrophoneIcon ? (
+      <CustomMicrophoneIcon />
+    ) : (
+      <MicrophoneIcon
+        style={tw.style(MIC_ICON_CLASS)}
+        color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
+      />
+    );
+
+  // The flow takes ownership of the row when voice is active and there's no
+  // text / preview to send. Otherwise we render the normal text-mode row.
+  const useVoiceFlowRow =
+    !showSendButton && showVoiceRecordButton && !customVoiceUI;
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <View style={tw`w-full px-2 relative`}>
+    <View style={tw`w-full px-2`}>
       {hasPreviewAttachments && (
         <FilePreview
           previews={previewList}
@@ -235,188 +370,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
       <View
         style={[
-          tw`flex-row items-end gap-2`,
+          tw`w-full`,
           theme?.inputStyles?.inputSectionContainerStyle,
         ]}
       >
-        {/* ── Text input pill ── */}
-        <View
-          style={[
-            tw`flex-1 flex-row bg-white overflow-hidden px-3.5`,
-            {
-              minHeight: INPUT_BAR_SHELL_HEIGHT,
-              borderRadius: isCompactInput ? 9999 : 24,
-              alignItems: isCompactInput ? 'center' : 'flex-end',
-            },
-            theme?.inputStyles?.inputContainerStyle,
-          ]}
-        >
-          {showEmojiButton && (
-            <View style={iconSlotStyle}>
-              <Pressable>
-                {CustomEmojiIcon ? (
-                  <CustomEmojiIcon />
-                ) : (
-                  <EmojiFunnySquareIcon
-                    style={inputBarIconStyle}
-                    color={
-                      theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
-                    }
-                  />
-                )}
-              </Pressable>
-            </View>
-          )}
-
-          <TextInput
-            key={`chat-input-${inputResetKey}`}
-            value={inputText}
-            onChangeText={handleChangeText}
-            placeholder={placeholder || 'Message'}
-            style={withFontFamily(
-              [
-                tw`bg-transparent flex-1 pl-2`,
-                Platform.OS === 'ios' ? tw`text-[17px]` : tw`text-[16px]`,
-                {
-                  minHeight: MIN_INPUT_HEIGHT,
-                  maxHeight: MAX_INPUT_HEIGHT,
-                  paddingVertical: isCompactInput ? 0 : 8,
-                  marginVertical: isCompactInput
-                    ? (INPUT_BAR_SHELL_HEIGHT - MIN_INPUT_HEIGHT) / 2
-                    : 4,
-                },
-                {
-                  color:
-                    theme?.colors?.inputTextColor || 'rgba(0, 0, 0, 0.87)',
-                },
-              ],
-              theme?.fontFamily
-            )}
-            placeholderTextColor={
-              theme?.colors?.placeholderTextColor || 'rgba(0, 0, 0, 0.4)'
-            }
-            multiline
-            textAlignVertical={
-              inputHeight.isMultiline && inputText.length > 0
-                ? 'top'
-                : 'center'
-            }
-            onContentSizeChange={handleContentSizeChange}
-          />
-
-          <View style={[tw`flex-row items-center gap-4`, iconSlotStyle]}>
-            {showAttachmentsButton && (
-              <Pressable onPress={onAttachmentPress}>
-                {CustomAttachmentIcon ? (
-                  <CustomAttachmentIcon />
-                ) : (
-                  <PaperClipIcon
-                    style={inputBarIconStyle}
-                    color={
-                      theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
-                    }
-                  />
-                )}
-              </Pressable>
-            )}
-            {showCameraButton && !inputText.trim() && (
-              <Pressable onPress={onCameraPress}>
-                {CustomCameraIcon ? (
-                  <CustomCameraIcon />
-                ) : (
-                  <CameraIcon
-                    style={inputBarIconStyle}
-                    color={
-                      theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
-                    }
-                  />
-                )}
-              </Pressable>
-            )}
-          </View>
-        </View>
-
-        {/* ── Right action button ── */}
-        {showSendButton ? (
-          <Pressable
-            onPress={handleSendMessage}
-            style={[
-              tw`rounded-full justify-center items-center`,
-              {
-                height: INPUT_BAR_SHELL_HEIGHT,
-                width: INPUT_BAR_SHELL_HEIGHT,
-                backgroundColor: '#16a34a',
-                ...theme?.inputStyles?.sendButtonStyle,
-              },
-            ]}
-          >
-            {CustomSendIcon ? (
-              <CustomSendIcon />
-            ) : (
-              <PaperPlaneIcon
-                style={tw.style(SEND_ICON_CLASS)}
-                color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
-              />
-            )}
-          </Pressable>
-        ) : showFlowMicSpacer && !customVoiceUI ? (
-          // Reserve space for VoiceRecorderFlow's overlaid mic button
-          <View
-            style={{
-              height: INPUT_BAR_SHELL_HEIGHT,
-              width: INPUT_BAR_SHELL_HEIGHT,
-            }}
-            pointerEvents="none"
-          />
-        ) : showVoiceRecordButton && customVoiceUI ? (
-          // Custom UI provides its own trigger; render a placeholder mic
-          // that does nothing visible if the custom UI handles its own button.
-          <View
-            style={{
-              height: INPUT_BAR_SHELL_HEIGHT,
-              width: INPUT_BAR_SHELL_HEIGHT,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            {CustomMicrophoneIcon ? (
-              <CustomMicrophoneIcon />
-            ) : (
-              <MicrophoneIcon
-                style={tw.style(MIC_ICON_CLASS)}
-                color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
-              />
-            )}
-          </View>
-        ) : (
-          <Pressable
-            onPress={handleSendMessage}
-            style={[
-              tw`rounded-full justify-center items-center`,
-              {
-                height: INPUT_BAR_SHELL_HEIGHT,
-                width: INPUT_BAR_SHELL_HEIGHT,
-                backgroundColor: '#16a34a',
-                ...theme?.inputStyles?.sendButtonStyle,
-              },
-            ]}
-          >
-            {CustomSendIcon ? (
-              <CustomSendIcon />
-            ) : (
-              <PaperPlaneIcon
-                style={tw.style(SEND_ICON_CLASS)}
-                color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
-              />
-            )}
-          </Pressable>
-        )}
-      </View>
-
-      {/* ── Voice recorder overlay ── */}
-      {customVoiceUI ?? (
-        showVoiceRecordButton && (
+        {useVoiceFlowRow ? (
           <VoiceRecorderFlow
+            inputBarHeight={INPUT_BAR_SHELL_HEIGHT}
             primaryColor={recordingPrimary}
             backgroundColor={recordingBackground}
             timerColor={recordingTimerColor}
@@ -426,15 +386,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             chevronColor={recordingUIProps?.chevronIconColor}
             lockColor={recordingUIProps?.lockIconColor}
             lockPillBackground={recordingUIProps?.lockPillBackground}
-            lockPillActiveBorderColor={
-              recordingUIProps?.lockPillActiveBorderColor
-            }
-            borderTopColor={recordingUIProps?.containerBorderTopColor}
-            borderTopWidth={recordingUIProps?.containerBorderTopWidth}
             iconSize={recordingUIProps?.iconSize}
-            sendIconSize={recordingUIProps?.sendIconSize}
-            lockPillGap={recordingUIProps?.lockPillGap}
-            lockPillMarginBottom={recordingUIProps?.lockPillMarginBottom}
             lockSlideDistance={recordingUIProps?.lockSlideDistance}
             waveCount={recordingUIProps?.waveformBarCount}
             enableLockRecording={voiceRecorderProps?.enableLockRecording}
@@ -450,13 +402,42 @@ const ChatInput: React.FC<ChatInputProps> = ({
             lockPillStyle={voiceRecorderStyles?.lockPill}
             trashButtonStyle={voiceRecorderStyles?.trashButton}
             sendButtonStyle={voiceRecorderStyles?.sendButton}
+            renderInputPill={renderInputPill}
+            renderSendIcon={CustomSendIcon ? () => <CustomSendIcon /> : undefined}
+            renderMicIcon={
+              CustomMicrophoneIcon ? () => <CustomMicrophoneIcon /> : undefined
+            }
             onRecordingStart={handleFlowRecordingStart}
             onSend={handleFlowSend}
             onCancel={handleFlowCancel}
             onDelete={handleFlowCancel}
+            onPauseRecording={handleFlowPause}
+            onResumeRecording={handleFlowResume}
           />
-        )
-      )}
+        ) : (
+          <View style={tw`flex-row items-end gap-2`}>
+            {renderInputPill()}
+            {showSendButton || !showVoiceRecordButton ? (
+              renderSendButton()
+            ) : customVoiceUI ? (
+              <View
+                style={{
+                  height: INPUT_BAR_SHELL_HEIGHT,
+                  width: INPUT_BAR_SHELL_HEIGHT,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                {renderCustomVoiceTrigger()}
+              </View>
+            ) : (
+              renderSendButton()
+            )}
+          </View>
+        )}
+      </View>
+
+      {customVoiceUI}
     </View>
   );
 };

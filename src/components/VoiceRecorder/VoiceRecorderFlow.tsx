@@ -7,8 +7,8 @@ import React, {
   useState,
 } from 'react';
 import {
+  Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextStyle,
   Vibration,
@@ -29,10 +29,13 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
+import tw from 'twrnc';
 import { ChevronUpIcon } from '../../assets/Icons/ChevronUpIcon';
 import { LockIcon } from '../../assets/Icons/LockIcon';
 import { MicrophoneIcon } from '../../assets/Icons/MicrophoneIcon';
 import { PaperPlaneIcon } from '../../assets/Icons/PaperPlaneIcon';
+import { PauseIcon } from '../../assets/Icons/PauseIcon';
+import { PlayIcon } from '../../assets/Icons/PlayIcon';
 import { TrashIcon } from '../../assets/Icons/TrashIcon';
 import { formatDuration } from '../../utils/datefunc';
 
@@ -82,7 +85,10 @@ export interface VoiceRecorderFlowAudio {
 export interface VoiceRecorderFlowProps {
   // ── Colors ────────────────────────────────────────────────────────────────
   primaryColor?: string;
+  /** Background of the dark recording bar (tap / locked screen). */
   backgroundColor?: string;
+  /** Background of the dark "input-shaped" pill shown while long-pressing. */
+  holdPillBackground?: string;
   timerColor?: string;
   microphoneColor?: string;
   lockColor?: string;
@@ -90,16 +96,19 @@ export interface VoiceRecorderFlowProps {
   deleteIconColor?: string;
   cancelTextColor?: string;
   chevronColor?: string;
+  /** Recording-active pause/play button color. */
+  pauseIconColor?: string;
   lockPillBackground?: string;
-  lockPillActiveBorderColor?: string;
-  borderTopColor?: string;
-  borderTopWidth?: number;
 
   // ── Sizes ─────────────────────────────────────────────────────────────────
-  containerHeight?: number;
+  /** Height of the surrounding chat-input row (used to size the mic). */
+  inputBarHeight?: number;
+  /** Size of the mic / send button when idle. Defaults to `inputBarHeight`. */
   micSize?: number;
+  /** Scale multiplier applied to the mic while long-pressing. Default `1.18`. */
+  holdMicScale?: number;
+  /** Size of glyph icons (mic, send, etc.). */
   iconSize?: number;
-  sendIconSize?: number;
   lockIconSize?: number;
 
   // ── Behavior flags ────────────────────────────────────────────────────────
@@ -111,19 +120,25 @@ export interface VoiceRecorderFlowProps {
   lockSlideDistance?: number;
   cancelSlideDistance?: number;
 
-  // ── Lock pill layout ──────────────────────────────────────────────────────
-  lockPillGap?: number;
-  lockPillMarginBottom?: number;
-
   // ── Waveform ──────────────────────────────────────────────────────────────
   waveCount?: number;
 
-  // ── Render props ──────────────────────────────────────────────────────────
+  // ── Render slots ──────────────────────────────────────────────────────────
+  /**
+   * Render the normal text input pill that lives next to the mic while idle.
+   * The flow takes ownership of the row layout, so the pill is rendered as
+   * the flex-1 child to the left of the mic.
+   */
+  renderInputPill?: () => ReactNode;
+
+  // ── Render props (icons) ──────────────────────────────────────────────────
   renderMicIcon?: () => ReactNode;
   renderSendIcon?: () => ReactNode;
   renderLockIcon?: () => ReactNode;
   renderArrowIcon?: () => ReactNode;
   renderDeleteIcon?: () => ReactNode;
+  renderPauseIcon?: () => ReactNode;
+  renderPlayIcon?: () => ReactNode;
   renderWaveform?: () => ReactNode;
 
   // ── Style overrides ───────────────────────────────────────────────────────
@@ -143,67 +158,69 @@ export interface VoiceRecorderFlowProps {
   onDelete?: () => void;
   onLock?: () => void;
   onCancel?: () => void;
+  /** Fired when the user taps the in-bar pause icon. */
+  onPauseRecording?: () => void;
+  /** Fired when the user taps the in-bar play icon to resume. */
+  onResumeRecording?: () => void;
+  /** Notifies the parent whenever the internal state changes. */
+  onStateChange?: (state: RecordingState) => void;
 }
 
 // ─── Tunables (defaults; overridable via props) ───────────────────────────────
 
-const DEFAULT_CONTAINER_HEIGHT = 110;
-const DEFAULT_MIC_SIZE = 72;
-const MIC_RIGHT = 18;
+const DEFAULT_INPUT_BAR_HEIGHT = Platform.OS === 'ios' ? 50 : 48;
+const DEFAULT_HOLD_SCALE = 1.18;
 
-const LONG_PRESS_MS = 300;
+const LONG_PRESS_MS = 220;
 
-const DEFAULT_CANCEL_DISTANCE = 120;
-const DEFAULT_LOCK_DISTANCE = 100;
-const LOCK_REVEAL_TRAVEL = -10;
+const DEFAULT_CANCEL_DISTANCE = 90;
+const DEFAULT_LOCK_DISTANCE = 70;
 
-const DEFAULT_LOCK_PILL_GAP = 10;
-const DEFAULT_LOCK_PILL_MARGIN_BOTTOM = 8;
-const DEFAULT_WAVE_COUNT = 28;
-const DEFAULT_ICON_SIZE = 30;
-const DEFAULT_LOCK_ICON_SIZE = 20;
+const DEFAULT_WAVE_COUNT = 32;
+const DEFAULT_ICON_SIZE = 22;
+const DEFAULT_LOCK_ICON_SIZE = 18;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function vibrateOnce() {
-  Vibration.vibrate(20);
+  Vibration.vibrate(15);
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
   const {
-    primaryColor = '#22C55E',
+    primaryColor = '#16A34A',
     backgroundColor = '#0B141A',
+    holdPillBackground = '#1F2C33',
     timerColor = '#FFFFFF',
     microphoneColor = '#FFFFFF',
     lockColor = '#E9EDEF',
     waveformColor = '#E9EDEF',
     deleteIconColor = '#8696A0',
-    cancelTextColor = 'rgba(255,255,255,0.55)',
+    cancelTextColor = 'rgba(255,255,255,0.6)',
     chevronColor,
-    lockPillBackground = 'rgba(20,28,33,0.95)',
-    lockPillActiveBorderColor = '#22C55E',
-    borderTopColor,
-    borderTopWidth = 0,
-    containerHeight = DEFAULT_CONTAINER_HEIGHT,
-    micSize = DEFAULT_MIC_SIZE,
+    pauseIconColor = '#F15C6D',
+    lockPillBackground = '#1F2C33',
+    inputBarHeight = DEFAULT_INPUT_BAR_HEIGHT,
+    micSize: micSizeProp,
+    holdMicScale = DEFAULT_HOLD_SCALE,
     iconSize = DEFAULT_ICON_SIZE,
-    sendIconSize,
     lockIconSize = DEFAULT_LOCK_ICON_SIZE,
     enableLockRecording = true,
     enableSlideToCancel = true,
     enableWaveform = true,
     lockSlideDistance = DEFAULT_LOCK_DISTANCE,
     cancelSlideDistance = DEFAULT_CANCEL_DISTANCE,
-    lockPillGap = DEFAULT_LOCK_PILL_GAP,
-    lockPillMarginBottom = DEFAULT_LOCK_PILL_MARGIN_BOTTOM,
     waveCount = DEFAULT_WAVE_COUNT,
+    renderInputPill,
     renderMicIcon,
     renderSendIcon,
     renderLockIcon,
     renderArrowIcon,
     renderDeleteIcon,
+    renderPauseIcon,
+    renderPlayIcon,
     renderWaveform,
     containerStyle: containerStyleOverride,
     barStyle: barStyleOverride,
@@ -219,31 +236,36 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
     onDelete,
     onLock,
     onCancel,
+    onPauseRecording,
+    onResumeRecording,
+    onStateChange,
   } = props;
 
-  // Resolve threshold magnitudes (signs handled internally)
+  const micSize = micSizeProp ?? inputBarHeight;
+
+  // Threshold magnitudes (negative because "up" / "left" use negative deltas).
   const cancelThreshold = -Math.abs(cancelSlideDistance);
   const lockThreshold = -Math.abs(lockSlideDistance);
   const maxLeft = cancelThreshold - 30;
   const maxUp = lockThreshold - 20;
-  const resolvedSendIconSize = sendIconSize ?? iconSize;
 
-  // Reactive state
+  // ── React state ────────────────────────────────────────────────────────────
   const [state, setState] = useState<RecordingState>('IDLE');
   const [duration, setDuration] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
-  // Mirrors of state for closures / worklets
   const stateRef = useRef<RecordingState>('IDLE');
   useEffect(() => {
     stateRef.current = state;
-  }, [state]);
+    onStateChange?.(state);
+  }, [state, onStateChange]);
 
   const stateShared = useSharedValue(STATE_IDLE);
   useEffect(() => {
     stateShared.value = stateToInt(state);
   }, [state]);
 
-  // Threshold mirrors so gesture worklets always read the latest prop values
+  // Worklet-readable mirrors of the dynamic prop values.
   const cancelThresholdShared = useSharedValue(cancelThreshold);
   const lockThresholdShared = useSharedValue(lockThreshold);
   const maxLeftShared = useSharedValue(maxLeft);
@@ -266,34 +288,27 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
     enableSlideToCancel,
   ]);
 
-  // Timekeeping
+  // ── Timekeeping ────────────────────────────────────────────────────────────
   const startedAtRef = useRef<number>(0);
+  const pausedAccumRef = useRef<number>(0);
+  const pausedAtRef = useRef<number>(0);
 
-  // Animation shared values
+  // ── Animation shared values ───────────────────────────────────────────────
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
-  const containerOpacity = useSharedValue(0);
-  const containerY = useSharedValue(120);
 
-  const micPulse = useSharedValue(1);
+  const micScale = useSharedValue(1);
   const arrowPulse = useSharedValue(0);
   const chevronPulse = useSharedValue(0);
-  const pauseOpacity = useSharedValue(1);
+  const pausePulse = useSharedValue(1);
   const waveTick = useSharedValue(0);
+  const recBlink = useSharedValue(1);
 
   const cancelFiredShared = useSharedValue(0);
   const lockFiredShared = useSharedValue(0);
 
-  // Continuous loop animations
+  // Continuous loops (start once, run for the lifetime of the component)
   useEffect(() => {
-    micPulse.value = withRepeat(
-      withSequence(
-        withTiming(1.06, { duration: 850, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1, { duration: 850, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      false
-    );
     arrowPulse.value = withRepeat(
       withSequence(
         withTiming(-4, { duration: 700, easing: Easing.inOut(Easing.ease) }),
@@ -304,15 +319,15 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
     );
     chevronPulse.value = withRepeat(
       withSequence(
-        withTiming(-5, { duration: 500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 500, easing: Easing.inOut(Easing.ease) })
+        withTiming(-4, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 600, easing: Easing.inOut(Easing.ease) })
       ),
       -1,
       false
     );
-    pauseOpacity.value = withRepeat(
+    pausePulse.value = withRepeat(
       withSequence(
-        withTiming(0.45, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.5, { duration: 600, easing: Easing.inOut(Easing.ease) }),
         withTiming(1, { duration: 600, easing: Easing.inOut(Easing.ease) })
       ),
       -1,
@@ -323,22 +338,43 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
       -1,
       false
     );
+    recBlink.value = withRepeat(
+      withSequence(
+        withTiming(0.3, { duration: 600 }),
+        withTiming(1, { duration: 600 })
+      ),
+      -1,
+      false
+    );
   }, []);
 
-  // Timer — single source of truth across HOLD ↔ LOCKED transitions
+  // Mic scale tracks the active state (idle / hold / recording).
+  useEffect(() => {
+    if (state === 'RECORDING_HOLD') {
+      micScale.value = withSpring(holdMicScale, {
+        damping: 14,
+        stiffness: 220,
+      });
+    } else {
+      micScale.value = withSpring(1, { damping: 16, stiffness: 220 });
+    }
+  }, [state, holdMicScale]);
+
+  // Timer — pauses when `isPaused` is true (tap-mode pause/resume).
   useEffect(() => {
     const recording =
       state === 'RECORDING_TAP' ||
       state === 'RECORDING_HOLD' ||
       state === 'LOCKED_RECORDING';
-    if (!recording) return;
+    if (!recording || isPaused) return;
     const id = setInterval(() => {
-      setDuration((Date.now() - startedAtRef.current) / 1000);
+      const live = Date.now() - startedAtRef.current - pausedAccumRef.current;
+      setDuration(live / 1000);
     }, 250);
     return () => clearInterval(id);
-  }, [state]);
+  }, [state, isPaused]);
 
-  // Stable callback refs (worklet-safe)
+  // ── Stable callback refs (worklet-safe) ───────────────────────────────────
   const onRecordingStartRef = useRef(onRecordingStart);
   onRecordingStartRef.current = onRecordingStart;
   const onRecordingStopRef = useRef(onRecordingStop);
@@ -351,53 +387,46 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
   onLockRef.current = onLock;
   const onCancelRef = useRef(onCancel);
   onCancelRef.current = onCancel;
+  const onPauseRef = useRef(onPauseRecording);
+  onPauseRef.current = onPauseRecording;
+  const onResumeRef = useRef(onResumeRecording);
+  onResumeRef.current = onResumeRecording;
 
   // ─── Lifecycle helpers ──────────────────────────────────────────────────────
 
   const beginRecording = useCallback(() => {
     startedAtRef.current = Date.now();
+    pausedAccumRef.current = 0;
+    pausedAtRef.current = 0;
+    setIsPaused(false);
     setDuration(0);
     cancelFiredShared.value = 0;
     lockFiredShared.value = 0;
     translateX.value = 0;
     translateY.value = 0;
-    containerOpacity.value = withTiming(1, { duration: 280 });
-    containerY.value = withSpring(0, { damping: 18, stiffness: 180 });
     onRecordingStartRef.current?.();
   }, []);
 
   const finalizeReset = useCallback(() => {
     setDuration(0);
+    setIsPaused(false);
+    pausedAccumRef.current = 0;
+    pausedAtRef.current = 0;
     translateX.value = 0;
     translateY.value = 0;
-    containerY.value = 120;
-    containerOpacity.value = 0;
     setState('IDLE');
   }, []);
-
-  const closeOut = useCallback(() => {
-    containerOpacity.value = withTiming(0, { duration: 280 });
-    containerY.value = withTiming(
-      120,
-      { duration: 280, easing: Easing.in(Easing.cubic) },
-      (finished) => {
-        'worklet';
-        if (finished) {
-          runOnJS(finalizeReset)();
-        }
-      }
-    );
-  }, [finalizeReset]);
 
   // ─── Transitions ────────────────────────────────────────────────────────────
 
   const sendNow = useCallback(() => {
-    const finalDuration = (Date.now() - startedAtRef.current) / 1000;
+    const finalDuration =
+      (Date.now() - startedAtRef.current - pausedAccumRef.current) / 1000;
     setState('SENDING');
     onRecordingStopRef.current?.();
     onSendRef.current?.({ duration: finalDuration });
-    closeOut();
-  }, [closeOut]);
+    finalizeReset();
+  }, [finalizeReset]);
 
   const handleQuickTap = useCallback(() => {
     const s = stateRef.current;
@@ -421,8 +450,8 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
     if (stateRef.current !== 'RECORDING_HOLD') return;
     vibrateOnce();
     setState('LOCKED_RECORDING');
-    translateX.value = withSpring(0, { damping: 18, stiffness: 180 });
-    translateY.value = withSpring(0, { damping: 18, stiffness: 180 });
+    translateX.value = withSpring(0, { damping: 18, stiffness: 220 });
+    translateY.value = withSpring(0, { damping: 18, stiffness: 220 });
     onLockRef.current?.();
   }, []);
 
@@ -439,15 +468,30 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
     onRecordingStopRef.current?.();
     onCancelRef.current?.();
     onDeleteRef.current?.();
-    closeOut();
-  }, [closeOut]);
+    finalizeReset();
+  }, [finalizeReset]);
 
   const handleHoldEnd = useCallback(() => {
     if (stateRef.current !== 'RECORDING_HOLD') return;
     sendNow();
   }, [sendNow]);
 
-  // Stable refs for worklets (avoid recomputing gesture on every render)
+  const togglePause = useCallback(() => {
+    setIsPaused((prev) => {
+      const next = !prev;
+      if (next) {
+        pausedAtRef.current = Date.now();
+        onPauseRef.current?.();
+      } else {
+        pausedAccumRef.current += Date.now() - pausedAtRef.current;
+        pausedAtRef.current = 0;
+        onResumeRef.current?.();
+      }
+      return next;
+    });
+  }, []);
+
+  // ── Stable refs so gesture worklets never see stale handlers ─────────────
   const handleQuickTapRef = useRef(handleQuickTap);
   handleQuickTapRef.current = handleQuickTap;
   const handleHoldStartRef = useRef(handleHoldStart);
@@ -519,8 +563,8 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
       .onFinalize(() => {
         'worklet';
         if (lockFiredShared.value === 0 && cancelFiredShared.value === 0) {
-          translateX.value = withSpring(0, { damping: 18, stiffness: 180 });
-          translateY.value = withSpring(0, { damping: 18, stiffness: 180 });
+          translateX.value = withSpring(0, { damping: 18, stiffness: 220 });
+          translateY.value = withSpring(0, { damping: 18, stiffness: 220 });
         }
       });
 
@@ -529,19 +573,13 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
 
   // ─── Animated styles ────────────────────────────────────────────────────────
 
-  const containerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: containerOpacity.value,
-    transform: [{ translateY: containerY.value }],
-  }));
-
-  const micButtonStyle = useAnimatedStyle(() => {
+  const micWrapperStyle = useAnimatedStyle(() => {
     const isHold = stateShared.value === STATE_HOLD;
-    const pulse = stateShared.value === STATE_IDLE ? 1 : micPulse.value;
     return {
       transform: [
         { translateX: isHold ? translateX.value : 0 },
         { translateY: isHold ? translateY.value : 0 },
-        { scale: pulse },
+        { scale: micScale.value },
       ],
     };
   });
@@ -555,17 +593,11 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
     );
     return {
       opacity,
-      transform: [{ translateX: translateX.value * 0.55 + arrowPulse.value }],
+      transform: [{ translateX: translateX.value * 0.4 + arrowPulse.value }],
     };
   });
 
   const lockPillAnimatedStyle = useAnimatedStyle(() => {
-    const reveal = interpolate(
-      translateY.value,
-      [0, LOCK_REVEAL_TRAVEL],
-      [0, 1],
-      Extrapolation.CLAMP
-    );
     const lockProgress = interpolate(
       translateY.value,
       [0, lockThresholdShared.value],
@@ -573,210 +605,290 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
       Extrapolation.CLAMP
     );
     return {
-      opacity: reveal,
       transform: [
-        { scale: 0.7 + reveal * 0.3 },
         { translateY: interpolate(lockProgress, [0, 1], [0, -22]) },
       ],
     };
   });
 
-  const lockProgressFillStyle = useAnimatedStyle(() => {
-    const progress = interpolate(
-      translateY.value,
-      [0, lockThresholdShared.value],
-      [0, 1],
-      Extrapolation.CLAMP
-    );
-    return { height: `${Math.round(progress * 100)}%` };
-  });
-
-  const chevronStyle = useAnimatedStyle(() => ({
+  const chevronAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: chevronPulse.value }],
   }));
 
-  const pauseAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: pauseOpacity.value,
+  const pausePulseStyle = useAnimatedStyle(() => ({
+    opacity: isPaused ? 1 : pausePulse.value,
+  }));
+
+  const recDotStyle = useAnimatedStyle(() => ({
+    opacity: recBlink.value,
   }));
 
   // ─── Render decisions ───────────────────────────────────────────────────────
 
-  const showBar = state !== 'IDLE';
-  const showLockPill = state === 'RECORDING_HOLD';
-  const isScreenOne =
+  const isFullBar =
     state === 'RECORDING_TAP' ||
     state === 'LOCKED_RECORDING' ||
     state === 'SENDING';
+  const isHold = state === 'RECORDING_HOLD';
 
-  // ── Computed style fragments ───────────────────────────────────────────────
-  const dynamicBarStyle: ViewStyle = {
-    height: containerHeight,
-    backgroundColor,
-    ...(borderTopWidth > 0 && borderTopColor
-      ? { borderTopWidth, borderTopColor }
-      : null),
-  };
+  const resolvedChevronColor = chevronColor ?? lockColor;
 
-  const buttonAnchorStyle: ViewStyle = {
-    position: 'absolute',
-    right: MIC_RIGHT,
-    bottom: (containerHeight - micSize) / 2,
-  };
-
-  const micPressableStyle: ViewStyle = {
-    width: micSize,
+  // ── Derived prop-driven styles ─────────────────────────────────────────────
+  const micButtonStyle: ViewStyle = {
     height: micSize,
-    justifyContent: 'center',
-    alignItems: 'center',
-  };
-
-  const micCircleStyle: ViewStyle = {
     width: micSize,
-    height: micSize,
-    borderRadius: micSize / 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
     backgroundColor: primaryColor,
   };
 
-  const lockPillBaseStyle: ViewStyle = {
-    position: 'absolute',
-    right: MIC_RIGHT + (micSize - 46) / 2,
-    bottom: containerHeight + lockPillMarginBottom,
-    width: 46,
-    paddingVertical: 12,
-    borderRadius: 28,
-    backgroundColor: lockPillBackground,
-    borderColor: lockPillActiveBorderColor,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: lockPillGap,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+  const fullBarStyle: ViewStyle = {
+    minHeight: inputBarHeight + 50,
+    backgroundColor,
   };
 
-  const resolvedChevronColor = chevronColor ?? lockColor;
-  const showLockPillNode = enableLockRecording && showLockPill;
+  const holdPillStyle: ViewStyle = {
+    minHeight: inputBarHeight,
+    backgroundColor: holdPillBackground,
+  };
 
-  return (
-    <View
-      style={[styles.root, containerStyleOverride]}
-      pointerEvents="box-none"
-    >
-      {showBar && (
-        <Animated.View
-          style={[
-            styles.bar,
-            dynamicBarStyle,
-            barStyleOverride,
-            containerAnimatedStyle,
-          ]}
-        >
-          {isScreenOne ? (
-            <ScreenOneCenter
-              duration={duration}
-              timerColor={timerColor}
-              waveformColor={waveformColor}
-              deleteIconColor={deleteIconColor}
-              waveTick={waveTick}
-              pauseAnimatedStyle={pauseAnimatedStyle}
-              renderDeleteIcon={renderDeleteIcon}
-              renderWaveform={renderWaveform}
-              onDeletePress={triggerCancel}
-              waveCount={waveCount}
-              showWaveform={enableWaveform}
-              micSize={micSize}
-              timerTextStyleOverride={timerTextStyle}
-              waveformStyle={waveformStyle}
-              trashButtonStyleOverride={trashButtonStyle}
-            />
-          ) : (
-            <ScreenTwoCenter
-              duration={duration}
-              timerColor={timerColor}
-              slideTextAnimatedStyle={slideTextAnimatedStyle}
-              renderArrowIcon={renderArrowIcon}
-              cancelTextColor={cancelTextColor}
-              micSize={micSize}
-              timerTextStyleOverride={timerTextStyle}
-              slideTextStyleOverride={slideTextStyleOverride}
-            />
-          )}
-        </Animated.View>
-      )}
+  const lockPillContainerStyle: ViewStyle = {
+    width: micSize - 8,
+    backgroundColor: lockPillBackground,
+  };
 
-      {showLockPillNode && (
-        <Animated.View
-          style={[lockPillBaseStyle, lockPillAnimatedStyle, lockPillStyleOverride]}
-          pointerEvents="none"
-        >
-          {renderLockIcon ? (
-            renderLockIcon()
-          ) : (
-            <LockIcon
-              style={{ width: lockIconSize, height: lockIconSize }}
-              color={lockColor}
-            />
+  // ─── FULL RECORDING BAR (image 5) ───────────────────────────────────────────
+  if (isFullBar) {
+    return (
+      <View
+        style={[
+          tw`w-full rounded-2xl px-4 py-2.5`,
+          fullBarStyle,
+          containerStyleOverride,
+          barStyleOverride,
+        ]}
+      >
+        {/* Top row: timer + waveform */}
+        <View style={tw`flex-row items-center gap-3 px-1 pt-1.5 pb-2`}>
+          <Animated.View
+            style={[
+              tw`w-1.5 h-1.5 rounded-full`,
+              { backgroundColor: pauseIconColor },
+              recDotStyle,
+            ]}
+          />
+          <Text
+            style={[
+              tw`text-base font-semibold text-white`,
+              { color: timerColor, minWidth: 42 },
+              timerTextStyle,
+            ]}
+            numberOfLines={1}
+          >
+            {formatDuration(duration)}
+          </Text>
+
+          {enableWaveform && (
+            <View style={[tw`flex-1`, waveformStyle]}>
+              {renderWaveform ? (
+                renderWaveform()
+              ) : (
+                <Waveform color={waveformColor} tick={waveTick} count={waveCount} />
+              )}
+            </View>
           )}
-          <View style={styles.lockProgressTrack}>
+        </View>
+
+        {/* Bottom row: trash · pause/play · send */}
+        <View style={tw`flex-row items-center justify-between mt-1`}>
+          <Pressable
+            onPress={triggerCancel}
+            hitSlop={12}
+            style={[
+              tw`items-center justify-center rounded-full`,
+              { width: micSize, height: micSize },
+              trashButtonStyle,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Delete recording"
+          >
+            {renderDeleteIcon ? (
+              renderDeleteIcon()
+            ) : (
+              <TrashIcon
+                style={tw.style('w-6 h-6')}
+                color={deleteIconColor}
+              />
+            )}
+          </Pressable>
+
+          <Pressable
+            onPress={togglePause}
+            hitSlop={12}
+            style={tw`items-center justify-center px-4`}
+            accessibilityRole="button"
+            accessibilityLabel={isPaused ? 'Resume recording' : 'Pause recording'}
+          >
+            {isPaused ? (
+              renderPlayIcon ? (
+                renderPlayIcon()
+              ) : (
+                <PlayIcon
+                  style={tw.style('w-7 h-7')}
+                  color={pauseIconColor}
+                />
+              )
+            ) : (
+              <Animated.View style={pausePulseStyle}>
+                {renderPauseIcon ? (
+                  renderPauseIcon()
+                ) : (
+                  <PauseIcon
+                    style={tw.style('w-7 h-7')}
+                    color={pauseIconColor}
+                  />
+                )}
+              </Animated.View>
+            )}
+          </Pressable>
+
+          <GestureDetector gesture={composedGesture}>
             <Animated.View
               style={[
-                styles.lockProgressFill,
-                { backgroundColor: primaryColor },
-                lockProgressFillStyle,
+                tw`items-center justify-center rounded-full`,
+                micButtonStyle,
+                sendButtonStyle,
+                micWrapperStyle,
               ]}
-            />
-          </View>
-          <Animated.View style={chevronStyle}>
-            <ChevronUpIcon
-              style={{ width: 16, height: 16 }}
-              color={resolvedChevronColor}
-            />
+              accessibilityRole="button"
+              accessibilityLabel="Send recording"
+            >
+              {renderSendIcon ? (
+                renderSendIcon()
+              ) : (
+                <PaperPlaneIcon
+                  style={{ width: iconSize, height: iconSize }}
+                  color="#FFFFFF"
+                />
+              )}
+            </Animated.View>
+          </GestureDetector>
+        </View>
+      </View>
+    );
+  }
+
+  // ─── INLINE: IDLE / RECORDING_HOLD (image 6 + idle) ─────────────────────────
+  return (
+    <View
+      style={[tw`flex-row items-end gap-2 relative`, containerStyleOverride]}
+      pointerEvents="box-none"
+    >
+      {isHold ? (
+        <View
+          style={[
+            tw`flex-1 flex-row items-center px-4 rounded-3xl`,
+            holdPillStyle,
+          ]}
+        >
+          <Text
+            style={[
+              tw`text-base font-semibold`,
+              { color: timerColor, minWidth: 42 },
+              timerTextStyle,
+            ]}
+            numberOfLines={1}
+          >
+            {formatDuration(duration)}
+          </Text>
+
+          <Animated.View
+            style={[
+              tw`flex-1 flex-row items-center justify-center gap-1.5`,
+              slideTextAnimatedStyle,
+            ]}
+          >
+            {renderArrowIcon ? (
+              renderArrowIcon()
+            ) : (
+              <Text
+                style={[
+                  tw`text-base leading-none`,
+                  { color: cancelTextColor, marginTop: -2 },
+                ]}
+              >
+                ‹
+              </Text>
+            )}
+            <Text
+              style={[
+                tw`text-sm`,
+                { color: cancelTextColor },
+                slideTextStyleOverride,
+              ]}
+            >
+              Slide to cancel
+            </Text>
           </Animated.View>
-        </Animated.View>
+        </View>
+      ) : (
+        renderInputPill?.()
       )}
 
-      <View style={buttonAnchorStyle} pointerEvents="box-none">
+      <View
+        style={[
+          tw`relative items-center justify-center`,
+          { height: inputBarHeight, width: inputBarHeight },
+        ]}
+      >
+        {enableLockRecording && isHold && (
+          <Animated.View
+            style={[
+              tw`absolute items-center justify-center rounded-2xl py-2.5`,
+              lockPillContainerStyle,
+              {
+                bottom: micSize + 6,
+                gap: 6,
+              },
+              lockPillStyleOverride,
+              lockPillAnimatedStyle,
+            ]}
+            pointerEvents="none"
+          >
+            {renderLockIcon ? (
+              renderLockIcon()
+            ) : (
+              <LockIcon
+                style={{ width: lockIconSize, height: lockIconSize }}
+                color={lockColor}
+              />
+            )}
+            <Animated.View style={chevronAnimatedStyle}>
+              <ChevronUpIcon
+                style={{ width: 14, height: 14 }}
+                color={resolvedChevronColor}
+              />
+            </Animated.View>
+          </Animated.View>
+        )}
+
         <GestureDetector gesture={composedGesture}>
           <Animated.View
-            style={[micPressableStyle, micButtonStyle]}
+            style={[
+              tw`items-center justify-center rounded-full`,
+              micButtonStyle,
+              sendButtonStyle,
+              micWrapperStyle,
+            ]}
             accessibilityRole="button"
-            accessibilityLabel={
-              isScreenOne
-                ? 'Send recording'
-                : 'Tap to record. Long-press and slide left to cancel or up to lock.'
-            }
+            accessibilityLabel="Tap to record. Long-press and slide left to cancel or up to lock."
           >
-            <View style={[micCircleStyle, sendButtonStyle]}>
-              {isScreenOne
-                ? renderSendIcon
-                  ? renderSendIcon()
-                  : (
-                    <PaperPlaneIcon
-                      style={{
-                        width: resolvedSendIconSize,
-                        height: resolvedSendIconSize,
-                      }}
-                      color="#FFFFFF"
-                    />
-                  )
-                : renderMicIcon
-                  ? renderMicIcon()
-                  : (
-                    <MicrophoneIcon
-                      style={{ width: iconSize, height: iconSize }}
-                      color={microphoneColor}
-                    />
-                  )}
-            </View>
+            {renderMicIcon ? (
+              renderMicIcon()
+            ) : (
+              <MicrophoneIcon
+                style={{ width: iconSize + 6, height: iconSize + 6 }}
+                color={microphoneColor}
+              />
+            )}
           </Animated.View>
         </GestureDetector>
       </View>
@@ -784,154 +896,7 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
   );
 };
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-interface ScreenOneCenterProps {
-  duration: number;
-  timerColor: string;
-  waveformColor: string;
-  deleteIconColor: string;
-  waveTick: SharedValue<number>;
-  pauseAnimatedStyle: ReturnType<typeof useAnimatedStyle>;
-  renderDeleteIcon?: () => ReactNode;
-  renderWaveform?: () => ReactNode;
-  onDeletePress: () => void;
-  waveCount: number;
-  showWaveform: boolean;
-  micSize: number;
-  timerTextStyleOverride?: TextStyle;
-  waveformStyle?: ViewStyle;
-  trashButtonStyleOverride?: ViewStyle;
-}
-
-const ScreenOneCenter: React.FC<ScreenOneCenterProps> = ({
-  duration,
-  timerColor,
-  waveformColor,
-  deleteIconColor,
-  waveTick,
-  pauseAnimatedStyle,
-  renderDeleteIcon,
-  renderWaveform,
-  onDeletePress,
-  waveCount,
-  showWaveform,
-  micSize,
-  timerTextStyleOverride,
-  waveformStyle,
-  trashButtonStyleOverride,
-}) => {
-  return (
-    <View style={styles.screenOneRow}>
-      <Pressable
-        onPress={onDeletePress}
-        hitSlop={10}
-        style={[styles.deleteWrapper, trashButtonStyleOverride]}
-        accessibilityRole="button"
-        accessibilityLabel="Delete recording"
-      >
-        {renderDeleteIcon ? (
-          renderDeleteIcon()
-        ) : (
-          <TrashIcon
-            style={{ width: 26, height: 26 }}
-            color={deleteIconColor}
-          />
-        )}
-      </Pressable>
-
-      <View style={styles.screenOneCenter}>
-        <View style={styles.timerRow}>
-          <Text
-            style={[styles.timer, { color: timerColor }, timerTextStyleOverride]}
-            numberOfLines={1}
-          >
-            {formatDuration(duration)}
-          </Text>
-          {showWaveform && (
-            <View style={[styles.waveformWrapper, waveformStyle]}>
-              {renderWaveform ? (
-                renderWaveform()
-              ) : (
-                <Waveform
-                  color={waveformColor}
-                  tick={waveTick}
-                  count={waveCount}
-                />
-              )}
-            </View>
-          )}
-        </View>
-
-        <Animated.View style={[styles.pauseRow, pauseAnimatedStyle]}>
-          <View style={styles.pauseBar} />
-          <View style={styles.pauseBar} />
-        </Animated.View>
-      </View>
-
-      <View style={{ width: micSize, height: micSize }} />
-    </View>
-  );
-};
-
-interface ScreenTwoCenterProps {
-  duration: number;
-  timerColor: string;
-  slideTextAnimatedStyle: ReturnType<typeof useAnimatedStyle>;
-  renderArrowIcon?: () => ReactNode;
-  cancelTextColor: string;
-  micSize: number;
-  timerTextStyleOverride?: TextStyle;
-  slideTextStyleOverride?: TextStyle;
-}
-
-const ScreenTwoCenter: React.FC<ScreenTwoCenterProps> = ({
-  duration,
-  timerColor,
-  slideTextAnimatedStyle,
-  renderArrowIcon,
-  cancelTextColor,
-  micSize,
-  timerTextStyleOverride,
-  slideTextStyleOverride,
-}) => {
-  return (
-    <View style={styles.screenTwoRow}>
-      <Text
-        style={[styles.timer, { color: timerColor }, timerTextStyleOverride]}
-        numberOfLines={1}
-      >
-        {formatDuration(duration)}
-      </Text>
-
-      <Animated.View style={[styles.slideArea, slideTextAnimatedStyle]}>
-        {renderArrowIcon ? (
-          renderArrowIcon()
-        ) : (
-          <Text style={[styles.slideArrow, { color: cancelTextColor }]}>
-            ‹
-          </Text>
-        )}
-        <Text
-          style={[
-            styles.slideText,
-            { color: cancelTextColor },
-            slideTextStyleOverride,
-          ]}
-        >
-          Slide to cancel
-        </Text>
-      </Animated.View>
-
-      <View style={{ width: micSize, height: micSize }} />
-    </View>
-  );
-};
-
 // ─── Waveform (UI-thread driven) ──────────────────────────────────────────────
-
-const WAVE_BAR_WIDTH = 3;
-const WAVE_SPACING = 3;
 
 interface WaveformProps {
   color: string;
@@ -941,7 +906,7 @@ interface WaveformProps {
 
 const Waveform: React.FC<WaveformProps> = ({ color, tick, count }) => {
   return (
-    <View style={styles.waveform}>
+    <View style={tw`flex-row items-center justify-between h-6`}>
       {Array.from({ length: count }).map((_, i) => (
         <WaveBar key={i} index={i} total={count} color={color} tick={tick} />
       ))}
@@ -965,131 +930,18 @@ const WaveBar: React.FC<WaveBarProps> = ({ index, total, color, tick }) => {
     const phase3 = Math.sin(t * 0.9 + index * 0.27);
     const combined = (phase1 * 0.55 + phase2 * 0.3 + phase3 * 0.4) * 0.5 + 0.5;
     const edge = Math.sin((index / Math.max(1, total - 1)) * Math.PI);
-    const amp = Math.max(0.15, Math.min(1, combined) * (0.35 + 0.65 * edge));
+    const amp = Math.max(0.18, Math.min(1, combined) * (0.35 + 0.65 * edge));
     return { height: `${Math.round(amp * 100)}%` };
   });
   return (
     <Animated.View
       style={[
-        {
-          width: WAVE_BAR_WIDTH,
-          marginHorizontal: WAVE_SPACING / 2,
-          backgroundColor: color,
-          borderRadius: WAVE_BAR_WIDTH,
-        },
+        tw`mx-px rounded-full`,
+        { width: 2, backgroundColor: color },
         animatedStyle,
       ]}
     />
   );
 };
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  root: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  bar: {
-    width: '100%',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  lockProgressTrack: {
-    width: 4,
-    height: 18,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-  },
-  lockProgressFill: {
-    width: '100%',
-    borderRadius: 2,
-  },
-  screenOneRow: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  screenOneCenter: {
-    flex: 1,
-    height: '100%',
-    paddingHorizontal: 12,
-    justifyContent: 'center',
-  },
-  screenTwoRow: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: '100%',
-  },
-  deleteWrapper: {
-    width: 26,
-    height: '100%',
-    justifyContent: 'flex-end',
-    alignItems: 'flex-start',
-    paddingBottom: 4,
-  },
-  timerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  timer: {
-    fontSize: 24,
-    fontWeight: '600',
-    minWidth: 50,
-    letterSpacing: 0.3,
-  },
-  waveformWrapper: {
-    flex: 1,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-  },
-  waveform: {
-    width: 200,
-    height: 36,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  pauseRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 6,
-    gap: 4,
-  },
-  pauseBar: {
-    width: 3,
-    height: 12,
-    borderRadius: 2,
-    backgroundColor: '#F15C6D',
-  },
-  slideArea: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  slideArrow: {
-    fontSize: 18,
-    lineHeight: 18,
-    fontWeight: '500',
-    marginTop: -2,
-  },
-  slideText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-});
 
 export default VoiceRecorderFlow;
