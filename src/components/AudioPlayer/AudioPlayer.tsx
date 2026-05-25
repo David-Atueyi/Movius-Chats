@@ -20,8 +20,8 @@ import { AudioPlayerProps, PLAYBACK_RATES, PlaybackRate } from './types';
 
 type ChatTheme = ChatScreenProps['theme'];
 
-const WAVEFORM_BARS = 34;
-const WAVEFORM_H = 34;
+const WAVEFORM_BARS = 50;
+const WAVEFORM_H = 36;
 const AVATAR_SIZE = 42;
 
 function generateWaveform(url: string, count: number): number[] {
@@ -264,7 +264,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   );
 
   const waveformBlock = (
-    <View style={[tw`flex-1 min-w-0`, reserveStatusSpace && showMessageStatus && tw`pr-14`]}>
+    <View style={tw`flex-1 min-w-0`}>
       <View
         style={{ height: WAVEFORM_H }}
         onLayout={(e) => setWaveformW(e.nativeEvent.layout.width)}
@@ -274,7 +274,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             {
               height: WAVEFORM_H,
               flexDirection: 'row',
-              alignItems: 'flex-end',
+              alignItems: 'center',
             },
             theme?.messageStyle?.progressBarStyle,
           ]}
@@ -289,7 +289,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 style={[
                   {
                     flex: 1,
-                    marginHorizontal: 1,
+                    marginHorizontal: 0.5,
                     height: Math.max(3, Math.round(amp * WAVEFORM_H)),
                     borderRadius: 2,
                     backgroundColor: active ? activeBarColor : inactiveBarColor,

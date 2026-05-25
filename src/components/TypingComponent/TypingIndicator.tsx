@@ -32,9 +32,9 @@ export const TypingIndicator = ({
   const additionalUsers = otherTypingUsers.length - 2;
 
   return (
-    <View style={tw`my-1 max-w-[75%] self-start flex-row px-2 relative`}>
+    <View style={tw`my-1 max-w-[75%] self-start flex-row`}>
       {showAvatars && (
-        <View style={tw`flex-row absolute w-6 h-6 rounded-full top-0 -left-9`}>
+        <View style={tw`flex-row mr-2`}>
           {displayedUsers.map((user, index) => (
             <View
               key={user.id}
@@ -98,7 +98,7 @@ export const TypingIndicator = ({
       {showBubbleTail && (
         <ArrowBack2RoundedIcon
           style={tw.style(
-            'w-6 h-6 rotate-180 mt-[1.265px] absolute -top-1 rotate-180 -left-3.5'
+            'w-6 h-6 rotate-180 mt-[1.27px]'
           )}
           color={theme?.colors?.receivedMessageTailColor || 'white'}
         />
