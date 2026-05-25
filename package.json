@@ -48,9 +48,10 @@
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-native": "*",
-    "react-native-reanimated": "*",
     "react-native-audio-record": "*",
-    "react-native-fs": "*"
+    "react-native-fs": "*",
+    "react-native-gesture-handler": ">=2.0.0",
+    "react-native-reanimated": "*"
   },
   "peerDependenciesMeta": {
     "react-native-audio-record": {
@@ -90,6 +91,7 @@
     "jest": "^29.7.0",
     "metro-react-native-babel-preset": "^0.77.0",
     "prettier": "^3.2.0",
+    "react-native-gesture-handler": "^2.31.2",
     "react-native-reanimated": "^3.0.0",
     "rimraf": "^6.0.1",
     "rollup": "^4.34.9",
