@@ -27,35 +27,33 @@ export interface VoiceRecorderExposedState {
 
 /** Feature flags / limits for the built-in recorder. */
 export interface VoiceRecorderConfig {
+  /** Maximum recording length in seconds. Default `300`. */
   maxDuration?: number;
+  /** When `false`, sliding the mic left does not cancel the recording. */
   enableSlideToCancel?: boolean;
+  /** When `false`, sliding the mic up does not lock the recording. */
   enableLockRecording?: boolean;
+  /** Render the animated waveform inside the locked / tap recording view. */
   enableWaveform?: boolean;
-  autoSendOnRelease?: boolean;
-  enablePauseResume?: boolean;
-  recordingFormat?: string;
-  recordingQuality?: string;
-  animationDuration?: number;
 }
 
+/** Coarse-grained style overrides for the built-in recorder UI. */
 export interface VoiceRecorderStyleOverrides {
+  /** Outer fixed-bottom container that hosts the recorder overlay. */
   container?: ViewStyle;
-  normalBar?: ViewStyle;
-  longPressBar?: ViewStyle;
+  /** The dark recording bar that slides up from the bottom. */
+  bar?: ViewStyle;
   timer?: TextStyle;
   waveform?: ViewStyle;
   slideText?: TextStyle;
-  lockContainer?: ViewStyle;
   lockPill?: ViewStyle;
   trashButton?: ViewStyle;
-  playPauseButton?: ViewStyle;
   sendButton?: ViewStyle;
-  holdMicButton?: ViewStyle;
 }
 
+/** Color / sizing knobs for the built-in recorder UI. */
 export interface RecordingUIProps {
   iconSize?: number;
-  recordingIconSize?: number;
   sendIconSize?: number;
   timerTextStyle?: TextStyle;
   timerColor?: string;
@@ -65,9 +63,6 @@ export interface RecordingUIProps {
   longPressMicColor?: string;
   containerBorderTopColor?: string;
   containerBorderTopWidth?: number;
-  playPauseIconColor?: string;
-  playPauseIconSize?: number;
-  playPauseButtonBackground?: string;
   lockPillBackground?: string;
   lockIconColor?: string;
   chevronIconColor?: string;
@@ -76,14 +71,7 @@ export interface RecordingUIProps {
   lockPillMarginBottom?: number;
   lockSlideDistance?: number;
   recordingSendButtonBackground?: string;
-  /** Show a circular ring indicator beside the waveform in locked recording mode */
-  showTimerRing?: boolean;
-  /** Color of the circular ring indicator */
-  timerRingColor?: string;
-  /** Number of waveform bars in the recording animation */
   waveformBarCount?: number;
-  /** WhatsApp-style outer dots — small circular bars fade into taller centre bars */
-  showWaveformOuterDots?: boolean;
 }
 
 /** Single image or video inside a message bubble (use `mediaItems` for albums). */

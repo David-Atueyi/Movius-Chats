@@ -6,7 +6,15 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Pressable, StyleSheet, Text, Vibration, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TextStyle,
+  Vibration,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -72,6 +80,7 @@ export interface VoiceRecorderFlowAudio {
 // ─── Public props ─────────────────────────────────────────────────────────────
 
 export interface VoiceRecorderFlowProps {
+  // ── Colors ────────────────────────────────────────────────────────────────
   primaryColor?: string;
   backgroundColor?: string;
   timerColor?: string;
@@ -79,7 +88,37 @@ export interface VoiceRecorderFlowProps {
   lockColor?: string;
   waveformColor?: string;
   deleteIconColor?: string;
+  cancelTextColor?: string;
+  chevronColor?: string;
+  lockPillBackground?: string;
+  lockPillActiveBorderColor?: string;
+  borderTopColor?: string;
+  borderTopWidth?: number;
 
+  // ── Sizes ─────────────────────────────────────────────────────────────────
+  containerHeight?: number;
+  micSize?: number;
+  iconSize?: number;
+  sendIconSize?: number;
+  lockIconSize?: number;
+
+  // ── Behavior flags ────────────────────────────────────────────────────────
+  enableLockRecording?: boolean;
+  enableSlideToCancel?: boolean;
+  enableWaveform?: boolean;
+
+  // ── Thresholds (positive values; signs handled internally) ────────────────
+  lockSlideDistance?: number;
+  cancelSlideDistance?: number;
+
+  // ── Lock pill layout ──────────────────────────────────────────────────────
+  lockPillGap?: number;
+  lockPillMarginBottom?: number;
+
+  // ── Waveform ──────────────────────────────────────────────────────────────
+  waveCount?: number;
+
+  // ── Render props ──────────────────────────────────────────────────────────
   renderMicIcon?: () => ReactNode;
   renderSendIcon?: () => ReactNode;
   renderLockIcon?: () => ReactNode;
@@ -87,6 +126,17 @@ export interface VoiceRecorderFlowProps {
   renderDeleteIcon?: () => ReactNode;
   renderWaveform?: () => ReactNode;
 
+  // ── Style overrides ───────────────────────────────────────────────────────
+  containerStyle?: ViewStyle;
+  barStyle?: ViewStyle;
+  timerTextStyle?: TextStyle;
+  slideTextStyle?: TextStyle;
+  waveformStyle?: ViewStyle;
+  lockPillStyle?: ViewStyle;
+  trashButtonStyle?: ViewStyle;
+  sendButtonStyle?: ViewStyle;
+
+  // ── Callbacks ─────────────────────────────────────────────────────────────
   onRecordingStart?: () => void;
   onRecordingStop?: () => void;
   onSend?: (audio: VoiceRecorderFlowAudio) => void;
@@ -95,19 +145,23 @@ export interface VoiceRecorderFlowProps {
   onCancel?: () => void;
 }
 
-// ─── Tunables ─────────────────────────────────────────────────────────────────
+// ─── Tunables (defaults; overridable via props) ───────────────────────────────
 
-const CONTAINER_HEIGHT = 110;
-const MIC_SIZE = 72;
+const DEFAULT_CONTAINER_HEIGHT = 110;
+const DEFAULT_MIC_SIZE = 72;
 const MIC_RIGHT = 18;
 
 const LONG_PRESS_MS = 300;
 
-const MAX_LEFT = -150;
-const MAX_UP = -120;
-const CANCEL_THRESHOLD = -120;
-const LOCK_THRESHOLD = -100;
+const DEFAULT_CANCEL_DISTANCE = 120;
+const DEFAULT_LOCK_DISTANCE = 100;
 const LOCK_REVEAL_TRAVEL = -10;
+
+const DEFAULT_LOCK_PILL_GAP = 10;
+const DEFAULT_LOCK_PILL_MARGIN_BOTTOM = 8;
+const DEFAULT_WAVE_COUNT = 28;
+const DEFAULT_ICON_SIZE = 30;
+const DEFAULT_LOCK_ICON_SIZE = 20;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -126,12 +180,39 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
     lockColor = '#E9EDEF',
     waveformColor = '#E9EDEF',
     deleteIconColor = '#8696A0',
+    cancelTextColor = 'rgba(255,255,255,0.55)',
+    chevronColor,
+    lockPillBackground = 'rgba(20,28,33,0.95)',
+    lockPillActiveBorderColor = '#22C55E',
+    borderTopColor,
+    borderTopWidth = 0,
+    containerHeight = DEFAULT_CONTAINER_HEIGHT,
+    micSize = DEFAULT_MIC_SIZE,
+    iconSize = DEFAULT_ICON_SIZE,
+    sendIconSize,
+    lockIconSize = DEFAULT_LOCK_ICON_SIZE,
+    enableLockRecording = true,
+    enableSlideToCancel = true,
+    enableWaveform = true,
+    lockSlideDistance = DEFAULT_LOCK_DISTANCE,
+    cancelSlideDistance = DEFAULT_CANCEL_DISTANCE,
+    lockPillGap = DEFAULT_LOCK_PILL_GAP,
+    lockPillMarginBottom = DEFAULT_LOCK_PILL_MARGIN_BOTTOM,
+    waveCount = DEFAULT_WAVE_COUNT,
     renderMicIcon,
     renderSendIcon,
     renderLockIcon,
     renderArrowIcon,
     renderDeleteIcon,
     renderWaveform,
+    containerStyle: containerStyleOverride,
+    barStyle: barStyleOverride,
+    timerTextStyle,
+    slideTextStyle: slideTextStyleOverride,
+    waveformStyle,
+    lockPillStyle: lockPillStyleOverride,
+    trashButtonStyle,
+    sendButtonStyle,
     onRecordingStart,
     onRecordingStop,
     onSend,
@@ -139,6 +220,13 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
     onLock,
     onCancel,
   } = props;
+
+  // Resolve threshold magnitudes (signs handled internally)
+  const cancelThreshold = -Math.abs(cancelSlideDistance);
+  const lockThreshold = -Math.abs(lockSlideDistance);
+  const maxLeft = cancelThreshold - 30;
+  const maxUp = lockThreshold - 20;
+  const resolvedSendIconSize = sendIconSize ?? iconSize;
 
   // Reactive state
   const [state, setState] = useState<RecordingState>('IDLE');
@@ -154,6 +242,29 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
   useEffect(() => {
     stateShared.value = stateToInt(state);
   }, [state]);
+
+  // Threshold mirrors so gesture worklets always read the latest prop values
+  const cancelThresholdShared = useSharedValue(cancelThreshold);
+  const lockThresholdShared = useSharedValue(lockThreshold);
+  const maxLeftShared = useSharedValue(maxLeft);
+  const maxUpShared = useSharedValue(maxUp);
+  const enableLockShared = useSharedValue(enableLockRecording ? 1 : 0);
+  const enableCancelShared = useSharedValue(enableSlideToCancel ? 1 : 0);
+  useEffect(() => {
+    cancelThresholdShared.value = cancelThreshold;
+    lockThresholdShared.value = lockThreshold;
+    maxLeftShared.value = maxLeft;
+    maxUpShared.value = maxUp;
+    enableLockShared.value = enableLockRecording ? 1 : 0;
+    enableCancelShared.value = enableSlideToCancel ? 1 : 0;
+  }, [
+    cancelThreshold,
+    lockThreshold,
+    maxLeft,
+    maxUp,
+    enableLockRecording,
+    enableSlideToCancel,
+  ]);
 
   // Timekeeping
   const startedAtRef = useRef<number>(0);
@@ -374,8 +485,8 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
         'worklet';
         if (stateShared.value !== STATE_HOLD) return;
 
-        const tx = Math.max(MAX_LEFT, Math.min(0, e.translationX));
-        const ty = Math.max(MAX_UP, Math.min(0, e.translationY));
+        const tx = Math.max(maxLeftShared.value, Math.min(0, e.translationX));
+        const ty = Math.max(maxUpShared.value, Math.min(0, e.translationY));
         translateX.value = tx;
         translateY.value = ty;
 
@@ -383,8 +494,9 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
 
         if (
           dominantY &&
+          enableLockShared.value === 1 &&
           lockFiredShared.value === 0 &&
-          ty <= LOCK_THRESHOLD
+          ty <= lockThresholdShared.value
         ) {
           lockFiredShared.value = 1;
           runOnJS(fireLock)();
@@ -392,8 +504,9 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
 
         if (
           !dominantY &&
+          enableCancelShared.value === 1 &&
           cancelFiredShared.value === 0 &&
-          tx <= CANCEL_THRESHOLD
+          tx <= cancelThresholdShared.value
         ) {
           cancelFiredShared.value = 1;
           runOnJS(fireCancel)();
@@ -416,7 +529,7 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
 
   // ─── Animated styles ────────────────────────────────────────────────────────
 
-  const containerStyle = useAnimatedStyle(() => ({
+  const containerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: containerOpacity.value,
     transform: [{ translateY: containerY.value }],
   }));
@@ -433,10 +546,10 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
     };
   });
 
-  const slideTextStyle = useAnimatedStyle(() => {
+  const slideTextAnimatedStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
       translateX.value,
-      [0, CANCEL_THRESHOLD],
+      [0, cancelThresholdShared.value],
       [1, 0],
       Extrapolation.CLAMP
     );
@@ -446,7 +559,7 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
     };
   });
 
-  const lockPillStyle = useAnimatedStyle(() => {
+  const lockPillAnimatedStyle = useAnimatedStyle(() => {
     const reveal = interpolate(
       translateY.value,
       [0, LOCK_REVEAL_TRAVEL],
@@ -455,7 +568,7 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
     );
     const lockProgress = interpolate(
       translateY.value,
-      [0, LOCK_THRESHOLD],
+      [0, lockThresholdShared.value],
       [0, 1],
       Extrapolation.CLAMP
     );
@@ -471,7 +584,7 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
   const lockProgressFillStyle = useAnimatedStyle(() => {
     const progress = interpolate(
       translateY.value,
-      [0, LOCK_THRESHOLD],
+      [0, lockThresholdShared.value],
       [0, 1],
       Extrapolation.CLAMP
     );
@@ -495,11 +608,77 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
     state === 'LOCKED_RECORDING' ||
     state === 'SENDING';
 
+  // ── Computed style fragments ───────────────────────────────────────────────
+  const dynamicBarStyle: ViewStyle = {
+    height: containerHeight,
+    backgroundColor,
+    ...(borderTopWidth > 0 && borderTopColor
+      ? { borderTopWidth, borderTopColor }
+      : null),
+  };
+
+  const buttonAnchorStyle: ViewStyle = {
+    position: 'absolute',
+    right: MIC_RIGHT,
+    bottom: (containerHeight - micSize) / 2,
+  };
+
+  const micPressableStyle: ViewStyle = {
+    width: micSize,
+    height: micSize,
+    justifyContent: 'center',
+    alignItems: 'center',
+  };
+
+  const micCircleStyle: ViewStyle = {
+    width: micSize,
+    height: micSize,
+    borderRadius: micSize / 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    backgroundColor: primaryColor,
+  };
+
+  const lockPillBaseStyle: ViewStyle = {
+    position: 'absolute',
+    right: MIC_RIGHT + (micSize - 46) / 2,
+    bottom: containerHeight + lockPillMarginBottom,
+    width: 46,
+    paddingVertical: 12,
+    borderRadius: 28,
+    backgroundColor: lockPillBackground,
+    borderColor: lockPillActiveBorderColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: lockPillGap,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  };
+
+  const resolvedChevronColor = chevronColor ?? lockColor;
+  const showLockPillNode = enableLockRecording && showLockPill;
+
   return (
-    <View style={styles.root} pointerEvents="box-none">
+    <View
+      style={[styles.root, containerStyleOverride]}
+      pointerEvents="box-none"
+    >
       {showBar && (
         <Animated.View
-          style={[styles.bar, { backgroundColor }, containerStyle]}
+          style={[
+            styles.bar,
+            dynamicBarStyle,
+            barStyleOverride,
+            containerAnimatedStyle,
+          ]}
         >
           {isScreenOne ? (
             <ScreenOneCenter
@@ -512,24 +691,40 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
               renderDeleteIcon={renderDeleteIcon}
               renderWaveform={renderWaveform}
               onDeletePress={triggerCancel}
+              waveCount={waveCount}
+              showWaveform={enableWaveform}
+              micSize={micSize}
+              timerTextStyleOverride={timerTextStyle}
+              waveformStyle={waveformStyle}
+              trashButtonStyleOverride={trashButtonStyle}
             />
           ) : (
             <ScreenTwoCenter
               duration={duration}
               timerColor={timerColor}
-              slideTextStyle={slideTextStyle}
+              slideTextAnimatedStyle={slideTextAnimatedStyle}
               renderArrowIcon={renderArrowIcon}
+              cancelTextColor={cancelTextColor}
+              micSize={micSize}
+              timerTextStyleOverride={timerTextStyle}
+              slideTextStyleOverride={slideTextStyleOverride}
             />
           )}
         </Animated.View>
       )}
 
-      {showLockPill && (
-        <Animated.View style={[styles.lockPill, lockPillStyle]} pointerEvents="none">
+      {showLockPillNode && (
+        <Animated.View
+          style={[lockPillBaseStyle, lockPillAnimatedStyle, lockPillStyleOverride]}
+          pointerEvents="none"
+        >
           {renderLockIcon ? (
             renderLockIcon()
           ) : (
-            <LockIcon style={{ width: 20, height: 20 }} color={lockColor} />
+            <LockIcon
+              style={{ width: lockIconSize, height: lockIconSize }}
+              color={lockColor}
+            />
           )}
           <View style={styles.lockProgressTrack}>
             <Animated.View
@@ -543,16 +738,16 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
           <Animated.View style={chevronStyle}>
             <ChevronUpIcon
               style={{ width: 16, height: 16 }}
-              color={lockColor}
+              color={resolvedChevronColor}
             />
           </Animated.View>
         </Animated.View>
       )}
 
-      <View style={styles.buttonAnchor} pointerEvents="box-none">
+      <View style={buttonAnchorStyle} pointerEvents="box-none">
         <GestureDetector gesture={composedGesture}>
           <Animated.View
-            style={[styles.micPressable, micButtonStyle]}
+            style={[micPressableStyle, micButtonStyle]}
             accessibilityRole="button"
             accessibilityLabel={
               isScreenOne
@@ -560,15 +755,16 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
                 : 'Tap to record. Long-press and slide left to cancel or up to lock.'
             }
           >
-            <View
-              style={[styles.mic, { backgroundColor: primaryColor }]}
-            >
+            <View style={[micCircleStyle, sendButtonStyle]}>
               {isScreenOne
                 ? renderSendIcon
                   ? renderSendIcon()
                   : (
                     <PaperPlaneIcon
-                      style={{ width: 30, height: 30 }}
+                      style={{
+                        width: resolvedSendIconSize,
+                        height: resolvedSendIconSize,
+                      }}
                       color="#FFFFFF"
                     />
                   )
@@ -576,7 +772,7 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
                   ? renderMicIcon()
                   : (
                     <MicrophoneIcon
-                      style={{ width: 30, height: 30 }}
+                      style={{ width: iconSize, height: iconSize }}
                       color={microphoneColor}
                     />
                   )}
@@ -600,6 +796,12 @@ interface ScreenOneCenterProps {
   renderDeleteIcon?: () => ReactNode;
   renderWaveform?: () => ReactNode;
   onDeletePress: () => void;
+  waveCount: number;
+  showWaveform: boolean;
+  micSize: number;
+  timerTextStyleOverride?: TextStyle;
+  waveformStyle?: ViewStyle;
+  trashButtonStyleOverride?: ViewStyle;
 }
 
 const ScreenOneCenter: React.FC<ScreenOneCenterProps> = ({
@@ -612,13 +814,19 @@ const ScreenOneCenter: React.FC<ScreenOneCenterProps> = ({
   renderDeleteIcon,
   renderWaveform,
   onDeletePress,
+  waveCount,
+  showWaveform,
+  micSize,
+  timerTextStyleOverride,
+  waveformStyle,
+  trashButtonStyleOverride,
 }) => {
   return (
     <View style={styles.screenOneRow}>
       <Pressable
         onPress={onDeletePress}
         hitSlop={10}
-        style={styles.deleteWrapper}
+        style={[styles.deleteWrapper, trashButtonStyleOverride]}
         accessibilityRole="button"
         accessibilityLabel="Delete recording"
       >
@@ -635,18 +843,24 @@ const ScreenOneCenter: React.FC<ScreenOneCenterProps> = ({
       <View style={styles.screenOneCenter}>
         <View style={styles.timerRow}>
           <Text
-            style={[styles.timer, { color: timerColor }]}
+            style={[styles.timer, { color: timerColor }, timerTextStyleOverride]}
             numberOfLines={1}
           >
             {formatDuration(duration)}
           </Text>
-          <View style={styles.waveformWrapper}>
-            {renderWaveform ? (
-              renderWaveform()
-            ) : (
-              <Waveform color={waveformColor} tick={waveTick} />
-            )}
-          </View>
+          {showWaveform && (
+            <View style={[styles.waveformWrapper, waveformStyle]}>
+              {renderWaveform ? (
+                renderWaveform()
+              ) : (
+                <Waveform
+                  color={waveformColor}
+                  tick={waveTick}
+                  count={waveCount}
+                />
+              )}
+            </View>
+          )}
         </View>
 
         <Animated.View style={[styles.pauseRow, pauseAnimatedStyle]}>
@@ -655,7 +869,7 @@ const ScreenOneCenter: React.FC<ScreenOneCenterProps> = ({
         </Animated.View>
       </View>
 
-      <View style={styles.micSpacer} />
+      <View style={{ width: micSize, height: micSize }} />
     </View>
   );
 };
@@ -663,55 +877,73 @@ const ScreenOneCenter: React.FC<ScreenOneCenterProps> = ({
 interface ScreenTwoCenterProps {
   duration: number;
   timerColor: string;
-  slideTextStyle: ReturnType<typeof useAnimatedStyle>;
+  slideTextAnimatedStyle: ReturnType<typeof useAnimatedStyle>;
   renderArrowIcon?: () => ReactNode;
+  cancelTextColor: string;
+  micSize: number;
+  timerTextStyleOverride?: TextStyle;
+  slideTextStyleOverride?: TextStyle;
 }
 
 const ScreenTwoCenter: React.FC<ScreenTwoCenterProps> = ({
   duration,
   timerColor,
-  slideTextStyle,
+  slideTextAnimatedStyle,
   renderArrowIcon,
+  cancelTextColor,
+  micSize,
+  timerTextStyleOverride,
+  slideTextStyleOverride,
 }) => {
   return (
     <View style={styles.screenTwoRow}>
       <Text
-        style={[styles.timer, { color: timerColor }]}
+        style={[styles.timer, { color: timerColor }, timerTextStyleOverride]}
         numberOfLines={1}
       >
         {formatDuration(duration)}
       </Text>
 
-      <Animated.View style={[styles.slideArea, slideTextStyle]}>
+      <Animated.View style={[styles.slideArea, slideTextAnimatedStyle]}>
         {renderArrowIcon ? (
           renderArrowIcon()
         ) : (
-          <Text style={styles.slideArrow}>‹</Text>
+          <Text style={[styles.slideArrow, { color: cancelTextColor }]}>
+            ‹
+          </Text>
         )}
-        <Text style={styles.slideText}>Slide to cancel</Text>
+        <Text
+          style={[
+            styles.slideText,
+            { color: cancelTextColor },
+            slideTextStyleOverride,
+          ]}
+        >
+          Slide to cancel
+        </Text>
       </Animated.View>
 
-      <View style={styles.micSpacer} />
+      <View style={{ width: micSize, height: micSize }} />
     </View>
   );
 };
 
 // ─── Waveform (UI-thread driven) ──────────────────────────────────────────────
 
-const WAVE_COUNT = 28;
 const WAVE_BAR_WIDTH = 3;
 const WAVE_SPACING = 3;
 
 interface WaveformProps {
   color: string;
   tick: SharedValue<number>;
+  count: number;
 }
 
-const Waveform: React.FC<WaveformProps> = ({ color, tick }) => {
+const Waveform: React.FC<WaveformProps> = ({ color, tick, count }) => {
   return (
     <View style={styles.waveform}>
-      {Array.from({ length: WAVE_COUNT }).map((_, i) => (
-        <WaveBar key={i} index={i} total={WAVE_COUNT} color={color} tick={tick} />
+      {Array.from({ length: count }).map((_, i) => (
+        <WaveBar key={i} index={i} total={count} color={color} tick={tick} />
       ))}
     </View>
   );
@@ -762,57 +994,12 @@ const styles = StyleSheet.create({
   },
   bar: {
     width: '100%',
-    height: CONTAINER_HEIGHT,
     paddingHorizontal: 18,
     paddingVertical: 14,
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  buttonAnchor: {
-    position: 'absolute',
-    right: MIC_RIGHT,
-    bottom: (CONTAINER_HEIGHT - MIC_SIZE) / 2,
-  },
-  micPressable: {
-    width: MIC_SIZE,
-    height: MIC_SIZE,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mic: {
-    width: MIC_SIZE,
-    height: MIC_SIZE,
-    borderRadius: MIC_SIZE / 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  micSpacer: {
-    width: MIC_SIZE,
-    height: MIC_SIZE,
-  },
-  lockPill: {
-    position: 'absolute',
-    right: MIC_RIGHT + (MIC_SIZE - 46) / 2,
-    bottom: CONTAINER_HEIGHT + 8,
-    width: 46,
-    paddingVertical: 12,
-    borderRadius: 28,
-    backgroundColor: 'rgba(20,28,33,0.95)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   lockProgressTrack: {
     width: 4,
@@ -896,13 +1083,11 @@ const styles = StyleSheet.create({
   slideArrow: {
     fontSize: 18,
     lineHeight: 18,
-    color: 'rgba(255,255,255,0.55)',
     fontWeight: '500',
     marginTop: -2,
   },
   slideText: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.55)',
     fontWeight: '500',
   },
 });

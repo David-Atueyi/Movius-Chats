@@ -71,6 +71,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     closePreview,
     onRemovePreviewItem,
     voiceRecorderProps,
+    voiceRecorderStyles,
     recordingUIProps,
     renderVoiceRecorder,
   } = useChatContext();
@@ -180,7 +181,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     recorderRef.current.cancelRecording();
   }, []);
 
-  // Theme colors for flow
+  // Theme colors / sizing for flow
   const recordingPrimary =
     recordingUIProps?.recordingSendButtonBackground ??
     (theme?.inputStyles?.sendButtonStyle?.backgroundColor as string) ??
@@ -421,6 +422,34 @@ const ChatInput: React.FC<ChatInputProps> = ({
             timerColor={recordingTimerColor}
             microphoneColor={recordingMicColor}
             waveformColor={recordingWaveformColor}
+            cancelTextColor={recordingUIProps?.cancelTextColor}
+            chevronColor={recordingUIProps?.chevronIconColor}
+            lockColor={recordingUIProps?.lockIconColor}
+            lockPillBackground={recordingUIProps?.lockPillBackground}
+            lockPillActiveBorderColor={
+              recordingUIProps?.lockPillActiveBorderColor
+            }
+            borderTopColor={recordingUIProps?.containerBorderTopColor}
+            borderTopWidth={recordingUIProps?.containerBorderTopWidth}
+            iconSize={recordingUIProps?.iconSize}
+            sendIconSize={recordingUIProps?.sendIconSize}
+            lockPillGap={recordingUIProps?.lockPillGap}
+            lockPillMarginBottom={recordingUIProps?.lockPillMarginBottom}
+            lockSlideDistance={recordingUIProps?.lockSlideDistance}
+            waveCount={recordingUIProps?.waveformBarCount}
+            enableLockRecording={voiceRecorderProps?.enableLockRecording}
+            enableSlideToCancel={voiceRecorderProps?.enableSlideToCancel}
+            enableWaveform={voiceRecorderProps?.enableWaveform}
+            timerTextStyle={
+              recordingUIProps?.timerTextStyle ?? voiceRecorderStyles?.timer
+            }
+            containerStyle={voiceRecorderStyles?.container}
+            barStyle={voiceRecorderStyles?.bar}
+            slideTextStyle={voiceRecorderStyles?.slideText}
+            waveformStyle={voiceRecorderStyles?.waveform}
+            lockPillStyle={voiceRecorderStyles?.lockPill}
+            trashButtonStyle={voiceRecorderStyles?.trashButton}
+            sendButtonStyle={voiceRecorderStyles?.sendButton}
             onRecordingStart={handleFlowRecordingStart}
             onSend={handleFlowSend}
             onCancel={handleFlowCancel}
