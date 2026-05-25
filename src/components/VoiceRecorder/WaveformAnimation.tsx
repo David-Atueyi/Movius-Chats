@@ -4,7 +4,7 @@ import { StyleProp, View, ViewStyle } from 'react-native';
 const DEFAULT_BAR_COUNT = 30;
 
 function buildStaticBars(count: number, showOuterDots: boolean): number[] {
-  return Array.from({ length: count }, (_, i) => {
+  return Array.from({ length: count }, (_, i): number => {
     if (!showOuterDots) return 0.3;
     const pos = i / (count - 1);
     if (pos < 0.12 || pos > 0.88) return 0.08;
@@ -15,12 +15,12 @@ function buildStaticBars(count: number, showOuterDots: boolean): number[] {
 
 function nextBars(prev: number[], showOuterDots: boolean): number[] {
   const count = prev.length;
-  return Array.from({ length: count }, (_, i) => {
+  return Array.from({ length: count }, (_, i): number => {
     if (!showOuterDots) return 0.15 + Math.random() * 0.85;
     const pos = i / (count - 1);
-    if (pos < 0.12 || pos > 0.88) return prev[i]; // outer dots stay static
+    if (pos < 0.12 || pos > 0.88) return prev[i]!;
     if (pos < 0.22 || pos > 0.78) return 0.12 + Math.random() * 0.35;
-    return 0.2 + Math.random() * 0.8; // full animation in center
+    return 0.2 + Math.random() * 0.8;
   });
 }
 

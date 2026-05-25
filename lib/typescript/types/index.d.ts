@@ -72,6 +72,14 @@ export interface RecordingUIProps {
     lockPillMarginBottom?: number;
     lockSlideDistance?: number;
     recordingSendButtonBackground?: string;
+    /** Show a circular ring indicator beside the waveform in locked recording mode */
+    showTimerRing?: boolean;
+    /** Color of the circular ring indicator */
+    timerRingColor?: string;
+    /** Number of waveform bars in the recording animation */
+    waveformBarCount?: number;
+    /** WhatsApp-style outer dots — small circular bars fade into taller centre bars */
+    showWaveformOuterDots?: boolean;
 }
 /** Single image or video inside a message bubble (use `mediaItems` for albums). */
 export interface MessageMediaItem {

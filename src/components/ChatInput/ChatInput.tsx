@@ -308,7 +308,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
     (theme?.inputStyles?.sendButtonStyle?.backgroundColor as string) ??
     '#16a34a';
   const recordingSendFg = theme?.colors?.sendIconsColor ?? '#ffffff';
-  const holdMicColor = recordingUIProps?.longPressMicColor ?? '#ef4444';
+  const holdMicColor =
+    recordingUIProps?.longPressMicColor ?? theme?.colors?.sendIconsColor ?? '#ffffff';
 
   const recordingContainerStyle = getRecordingContainerStyle(
     voiceRecorderStyles,
