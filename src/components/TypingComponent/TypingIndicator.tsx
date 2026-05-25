@@ -124,7 +124,7 @@ export const TypingIndicator = ({
 
       {showBubbleTail && (
         <ArrowBack2RoundedIcon
-          style={tw.style('absolute -top-1 w-6 h-6 rotate-180 -left-3.5 mt-[1.5px]')}
+          style={tw.style('absolute -top-[3px] w-6 h-6 rotate-180 -left-3.5 mt-[1.5px]')}
           color={theme?.colors?.receivedMessageTailColor || 'white'}
         />
       )}

@@ -1,10 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { StyleProp, View, ViewStyle } from 'react-native';
 
-const BAR_COUNT = 22;
+const DEFAULT_BAR_COUNT = 30;
 
-function randomBars(): number[] {
-  return Array.from({ length: BAR_COUNT }, () => 0.15 + Math.random() * 0.85);
+function buildStaticBars(count: number, showOuterDots: boolean): number[] {
+  return Array.from({ length: count }, (_, i) => {
+    if (!showOuterDots) return 0.3;
+    const pos = i / (count - 1);
+    if (pos < 0.12 || pos > 0.88) return 0.08;
+    if (pos < 0.22 || pos > 0.78) return 0.18;
+    return 0.3;
+  });
+}
+
+function nextBars(prev: number[], showOuterDots: boolean): number[] {
+  const count = prev.length;
+  return Array.from({ length: count }, (_, i) => {
+    if (!showOuterDots) return 0.15 + Math.random() * 0.85;
+    const pos = i / (count - 1);
+    if (pos < 0.12 || pos > 0.88) return prev[i]; // outer dots stay static
+    if (pos < 0.22 || pos > 0.78) return 0.12 + Math.random() * 0.35;
+    return 0.2 + Math.random() * 0.8; // full animation in center
+  });
 }
 
 interface WaveformAnimationProps {
@@ -12,6 +29,8 @@ interface WaveformAnimationProps {
   color?: string;
   height?: number;
   style?: StyleProp<ViewStyle>;
+  barCount?: number;
+  showOuterDots?: boolean;
 }
 
 export const WaveformAnimation: React.FC<WaveformAnimationProps> = ({
@@ -19,19 +38,28 @@ export const WaveformAnimation: React.FC<WaveformAnimationProps> = ({
   color = 'rgba(0,0,0,0.45)',
   height = 26,
   style,
+  barCount = DEFAULT_BAR_COUNT,
+  showOuterDots = false,
 }) => {
   const [bars, setBars] = useState<number[]>(() =>
-    Array.from({ length: BAR_COUNT }, () => 0.3)
+    buildStaticBars(barCount, showOuterDots)
   );
 
   useEffect(() => {
+    setBars(buildStaticBars(barCount, showOuterDots));
+  }, [barCount, showOuterDots]);
+
+  useEffect(() => {
     if (!isActive) {
-      setBars(Array.from({ length: BAR_COUNT }, () => 0.3));
+      setBars(buildStaticBars(barCount, showOuterDots));
       return;
     }
-    const id = setInterval(() => setBars(randomBars()), 110);
+    const id = setInterval(
+      () => setBars((prev) => nextBars(prev, showOuterDots)),
+      110
+    );
     return () => clearInterval(id);
-  }, [isActive]);
+  }, [isActive, barCount, showOuterDots]);
 
   return (
     <View
@@ -40,17 +68,23 @@ export const WaveformAnimation: React.FC<WaveformAnimationProps> = ({
         style,
       ]}
     >
-      {bars.map((amp, i) => (
-        <View
-          key={i}
-          style={{
-            flex: 1,
-            height: Math.max(3, Math.round(amp * height)),
-            borderRadius: 2,
-            backgroundColor: color,
-          }}
-        />
-      ))}
+      {bars.map((amp, i) => {
+        const barH = Math.max(3, Math.round(amp * height));
+        const isOuter =
+          showOuterDots &&
+          (i / (bars.length - 1) < 0.22 || i / (bars.length - 1) > 0.78);
+        return (
+          <View
+            key={i}
+            style={{
+              flex: 1,
+              height: barH,
+              borderRadius: isOuter ? barH / 2 : 2,
+              backgroundColor: color,
+            }}
+          />
+        );
+      })}
     </View>
   );
 };

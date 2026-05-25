@@ -114,10 +114,10 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
       {isFirstInSequence && showBubbleTail && (
         <ArrowBack2RoundedIcon
           style={tw.style(
-            'absolute -top-1 w-6 h-6',
+            'absolute  w-6 h-6',
             isCurrentUser
-              ? 'rotate-90 -right-3.5 mt-[1.24px]'
-              : 'rotate-180 -left-3.5 mt-[1.5px]'
+              ? 'rotate-90 -right-3.5 mt-[1.24px] -top-1'
+              : 'rotate-180 -left-3.5 mt-[1.5px] -top-[3px]'
           )}
           color={
             isCurrentUser
