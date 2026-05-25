@@ -19,7 +19,7 @@ export const TypingIndicator = ({
   typingUsers,
   currentUserId,
 }: TypingIndicatorProps) => {
-  const { theme, showAvatars, renderCustomTyping, showBubbleTail } =
+  const { theme, showAvatars, renderCustomTyping, showBubbleTail, typingText } =
     useChatContext();
 
   const otherTypingUsers = typingUsers.filter(
@@ -32,9 +32,9 @@ export const TypingIndicator = ({
   const additionalUsers = otherTypingUsers.length - 2;
 
   return (
-    <View style={tw`my-1 max-w-[75%] self-start flex-row`}>
+    <View style={tw`my-1 max-w-[75%] self-start ml-9 px-2`}>
       {showAvatars && (
-        <View style={tw`flex-row mr-2`}>
+        <View style={tw`absolute top-0 -left-9 flex-row`}>
           {displayedUsers.map((user, index) => (
             <View
               key={user.id}
@@ -73,10 +73,7 @@ export const TypingIndicator = ({
             <View
               style={[
                 tw`bg-gray-400 w-6 h-6 rounded-full items-center justify-center`,
-                {
-                  marginLeft: -10,
-                  zIndex: 3,
-                },
+                { marginLeft: -10, zIndex: 3 },
                 { ...theme?.bubbleStyle?.additionalTypingUsersContainerStyle },
               ]}
             >
@@ -95,27 +92,33 @@ export const TypingIndicator = ({
           )}
         </View>
       )}
-      {showBubbleTail && (
-        <ArrowBack2RoundedIcon
-          style={tw.style(
-            'w-6 h-6 rotate-180 mt-[1.27px]'
-          )}
-          color={theme?.colors?.receivedMessageTailColor || 'white'}
-        />
-      )}
 
       <View
         style={[
-          tw`px-2 my-1 bg-white rounded-tl-none rounded-lg`,
+          tw`px-2 bg-white rounded-tl-none rounded-lg relative`,
           theme?.bubbleStyle?.typingContainerStyle,
         ]}
       >
+        {showBubbleTail && (
+          <ArrowBack2RoundedIcon
+            style={tw.style('absolute -top-1 w-6 h-6 rotate-180 -left-3.5 mt-[1.26px]')}
+            color={theme?.colors?.receivedMessageTailColor || 'white'}
+          />
+        )}
         {renderCustomTyping ? (
           renderCustomTyping()
         ) : (
           <View style={tw`flex-row items-center py-3 px-2 justify-center`}>
-            <Text style={withFontFamily(tw`text-gray-600`, theme?.fontFamily)}>
-              Typing...
+            <Text
+              style={withFontFamily(
+                [
+                  tw`text-gray-600`,
+                  theme?.bubbleStyle?.typingTextStyle,
+                ],
+                theme?.fontFamily
+              )}
+            >
+              {typingText ?? 'Typing...'}
             </Text>
           </View>
         )}

@@ -263,58 +263,42 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     />
   );
 
-  const waveformBlock = (
-    <View style={tw`flex-1 min-w-0`}>
+  const waveformBars = (
+    <View
+      style={[tw`flex-1 min-w-0`, { height: WAVEFORM_H }]}
+      onLayout={(e) => setWaveformW(e.nativeEvent.layout.width)}
+    >
       <View
-        style={{ height: WAVEFORM_H }}
-        onLayout={(e) => setWaveformW(e.nativeEvent.layout.width)}
+        style={[
+          {
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+          },
+          theme?.messageStyle?.progressBarStyle,
+        ]}
+        {...panResponder.panHandlers}
       >
-        <View
-          style={[
-            {
-              height: WAVEFORM_H,
-              flexDirection: 'row',
-              alignItems: 'center',
-            },
-            theme?.messageStyle?.progressBarStyle,
-          ]}
-          {...panResponder.panHandlers}
-        >
-          {waveform.map((amp, i) => {
-            const barProgress = (i + 0.5) / WAVEFORM_BARS;
-            const active = barProgress <= progress;
-            return (
-              <View
-                key={i}
-                style={[
-                  {
-                    flex: 1,
-                    marginHorizontal: 0.5,
-                    height: Math.max(3, Math.round(amp * WAVEFORM_H)),
-                    borderRadius: 2,
-                    backgroundColor: active ? activeBarColor : inactiveBarColor,
-                  },
-                  active ? theme?.messageStyle?.activeProgressBarStyle : undefined,
-                ]}
-              />
-            );
-          })}
-        </View>
+        {waveform.map((amp, i) => {
+          const barProgress = (i + 0.5) / WAVEFORM_BARS;
+          const active = barProgress <= progress;
+          return (
+            <View
+              key={i}
+              style={[
+                {
+                  flex: 1,
+                  marginHorizontal: 0.5,
+                  height: Math.max(3, Math.round(amp * WAVEFORM_H)),
+                  borderRadius: 2,
+                  backgroundColor: active ? activeBarColor : inactiveBarColor,
+                },
+                active ? theme?.messageStyle?.activeProgressBarStyle : undefined,
+              ]}
+            />
+          );
+        })}
       </View>
-      <Text
-        style={withFontFamily(
-          [
-            tw`text-[11px] mt-0.5`,
-            { color: durationColor },
-            theme?.messageStyle?.audioDurationStyle,
-          ],
-          theme?.fontFamily
-        )}
-      >
-        {formatDuration(
-          effectivePlaying ? currentTime : duration > 0 ? duration : currentTime
-        )}
-      </Text>
     </View>
   );
 
@@ -344,16 +328,30 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           <>
             {avatarOrSpeed}
             {playPause}
-            {waveformBlock}
+            {waveformBars}
           </>
         ) : (
           <>
             {playPause}
-            {waveformBlock}
+            {waveformBars}
             {avatarOrSpeed}
           </>
         )}
       </View>
+      <Text
+        style={withFontFamily(
+          [
+            tw`text-[11px] mt-1`,
+            { color: durationColor },
+            theme?.messageStyle?.audioDurationStyle,
+          ],
+          theme?.fontFamily
+        )}
+      >
+        {formatDuration(
+          effectivePlaying ? currentTime : duration > 0 ? duration : currentTime
+        )}
+      </Text>
     </View>
   );
 };

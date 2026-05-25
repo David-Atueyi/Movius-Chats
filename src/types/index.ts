@@ -133,6 +133,7 @@ export interface ChatScreenProps {
 
   // Typing indicators and input
   typingUsers?: Array<{ id: string; avatar: string; name: string }>;
+  typingText?: string;
   onTypingStart?: () => void;
   onTypingEnd?: () => void;
   placeholder?: string;
@@ -197,8 +198,9 @@ export interface ChatScreenProps {
       userNameStyle?: TextStyle;
       avatarImageStyle?: ImageStyle;
       typingContainerStyle?: ViewStyle;
-      additionalTypingUsersContainerStyle?: ViewStyle;
-      additionalTypingUsersTextStyle?: TextStyle;
+        additionalTypingUsersContainerStyle?: ViewStyle;
+        additionalTypingUsersTextStyle?: TextStyle;
+        typingTextStyle?: TextStyle;
     };
     messageStyle?: {
       sentTextStyle?: TextStyle;
