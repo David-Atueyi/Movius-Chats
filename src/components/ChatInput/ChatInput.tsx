@@ -5,24 +5,13 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  PanResponder,
-  Platform,
-  Pressable,
-  TextInput,
-  View,
-} from 'react-native';
+import { Platform, Pressable, TextInput, View } from 'react-native';
 import tw from 'twrnc';
 import { CameraIcon } from '../../assets/Icons/CameraIcon';
 import { EmojiFunnySquareIcon } from '../../assets/Icons/EmojiFunnySquareIcon';
 import { MicrophoneIcon } from '../../assets/Icons/MicrophoneIcon';
 import { PaperClipIcon } from '../../assets/Icons/PaperClipIcon';
 import { PaperPlaneIcon } from '../../assets/Icons/PaperPlaneIcon';
-import { AnimatedHoldMic } from '../VoiceRecorder/AnimatedHoldMic';
-import { LockSlideColumn } from '../VoiceRecorder/LockSlideColumn';
-import { LongPressRecording } from '../VoiceRecorder/LongPressRecording';
-import { NormalRecording } from '../VoiceRecorder/NormalRecording';
-import { getRecordingContainerStyle } from '../VoiceRecorder/recordingContainerStyle';
 import { useChatContext } from '../../context/ChatContext';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import { RecordingResult, VoiceRecorderExposedState } from '../../types';
@@ -31,6 +20,7 @@ import {
   getInputBarIconStyle,
   withFontFamily,
 } from '../../utils/theme';
+import { VoiceRecorderFlow } from '../VoiceRecorder/VoiceRecorderFlow';
 import FilePreview from './FilePreview';
 import { ChatInputProps, InputHeightState } from './types';
 
@@ -41,13 +31,6 @@ const INPUT_BAR_SHELL_HEIGHT = Platform.OS === 'ios' ? 50 : 48;
 
 const SEND_ICON_CLASS = 'h-6 w-6';
 const MIC_ICON_CLASS = 'h-8 w-8';
-
-// Long-press / swipe thresholds (px)
-const LONG_PRESS_MS = 500;
-const CANCEL_THRESHOLD_X = -70; // slide left to cancel
-const DEFAULT_LOCK_SLIDE_DISTANCE = 72; // slide up to lock (matches lock pill)
-
-type VoiceMode = 'idle' | 'normal' | 'longPress' | 'locked';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -88,11 +71,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
     closePreview,
     onRemovePreviewItem,
     voiceRecorderProps,
-    voiceRecorderStyles,
     recordingUIProps,
     renderVoiceRecorder,
-    CustomPlayIcon,
-    CustomPauseIcon,
   } = useChatContext();
 
   // ── Preview list ───────────────────────────────────────────────────────────
@@ -152,7 +132,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
     onSendMessage({ text: trimmedText, senderId: currentUserId });
     setInputText('');
     resetInputLayout();
-  }, [inputText, onSendMessage, currentUserId, hasPreviewAttachments, resetInputLayout]);
+  }, [
+    inputText,
+    onSendMessage,
+    currentUserId,
+    hasPreviewAttachments,
+    resetInputLayout,
+  ]);
 
   useEffect(() => {
     if (inputText.trim()) onTypingStart?.();
@@ -161,25 +147,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const showSendButton = !!inputText.trim() || hasPreviewAttachments;
 
-  // ── Voice recorder ─────────────────────────────────────────────────────────
-  const [voiceMode, setVoiceModeState] = useState<VoiceMode>('idle');
-  const voiceModeRef = useRef<VoiceMode>('idle');
-  const setVoiceMode = useCallback((mode: VoiceMode) => {
-    voiceModeRef.current = mode;
-    setVoiceModeState(mode);
-  }, []);
-
-  const lockSlideDistance =
-    recordingUIProps?.lockSlideDistance ?? DEFAULT_LOCK_SLIDE_DISTANCE;
-  const lockSlideDistanceRef = useRef(lockSlideDistance);
-  lockSlideDistanceRef.current = lockSlideDistance;
-
-  // Track finger position for long-press UI feedback
-  const [slideX, setSlideX] = useState(0);
-  const [slideY, setSlideY] = useState(0);
-  const slideXRef = useRef(0);
-  const slideYRef = useRef(0);
-
+  // ── Voice recorder (audio engine) ──────────────────────────────────────────
   const onRecordEnd = useCallback(
     (result: RecordingResult) => {
       onAudioRecordEnd?.(result);
@@ -193,237 +161,65 @@ const ChatInput: React.FC<ChatInputProps> = ({
     onRecordEnd,
   });
 
-  // Keep a stable ref to the recorder so the PanResponder closure never stales
   const recorderRef = useRef(recorder);
   recorderRef.current = recorder;
 
-  // ── Send / cancel helpers ──────────────────────────────────────────────────
-  const handleSendVoice = useCallback(async () => {
+  // VoiceRecorderFlow → audio engine wiring
+  const handleFlowRecordingStart = useCallback(() => {
+    recorderRef.current.startRecording();
+  }, []);
+
+  const handleFlowSend = useCallback(async () => {
     const result = await recorderRef.current.stopRecording();
-    setVoiceMode('idle');
     if (result) {
       onSendMessage({ audio: result.uri, senderId: currentUserId });
     }
-  }, [onSendMessage, currentUserId, setVoiceMode]);
+  }, [onSendMessage, currentUserId]);
 
-  const handleCancelVoice = useCallback(() => {
+  const handleFlowCancel = useCallback(() => {
     recorderRef.current.cancelRecording();
-    setVoiceMode('idle');
-    setSlideX(0);
-    setSlideY(0);
-    slideXRef.current = 0;
-    slideYRef.current = 0;
-  }, [setVoiceMode]);
+  }, []);
 
-  // Stable refs for PanResponder closures
-  const handleSendVoiceRef = useRef(handleSendVoice);
-  handleSendVoiceRef.current = handleSendVoice;
-  const handleCancelVoiceRef = useRef(handleCancelVoice);
-  handleCancelVoiceRef.current = handleCancelVoice;
-
-  // ── PanResponder for the mic button ───────────────────────────────────────
-  // Created once; uses refs for all mutable values to avoid stale closures.
-  const longPressTimerRef = useRef<ReturnType<typeof setTimeout>>();
-  const isLongPressActiveRef = useRef(false);
-
-  const micPanResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => isLongPressActiveRef.current,
-
-        onPanResponderGrant: () => {
-          isLongPressActiveRef.current = false;
-          slideXRef.current = 0;
-          slideYRef.current = 0;
-          setSlideX(0);
-          setSlideY(0);
-
-          longPressTimerRef.current = setTimeout(async () => {
-            isLongPressActiveRef.current = true;
-            await recorderRef.current.startRecording();
-            setVoiceMode('longPress');
-          }, LONG_PRESS_MS);
-        },
-
-        onPanResponderMove: (_, gestureState) => {
-          if (!isLongPressActiveRef.current) return;
-
-          slideXRef.current = gestureState.dx;
-          slideYRef.current = gestureState.dy;
-          setSlideX(gestureState.dx);
-          setSlideY(gestureState.dy);
-
-          const enableLock =
-            voiceRecorderProps?.enableLockRecording !== false;
-
-          // Lock only after sliding up to the lock pill (not on tiny movements)
-          if (
-            enableLock &&
-            gestureState.dy <= -lockSlideDistanceRef.current &&
-            voiceModeRef.current === 'longPress'
-          ) {
-            setVoiceMode('locked');
-            slideYRef.current = -lockSlideDistanceRef.current;
-            setSlideY(-lockSlideDistanceRef.current);
-          }
-        },
-
-        onPanResponderRelease: async (_, gestureState) => {
-          clearTimeout(longPressTimerRef.current);
-          const wasLongPress = isLongPressActiveRef.current;
-          isLongPressActiveRef.current = false;
-
-          if (!wasLongPress) {
-            // Quick tap → start normal recording mode
-            await recorderRef.current.startRecording();
-            setVoiceMode('normal');
-            return;
-          }
-
-          // Long press released
-          if (voiceModeRef.current === 'locked') {
-            // Locked → stay in recording, user taps send/cancel manually
-            return;
-          }
-
-          if (gestureState.dx < CANCEL_THRESHOLD_X) {
-            handleCancelVoiceRef.current();
-          } else {
-            // Auto-send on release (WhatsApp behaviour)
-            handleSendVoiceRef.current();
-          }
-        },
-
-        onPanResponderTerminate: () => {
-          clearTimeout(longPressTimerRef.current);
-          isLongPressActiveRef.current = false;
-        },
-      }),
-    [] // Intentional: all values accessed via refs
-  );
-
-  const recordingSendBg =
+  // Theme colors for flow
+  const recordingPrimary =
     recordingUIProps?.recordingSendButtonBackground ??
     (theme?.inputStyles?.sendButtonStyle?.backgroundColor as string) ??
-    '#16a34a';
-  const recordingSendFg = theme?.colors?.sendIconsColor ?? '#ffffff';
-  const holdMicColor =
-    recordingUIProps?.longPressMicColor ?? theme?.colors?.sendIconsColor ?? '#ffffff';
+    '#22C55E';
+  const recordingBackground =
+    recordingUIProps?.recordingBackground ?? '#0B141A';
+  const recordingTimerColor =
+    recordingUIProps?.timerColor ?? '#FFFFFF';
+  const recordingMicColor =
+    recordingUIProps?.longPressMicColor ??
+    theme?.colors?.sendIconsColor ??
+    '#FFFFFF';
+  const recordingWaveformColor =
+    recordingUIProps?.waveformColor ?? '#E9EDEF';
 
-  const recordingContainerStyle = getRecordingContainerStyle(
-    voiceRecorderStyles,
-    recordingUIProps
-  );
+  // ── Custom voice UI override (back-compat for renderVoiceRecorder) ─────────
+  const exposedState: VoiceRecorderExposedState = {
+    isRecording: recorder.isRecording,
+    isPaused: recorder.isPaused,
+    duration: recorder.duration,
+    isLocked: false,
+    slideOffset: { x: 0, y: 0 },
+    waveformData: [],
+    startRecording: recorder.startRecording,
+    stopRecording: recorder.stopRecording,
+    pauseRecording: recorder.pauseRecording,
+    resumeRecording: recorder.resumeRecording,
+    cancelRecording: recorder.cancelRecording,
+  };
 
-  // ── Render recording UI ───────────────────────────────────────────────────
-  if (voiceMode !== 'idle') {
-    const exposedState: VoiceRecorderExposedState = {
-      isRecording: recorder.isRecording,
-      isPaused: recorder.isPaused,
-      duration: recorder.duration,
-      isLocked: voiceMode === 'locked',
-      slideOffset: { x: slideX, y: slideY },
-      waveformData: [],
-      startRecording: recorder.startRecording,
-      stopRecording: recorder.stopRecording,
-      pauseRecording: recorder.pauseRecording,
-      resumeRecording: recorder.resumeRecording,
-      cancelRecording: handleCancelVoice,
-    };
+  const customVoiceUI = renderVoiceRecorder
+    ? renderVoiceRecorder(exposedState)
+    : null;
 
-    return (
-      <View style={tw`w-full px-2`}>
-        {hasPreviewAttachments && (
-          <FilePreview
-            previews={previewList}
-            closePreview={closePreview}
-            onRemoveItem={onRemovePreviewItem}
-            CustomFileIcon={CustomFileIcon}
-            CustomImagePreview={CustomImagePreview}
-            CustomVideoPreview={CustomVideoPreview}
-            inputHeight={inputHeight.height}
-          />
-        )}
+  const showFlowMicSpacer = !showSendButton && showVoiceRecordButton;
 
-        <View style={recordingContainerStyle}>
-          {renderVoiceRecorder ? (
-            renderVoiceRecorder(exposedState)
-          ) : voiceMode === 'longPress' ? (
-            <View
-              style={[
-                tw`flex-row items-end gap-2`,
-                theme?.inputStyles?.inputSectionContainerStyle,
-              ]}
-            >
-              <LongPressRecording
-                duration={recorder.duration}
-                slideX={slideX}
-                containerHeight={INPUT_BAR_SHELL_HEIGHT}
-                fontFamily={theme?.fontFamily}
-                voiceRecorderStyles={voiceRecorderStyles}
-                recordingUIProps={recordingUIProps}
-              />
-
-              <View style={{ alignItems: 'center' }}>
-                <LockSlideColumn
-                  slideY={slideY}
-                  lockSlideDistance={lockSlideDistance}
-                  recordingUIProps={recordingUIProps}
-                  voiceRecorderStyles={voiceRecorderStyles}
-                />
-                <View
-                  {...micPanResponder.panHandlers}
-                  style={[
-                    tw`rounded-full justify-center items-center`,
-                    {
-                      height: INPUT_BAR_SHELL_HEIGHT,
-                      width: INPUT_BAR_SHELL_HEIGHT,
-                      backgroundColor: recordingSendBg,
-                    },
-                    voiceRecorderStyles?.holdMicButton,
-                    theme?.inputStyles?.sendButtonStyle,
-                  ]}
-                >
-                  <AnimatedHoldMic
-                    color={holdMicColor}
-                    size={
-                      recordingUIProps?.recordingIconSize ??
-                      recordingUIProps?.iconSize ??
-                      28
-                    }
-                  />
-                </View>
-              </View>
-            </View>
-          ) : (
-            <NormalRecording
-              isRecording={recorder.isRecording}
-              isPaused={recorder.isPaused}
-              duration={recorder.duration}
-              onCancel={handleCancelVoice}
-              onSend={handleSendVoice}
-              onPause={recorder.pauseRecording}
-              onResume={recorder.resumeRecording}
-              enablePauseResume={voiceRecorderProps?.enablePauseResume ?? true}
-              containerHeight={INPUT_BAR_SHELL_HEIGHT}
-              fontFamily={theme?.fontFamily}
-              sendButtonColor={recordingSendBg}
-              sendIconColor={recordingSendFg}
-              voiceRecorderStyles={voiceRecorderStyles}
-              recordingUIProps={recordingUIProps}
-              CustomPlayIcon={CustomPlayIcon}
-              CustomPauseIcon={CustomPauseIcon}
-            />
-          )}
-        </View>
-      </View>
-    );
-  }
-
-  // ── Normal input UI ───────────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <View style={tw`w-full px-2`}>
+    <View style={tw`w-full px-2 relative`}>
       {hasPreviewAttachments && (
         <FilePreview
           previews={previewList}
@@ -539,7 +335,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </View>
         </View>
 
-        {/* ── Right action button (send / mic) ── */}
+        {/* ── Right action button ── */}
         {showSendButton ? (
           <Pressable
             onPress={handleSendMessage}
@@ -562,19 +358,25 @@ const ChatInput: React.FC<ChatInputProps> = ({
               />
             )}
           </Pressable>
-        ) : showVoiceRecordButton ? (
-          // Mic button uses PanResponder for tap + long-press + drag
+        ) : showFlowMicSpacer && !customVoiceUI ? (
+          // Reserve space for VoiceRecorderFlow's overlaid mic button
           <View
-            {...micPanResponder.panHandlers}
-            style={[
-              tw`rounded-full justify-center items-center`,
-              {
-                height: INPUT_BAR_SHELL_HEIGHT,
-                width: INPUT_BAR_SHELL_HEIGHT,
-                backgroundColor: '#16a34a',
-                ...theme?.inputStyles?.sendButtonStyle,
-              },
-            ]}
+            style={{
+              height: INPUT_BAR_SHELL_HEIGHT,
+              width: INPUT_BAR_SHELL_HEIGHT,
+            }}
+            pointerEvents="none"
+          />
+        ) : showVoiceRecordButton && customVoiceUI ? (
+          // Custom UI provides its own trigger; render a placeholder mic
+          // that does nothing visible if the custom UI handles its own button.
+          <View
+            style={{
+              height: INPUT_BAR_SHELL_HEIGHT,
+              width: INPUT_BAR_SHELL_HEIGHT,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
           >
             {CustomMicrophoneIcon ? (
               <CustomMicrophoneIcon />
@@ -609,6 +411,23 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </Pressable>
         )}
       </View>
+
+      {/* ── Voice recorder overlay ── */}
+      {customVoiceUI ?? (
+        showVoiceRecordButton && (
+          <VoiceRecorderFlow
+            primaryColor={recordingPrimary}
+            backgroundColor={recordingBackground}
+            timerColor={recordingTimerColor}
+            microphoneColor={recordingMicColor}
+            waveformColor={recordingWaveformColor}
+            onRecordingStart={handleFlowRecordingStart}
+            onSend={handleFlowSend}
+            onCancel={handleFlowCancel}
+            onDelete={handleFlowCancel}
+          />
+        )
+      )}
     </View>
   );
 };
