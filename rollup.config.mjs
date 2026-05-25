@@ -12,11 +12,13 @@ export default {
       file: 'lib/commonjs/index.js',
       format: 'cjs',
       sourcemap: true,
+      exports: 'named',
     },
     {
       file: 'lib/module/index.js',
       format: 'esm',
       sourcemap: true,
+      exports: 'named',
     },
   ],
   plugins: [
