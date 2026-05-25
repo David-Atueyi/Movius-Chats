@@ -42,7 +42,7 @@ const MessageStatus: React.FC<MessageStatusProps> = ({
             hasText
               ? tw`justify-end pb-1 ml-4`
               : hasAudio
-                ? tw`absolute right-3 bottom-1`
+                ? tw`absolute right-3 bottom-2`
                 : mediaOverlay
                   ? [
                       tw`absolute right-3 bottom-4`,

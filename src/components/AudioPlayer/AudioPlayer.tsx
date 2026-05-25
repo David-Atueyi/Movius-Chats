@@ -342,7 +342,12 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         style={withFontFamily(
           [
             tw`text-[11px] mt-1`,
-            { color: durationColor },
+            {
+              color: durationColor,
+              paddingLeft: isCurrentUser
+                ? AVATAR_SIZE + 6 + 28 + 6
+                : 28 + 6,
+            },
             theme?.messageStyle?.audioDurationStyle,
           ],
           theme?.fontFamily

@@ -124,6 +124,7 @@ export interface ChatScreenProps {
         avatar: string;
         name: string;
     }>;
+    typingText?: string;
     onTypingStart?: () => void;
     onTypingEnd?: () => void;
     placeholder?: string;
@@ -194,6 +195,7 @@ export interface ChatScreenProps {
             typingContainerStyle?: ViewStyle;
             additionalTypingUsersContainerStyle?: ViewStyle;
             additionalTypingUsersTextStyle?: TextStyle;
+            typingTextStyle?: TextStyle;
         };
         messageStyle?: {
             sentTextStyle?: TextStyle;

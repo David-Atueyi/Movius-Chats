@@ -31,10 +31,39 @@ export const TypingIndicator = ({
   const displayedUsers = otherTypingUsers.slice(0, 2);
   const additionalUsers = otherTypingUsers.length - 2;
 
+  // Number of visible circles (up to 2 user avatars + optional "+N")
+  const numCircles = showAvatars
+    ? displayedUsers.length + (additionalUsers > 0 ? 1 : 0)
+    : 0;
+
+  // Width of avatar group: first is 24px, each extra adds 14px (24 - 10px overlap)
+  const avatarGroupW = numCircles > 0 ? 24 + Math.max(0, numCircles - 1) * 14 : 0;
+
+  // marginLeft = avatarGroupW + 12 keeps the same 4px visual gap as regular
+  // received chat bubbles (px-2 = 8px padding + 4px gap). For 1 avatar this
+  // equals exactly 36px = ml-9, matching ChatBubble.tsx perfectly.
+  const bubbleMarginLeft = numCircles > 0 ? avatarGroupW + 12 : 8;
+
+  // Avatar group left from content area (inside px-2 padding = 8px)
+  const avatarLeft = -(avatarGroupW + 12);
+
   return (
-    <View style={tw`my-1 max-w-[75%] self-start ml-9 px-2`}>
-      {showAvatars && (
-        <View style={tw`absolute top-0 -left-9 flex-row`}>
+    <View
+      style={[
+        tw`px-2 my-1 bg-white rounded-tl-none rounded-lg relative max-w-[75%] self-start`,
+        { marginLeft: bubbleMarginLeft },
+        theme?.bubbleStyle?.typingContainerStyle,
+      ]}
+    >
+      {showAvatars && numCircles > 0 && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: avatarLeft,
+            flexDirection: 'row',
+          }}
+        >
           {displayedUsers.map((user, index) => (
             <View
               key={user.id}
@@ -93,36 +122,27 @@ export const TypingIndicator = ({
         </View>
       )}
 
-      <View
-        style={[
-          tw`px-2 bg-white rounded-tl-none rounded-lg relative`,
-          theme?.bubbleStyle?.typingContainerStyle,
-        ]}
-      >
-        {showBubbleTail && (
-          <ArrowBack2RoundedIcon
-            style={tw.style('absolute -top-1 w-6 h-6 rotate-180 -left-3.5 mt-[1.26px]')}
-            color={theme?.colors?.receivedMessageTailColor || 'white'}
-          />
-        )}
-        {renderCustomTyping ? (
-          renderCustomTyping()
-        ) : (
-          <View style={tw`flex-row items-center py-3 px-2 justify-center`}>
-            <Text
-              style={withFontFamily(
-                [
-                  tw`text-gray-600`,
-                  theme?.bubbleStyle?.typingTextStyle,
-                ],
-                theme?.fontFamily
-              )}
-            >
-              {typingText ?? 'Typing...'}
-            </Text>
-          </View>
-        )}
-      </View>
+      {showBubbleTail && (
+        <ArrowBack2RoundedIcon
+          style={tw.style('absolute -top-1 w-6 h-6 rotate-180 -left-3.5 mt-[1.26px]')}
+          color={theme?.colors?.receivedMessageTailColor || 'white'}
+        />
+      )}
+
+      {renderCustomTyping ? (
+        renderCustomTyping()
+      ) : (
+        <View style={tw`flex-row items-center py-3 px-2 justify-center`}>
+          <Text
+            style={withFontFamily(
+              [tw`text-gray-600`, theme?.bubbleStyle?.typingTextStyle],
+              theme?.fontFamily
+            )}
+          >
+            {typingText ?? 'Typing...'}
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
