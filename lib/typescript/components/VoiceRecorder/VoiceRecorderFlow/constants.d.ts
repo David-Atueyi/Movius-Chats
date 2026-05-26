@@ -1,0 +1,19 @@
+export declare const DEFAULT_INPUT_BAR_HEIGHT: number;
+export declare const DEFAULT_HOLD_SCALE = 1.18;
+/** How long the user must hold before the long-press pan gesture activates. */
+export declare const LONG_PRESS_MS = 220;
+export declare const DEFAULT_CANCEL_DISTANCE = 90;
+export declare const DEFAULT_LOCK_DISTANCE = 70;
+export declare const DEFAULT_WAVE_COUNT = 32;
+export declare const DEFAULT_ICON_SIZE = 22;
+export declare const DEFAULT_LOCK_ICON_SIZE = 18;
+export declare const LOCK_ON_RELEASE_DELTA = 12;
+export declare const COLOR_PRIMARY_FALLBACK = "#16A34A";
+export declare const COLOR_BAR_BG_FALLBACK = "#0B141A";
+export declare const COLOR_HOLD_PILL_BG_FALLBACK = "#1F2C33";
+export declare const COLOR_LOCK_PILL_BG_FALLBACK = "#1F2C33";
+export declare const COLOR_WHITE = "#FFFFFF";
+export declare const COLOR_LIGHT = "#E9EDEF";
+export declare const COLOR_MUTED = "#8696A0";
+export declare const COLOR_RED = "#F15C6D";
+export declare const COLOR_CANCEL_TEXT = "rgba(255,255,255,0.6)";

@@ -332,10 +332,10 @@ When preview or text exists, the **send** icon shows instead of the mic.
 
 | Prop | Type |
 |------|------|
-| `renderVoiceRecorder` | `(VoiceRecorderExposedState) => ReactNode` — replace entire recorder UI |
-| `voiceRecorderProps` | `VoiceRecorderConfig` — `maxDuration`, lock, slide-to-cancel, etc. |
-| `voiceRecorderStyles` | `VoiceRecorderStyleOverrides` |
-| `recordingUIProps` | Colors/sizes for timer, lock pill, recorder play/pause |
+| `CustomVoiceRecorder` | `(VoiceRecorderExposedState) => ReactNode` — replace entire recorder UI |
+| `theme.voiceRecorder.config` | `VoiceRecorderConfig` — `maxDuration`, lock, slide-to-cancel, etc. |
+| `theme.voiceRecorder.ui` | `RecordingUIProps` — colors/sizes for timer, lock pill, recorder play/pause |
+| `theme.voiceRecorder.styles` | `VoiceRecorderStyleOverrides` |
 
 ### Typing
 
@@ -356,7 +356,7 @@ Requires **`react-native-audio-record`** and **`react-native-fs`** in the host a
 | **Tap** mic | Normal bar: trash, timer, waveform, play/pause preview, send |
 | **Long-press** mic | Hold mode: “slide to cancel”, lock column above send |
 | Slide **left** | Cancel (file deleted via `react-native-fs`) |
-| Slide **up** to lock | Switches to normal bar (`lockSlideDistance` in `recordingUIProps`) |
+| Slide **up** to lock | Switches to normal bar (`lockSlideDistance` in `theme.voiceRecorder.config`) |
 | **Release** without slide | Auto-send (`onAudioRecordEnd`) |
 
 ### Wiring
@@ -385,7 +385,7 @@ Requires **`react-native-audio-record`** and **`react-native-fs`** in the host a
 ### Custom recorder UI
 
 ```tsx
-renderVoiceRecorder={(state) => (
+CustomVoiceRecorder={(state) => (
   <MyRecorder
     duration={state.duration}
     onStop={state.stopRecording}
@@ -575,7 +575,7 @@ If your navigator already avoids the keyboard:
 | `renderCustomInput` | Entire input + recorder (you handle preview yourself) |
 | `renderCustomTyping` | “Typing…” content |
 | `renderCustomVideoBubbleError` | Inline video error in grid |
-| `renderVoiceRecorder` | Built-in recorder bars |
+| `CustomVoiceRecorder` | Built-in recorder bars |
 | `CustomEmojiIcon` | Emoji button |
 | `CustomAttachmentIcon` | Paperclip |
 | `CustomCameraIcon` | Camera |

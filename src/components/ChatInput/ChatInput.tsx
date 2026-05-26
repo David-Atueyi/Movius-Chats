@@ -70,10 +70,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     previewItems,
     closePreview,
     onRemovePreviewItem,
-    voiceRecorderProps,
-    voiceRecorderStyles,
-    recordingUIProps,
-    renderVoiceRecorder,
+    CustomVoiceRecorder,
   } = useChatContext();
 
   // ── Preview list ───────────────────────────────────────────────────────────
@@ -148,6 +145,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const showSendButton = !!inputText.trim() || hasPreviewAttachments;
 
+  // ── Voice recorder theming / config (theme.voiceRecorder) ────────────────
+  const voiceRecorderTheme = theme?.voiceRecorder;
+  const mergedRecordingUIProps = voiceRecorderTheme?.ui ?? {};
+  const mergedRecorderStyles = voiceRecorderTheme?.styles;
+  const mergedRecorderConfig = voiceRecorderTheme?.config;
+
   // ── Voice recorder (audio engine) ──────────────────────────────────────────
   const onRecordEnd = useCallback(
     (result: RecordingResult) => {
@@ -157,7 +160,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   );
 
   const recorder = useVoiceRecorder({
-    maxDuration: voiceRecorderProps?.maxDuration ?? 300,
+    maxDuration: mergedRecorderConfig?.maxDuration ?? 300,
     onRecordStart: onAudioRecordStart,
     onRecordEnd,
   });
@@ -195,16 +198,16 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const themeOnPrimary = theme?.colors?.sendIconsColor;
 
   const recordingPrimary =
-    recordingUIProps?.recordingSendButtonBackground ?? themePrimary;
-  const recordingBackground = recordingUIProps?.recordingBackground;
+    mergedRecordingUIProps.recordingSendButtonBackground ?? themePrimary;
+  const recordingBackground = mergedRecordingUIProps.recordingBackground;
   const recordingTimerColor =
-    recordingUIProps?.timerColor ?? themeOnPrimary;
+    mergedRecordingUIProps.timerColor ?? themeOnPrimary;
   const recordingMicColor =
-    recordingUIProps?.longPressMicColor ?? themeOnPrimary;
+    mergedRecordingUIProps.longPressMicColor ?? themeOnPrimary;
   const recordingWaveformColor =
-    recordingUIProps?.waveformColor ?? themeOnPrimary;
+    mergedRecordingUIProps.waveformColor ?? themeOnPrimary;
 
-  // ── Custom voice UI override (back-compat for renderVoiceRecorder) ─────────
+  // ── Custom voice UI override ──────────────────────────────────────────────
   const exposedState: VoiceRecorderExposedState = {
     isRecording: recorder.isRecording,
     isPaused: recorder.isPaused,
@@ -219,8 +222,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
     cancelRecording: recorder.cancelRecording,
   };
 
-  const customVoiceUI = renderVoiceRecorder
-    ? renderVoiceRecorder(exposedState)
+  const customVoiceUI = CustomVoiceRecorder
+    ? CustomVoiceRecorder(exposedState)
     : null;
 
   // ── Inline render helpers ──────────────────────────────────────────────────
@@ -379,26 +382,30 @@ const ChatInput: React.FC<ChatInputProps> = ({
             timerColor={recordingTimerColor}
             microphoneColor={recordingMicColor}
             waveformColor={recordingWaveformColor}
-            cancelTextColor={recordingUIProps?.cancelTextColor}
-            chevronColor={recordingUIProps?.chevronIconColor}
-            lockColor={recordingUIProps?.lockIconColor}
-            lockPillBackground={recordingUIProps?.lockPillBackground}
-            iconSize={recordingUIProps?.iconSize}
-            lockSlideDistance={recordingUIProps?.lockSlideDistance}
-            waveCount={recordingUIProps?.waveformBarCount}
-            enableLockRecording={voiceRecorderProps?.enableLockRecording}
-            enableSlideToCancel={voiceRecorderProps?.enableSlideToCancel}
-            enableWaveform={voiceRecorderProps?.enableWaveform}
+            holdPillBackground={mergedRecordingUIProps.holdPillBackground}
+            cancelTextColor={mergedRecordingUIProps.cancelTextColor}
+            chevronColor={mergedRecordingUIProps.chevronIconColor}
+            lockColor={mergedRecordingUIProps.lockIconColor}
+            lockPillBackground={mergedRecordingUIProps.lockPillBackground}
+            deleteIconColor={mergedRecordingUIProps.deleteIconColor}
+            pauseIconColor={mergedRecordingUIProps.pauseIconColor}
+            iconSize={mergedRecordingUIProps.iconSize}
+            lockSlideDistance={mergedRecordingUIProps.lockSlideDistance}
+            waveCount={mergedRecordingUIProps.waveformBarCount}
+            enableLockRecording={mergedRecorderConfig?.enableLockRecording}
+            enableSlideToCancel={mergedRecorderConfig?.enableSlideToCancel}
+            enableWaveform={mergedRecorderConfig?.enableWaveform}
             timerTextStyle={
-              recordingUIProps?.timerTextStyle ?? voiceRecorderStyles?.timer
+              mergedRecordingUIProps.timerTextStyle ??
+              mergedRecorderStyles?.timer
             }
-            containerStyle={voiceRecorderStyles?.container}
-            barStyle={voiceRecorderStyles?.bar}
-            slideTextStyle={voiceRecorderStyles?.slideText}
-            waveformStyle={voiceRecorderStyles?.waveform}
-            lockPillStyle={voiceRecorderStyles?.lockPill}
-            trashButtonStyle={voiceRecorderStyles?.trashButton}
-            sendButtonStyle={voiceRecorderStyles?.sendButton}
+            containerStyle={mergedRecorderStyles?.container}
+            barStyle={mergedRecorderStyles?.bar}
+            slideTextStyle={mergedRecorderStyles?.slideText}
+            waveformStyle={mergedRecorderStyles?.waveform}
+            lockPillStyle={mergedRecorderStyles?.lockPill}
+            trashButtonStyle={mergedRecorderStyles?.trashButton}
+            sendButtonStyle={mergedRecorderStyles?.sendButton}
             renderInputPill={renderInputPill}
             renderSendIcon={CustomSendIcon ? () => <CustomSendIcon /> : undefined}
             renderMicIcon={

@@ -1,0 +1,37 @@
+import React, { ReactNode } from 'react';
+import { TextStyle, ViewStyle } from 'react-native';
+import { Gesture } from 'react-native-gesture-handler';
+import { useAnimatedStyle } from 'react-native-reanimated';
+interface InlineRowProps {
+    isHold: boolean;
+    duration: number;
+    composedGesture: ReturnType<typeof Gesture.Race>;
+    micWrapperStyle: ReturnType<typeof useAnimatedStyle>;
+    slideTextAnimatedStyle: ReturnType<typeof useAnimatedStyle>;
+    lockPillAnimatedStyle: ReturnType<typeof useAnimatedStyle>;
+    chevronAnimatedStyle: ReturnType<typeof useAnimatedStyle>;
+    primaryColor: string;
+    microphoneColor: string;
+    timerColor: string;
+    cancelTextColor: string;
+    holdPillBackground: string;
+    lockPillBackground: string;
+    lockColor: string;
+    chevronColor: string;
+    iconSize: number;
+    lockIconSize: number;
+    inputBarHeight: number;
+    micSize: number;
+    enableLockRecording: boolean;
+    renderInputPill?: () => ReactNode;
+    renderMicIcon?: () => ReactNode;
+    renderArrowIcon?: () => ReactNode;
+    renderLockIcon?: () => ReactNode;
+    containerStyleOverride?: ViewStyle;
+    timerTextStyle?: TextStyle;
+    slideTextStyleOverride?: TextStyle;
+    lockPillStyleOverride?: ViewStyle;
+    sendButtonStyle?: ViewStyle;
+}
+export declare const InlineRow: React.FC<InlineRowProps>;
+export {};

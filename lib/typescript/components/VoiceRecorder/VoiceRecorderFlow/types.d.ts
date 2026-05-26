@@ -1,6 +1,13 @@
-import React, { ReactNode } from 'react';
-import { TextStyle, ViewStyle } from 'react-native';
+import type { ReactNode } from 'react';
+import type { TextStyle, ViewStyle } from 'react-native';
 export type RecordingState = 'IDLE' | 'RECORDING_TAP' | 'RECORDING_HOLD' | 'LOCKED_RECORDING' | 'SENDING' | 'CANCELLED';
+export declare const STATE_IDLE = 0;
+export declare const STATE_TAP = 1;
+export declare const STATE_HOLD = 2;
+export declare const STATE_LOCKED = 3;
+export declare const STATE_SENDING = 4;
+export declare const STATE_CANCELLED = 5;
+export declare function stateToInt(s: RecordingState): number;
 export interface VoiceRecorderFlowAudio {
     /** Final recording duration in seconds. */
     duration: number;
@@ -71,5 +78,3 @@ export interface VoiceRecorderFlowProps {
     /** Notifies the parent whenever the internal state changes. */
     onStateChange?: (state: RecordingState) => void;
 }
-export declare const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps>;
-export default VoiceRecorderFlow;

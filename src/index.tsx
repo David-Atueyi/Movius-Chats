@@ -154,4 +154,18 @@ export {
   type RecordingState,
 } from './components/VoiceRecorder/VoiceRecorderFlow';
 
+// Chat + voice recorder configuration types (public API)
+export type {
+  ChatScreenProps,
+  Message,
+  MessageFileAttachment,
+  MessageMediaItem,
+  PreviewAttachment,
+  RecordingResult,
+  RecordingUIProps,
+  VoiceRecorderConfig,
+  VoiceRecorderExposedState,
+  VoiceRecorderStyleOverrides,
+} from './types';
+
 export default ChatScreen;

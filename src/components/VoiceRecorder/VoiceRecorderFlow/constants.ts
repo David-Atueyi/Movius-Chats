@@ -13,11 +13,7 @@ export const DEFAULT_WAVE_COUNT = 32;
 export const DEFAULT_ICON_SIZE = 22;
 export const DEFAULT_LOCK_ICON_SIZE = 18;
 
-/**
- * Any upward movement greater than this magnitude (in px) at release time
- * locks the recording instead of sending — protects users who flick up and
- * release quickly without crossing the lock threshold.
- */
+
 export const LOCK_ON_RELEASE_DELTA = 12;
 
 // ── Default colors ───────────────────────────────────────────────────────────

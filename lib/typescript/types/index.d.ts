@@ -6,7 +6,7 @@ export interface RecordingResult {
     size?: number;
     mimeType?: string;
 }
-/** Passed to `renderVoiceRecorder` so a custom UI has full control. */
+/** Passed to `CustomVoiceRecorder` so a custom UI has full control. */
 export interface VoiceRecorderExposedState {
     isRecording: boolean;
     isPaused: boolean;
@@ -25,20 +25,14 @@ export interface VoiceRecorderExposedState {
 }
 /** Feature flags / limits for the built-in recorder. */
 export interface VoiceRecorderConfig {
-    /** Maximum recording length in seconds. Default `300`. */
     maxDuration?: number;
-    /** When `false`, sliding the mic left does not cancel the recording. */
     enableSlideToCancel?: boolean;
-    /** When `false`, sliding the mic up does not lock the recording. */
     enableLockRecording?: boolean;
-    /** Render the animated waveform inside the locked / tap recording view. */
     enableWaveform?: boolean;
 }
 /** Coarse-grained style overrides for the built-in recorder UI. */
 export interface VoiceRecorderStyleOverrides {
-    /** Outer fixed-bottom container that hosts the recorder overlay. */
     container?: ViewStyle;
-    /** The dark recording bar that slides up from the bottom. */
     bar?: ViewStyle;
     timer?: TextStyle;
     waveform?: ViewStyle;
@@ -55,6 +49,7 @@ export interface RecordingUIProps {
     timerColor?: string;
     waveformColor?: string;
     recordingBackground?: string;
+    holdPillBackground?: string;
     cancelTextColor?: string;
     longPressMicColor?: string;
     containerBorderTopColor?: string;
@@ -67,6 +62,8 @@ export interface RecordingUIProps {
     lockPillMarginBottom?: number;
     lockSlideDistance?: number;
     recordingSendButtonBackground?: string;
+    deleteIconColor?: string;
+    pauseIconColor?: string;
     waveformBarCount?: number;
 }
 /** Single image or video inside a message bubble (use `mediaItems` for albums). */
@@ -109,10 +106,8 @@ export interface ChatScreenProps {
     onAudioRecordStart?: () => void;
     onCameraPress?: () => void;
     onFileAttachmentPress?: (file: MessageFileAttachment) => void;
-    renderVoiceRecorder?: (state: VoiceRecorderExposedState) => React.ReactNode;
-    voiceRecorderProps?: VoiceRecorderConfig;
-    voiceRecorderStyles?: VoiceRecorderStyleOverrides;
-    recordingUIProps?: RecordingUIProps;
+    /** Replace the entire built-in voice recorder UI. */
+    CustomVoiceRecorder?: (state: VoiceRecorderExposedState) => React.ReactNode;
     keyboardVerticalOffset?: number;
     disableKeyboardAvoiding?: boolean;
     typingUsers?: Array<{
@@ -223,6 +218,11 @@ export interface ChatScreenProps {
             iconContainer?: ViewStyle;
             nameContainer?: ViewStyle;
             text?: TextStyle;
+        };
+        voiceRecorder?: {
+            ui?: RecordingUIProps;
+            styles?: VoiceRecorderStyleOverrides;
+            config?: VoiceRecorderConfig;
         };
     };
     showAvatars?: boolean;
