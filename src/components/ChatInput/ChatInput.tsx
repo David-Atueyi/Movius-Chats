@@ -405,37 +405,35 @@ const ChatInput: React.FC<ChatInputProps> = ({
   // ── Reply preview row ────────────────────────────────────────────────────
   const replyEnabled = replyProps?.enableReply ?? true;
   const replyPreviewNode =
-    replyTarget && replyEnabled
-      ? renderReplyPreview
-        ? renderReplyPreview(replyTarget, cancelReply)
-        : (
-            <ReplyPreview
-              message={replyTarget}
-              onCancel={cancelReply}
-              previewMaxLines={replyProps?.previewMaxLines}
-              replyStyle={replyStyle}
-              fontFamily={theme?.fontFamily}
-              accentColor={
-                theme?.colors?.sentMessageTailColor ||
-                theme?.colors?.receivedMessageTailColor ||
-                '#22c55e'
-              }
-              senderNameColor={
-                theme?.colors?.sentMessageTailColor ||
-                theme?.colors?.receivedMessageTailColor ||
-                '#22c55e'
-              }
-              previewTextColor={
-                theme?.colors?.placeholderTextColor ||
-                'rgba(255,255,255,0.7)'
-              }
-              closeIconColor={
-                theme?.colors?.inputsIconsColor ||
-                'rgba(255,255,255,0.7)'
-              }
-            />
-          )
-      : null;
+    replyTarget && replyEnabled ? (
+      renderReplyPreview ? (
+        renderReplyPreview(replyTarget, cancelReply)
+      ) : (
+        <ReplyPreview
+          message={replyTarget}
+          onCancel={cancelReply}
+          previewMaxLines={replyProps?.previewMaxLines}
+          replyStyle={replyStyle}
+          fontFamily={theme?.fontFamily}
+          accentColor={
+            theme?.colors?.sentMessageTailColor ||
+            theme?.colors?.receivedMessageTailColor ||
+            '#22c55e'
+          }
+          senderNameColor={
+            theme?.colors?.sentMessageTailColor ||
+            theme?.colors?.receivedMessageTailColor ||
+            '#22c55e'
+          }
+          previewTextColor={
+            theme?.colors?.placeholderTextColor || 'rgba(255,255,255,0.7)'
+          }
+          closeIconColor={
+            theme?.colors?.inputsIconsColor || 'rgba(255,255,255,0.7)'
+          }
+        />
+      )
+    ) : null;
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -454,10 +452,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       )}
 
       <View
-        style={[
-          tw`w-full`,
-          theme?.inputStyles?.inputSectionContainerStyle,
-        ]}
+        style={[tw`w-full`, theme?.inputStyles?.inputSectionContainerStyle]}
       >
         {useVoiceFlowRow ? (
           <VoiceRecorderFlow
@@ -493,7 +488,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
             trashButtonStyle={mergedRecorderStyles?.trashButton}
             sendButtonStyle={mergedRecorderStyles?.sendButton}
             renderInputPill={renderInputPill}
-            renderSendIcon={CustomSendIcon ? () => <CustomSendIcon /> : undefined}
+            renderSendIcon={
+              CustomSendIcon ? () => <CustomSendIcon /> : undefined
+            }
             renderMicIcon={
               CustomMicrophoneIcon ? () => <CustomMicrophoneIcon /> : undefined
             }

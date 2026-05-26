@@ -151,12 +151,7 @@ export interface MessageActionFlags {
 }
 
 /** Identifier for one of the default long-press actions. */
-export type MessageActionId =
-  | 'reply'
-  | 'copy'
-  | 'edit'
-  | 'delete'
-  | 'forward';
+export type MessageActionId = 'reply' | 'copy' | 'edit' | 'delete' | 'forward';
 
 // ─── Camera ───────────────────────────────────────────────────────────────────
 
