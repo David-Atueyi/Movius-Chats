@@ -189,21 +189,20 @@ const ChatInput: React.FC<ChatInputProps> = ({
     recorderRef.current.resumeRecording();
   }, []);
 
-  // Theme colors / sizing for flow
+  const themePrimary = theme?.inputStyles?.sendButtonStyle?.backgroundColor as
+    | string
+    | undefined;
+  const themeOnPrimary = theme?.colors?.sendIconsColor;
+
   const recordingPrimary =
-    recordingUIProps?.recordingSendButtonBackground ??
-    (theme?.inputStyles?.sendButtonStyle?.backgroundColor as string) ??
-    '#16A34A';
-  const recordingBackground =
-    recordingUIProps?.recordingBackground ?? '#0B141A';
+    recordingUIProps?.recordingSendButtonBackground ?? themePrimary;
+  const recordingBackground = recordingUIProps?.recordingBackground;
   const recordingTimerColor =
-    recordingUIProps?.timerColor ?? '#FFFFFF';
+    recordingUIProps?.timerColor ?? themeOnPrimary;
   const recordingMicColor =
-    recordingUIProps?.longPressMicColor ??
-    theme?.colors?.sendIconsColor ??
-    '#FFFFFF';
+    recordingUIProps?.longPressMicColor ?? themeOnPrimary;
   const recordingWaveformColor =
-    recordingUIProps?.waveformColor ?? '#E9EDEF';
+    recordingUIProps?.waveformColor ?? themeOnPrimary;
 
   // ── Custom voice UI override (back-compat for renderVoiceRecorder) ─────────
   const exposedState: VoiceRecorderExposedState = {
@@ -348,8 +347,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
       />
     );
 
-  // The flow takes ownership of the row when voice is active and there's no
-  // text / preview to send. Otherwise we render the normal text-mode row.
   const useVoiceFlowRow =
     !showSendButton && showVoiceRecordButton && !customVoiceUI;
 

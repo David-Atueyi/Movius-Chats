@@ -1,0 +1,192 @@
+import React, { ReactNode } from 'react';
+import { Text, TextStyle, View, ViewStyle } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import tw from 'twrnc';
+import { MicrophoneIcon } from '../../../assets/Icons/MicrophoneIcon';
+import { formatDuration } from '../../../utils/datefunc';
+import { LockPill } from './LockPill';
+
+interface InlineRowProps {
+  isHold: boolean;
+  duration: number;
+
+  composedGesture: ReturnType<typeof Gesture.Race>;
+  micWrapperStyle: ReturnType<typeof useAnimatedStyle>;
+  slideTextAnimatedStyle: ReturnType<typeof useAnimatedStyle>;
+  lockPillAnimatedStyle: ReturnType<typeof useAnimatedStyle>;
+  chevronAnimatedStyle: ReturnType<typeof useAnimatedStyle>;
+
+  // Colors / sizing
+  primaryColor: string;
+  microphoneColor: string;
+  timerColor: string;
+  cancelTextColor: string;
+  holdPillBackground: string;
+  lockPillBackground: string;
+  lockColor: string;
+  chevronColor: string;
+  iconSize: number;
+  lockIconSize: number;
+  inputBarHeight: number;
+  micSize: number;
+  enableLockRecording: boolean;
+
+  // Render slots
+  renderInputPill?: () => ReactNode;
+  renderMicIcon?: () => ReactNode;
+  renderArrowIcon?: () => ReactNode;
+  renderLockIcon?: () => ReactNode;
+
+  // Style overrides
+  containerStyleOverride?: ViewStyle;
+  timerTextStyle?: TextStyle;
+  slideTextStyleOverride?: TextStyle;
+  lockPillStyleOverride?: ViewStyle;
+  sendButtonStyle?: ViewStyle;
+}
+
+export const InlineRow: React.FC<InlineRowProps> = ({
+  isHold,
+  duration,
+  composedGesture,
+  micWrapperStyle,
+  slideTextAnimatedStyle,
+  lockPillAnimatedStyle,
+  chevronAnimatedStyle,
+  primaryColor,
+  microphoneColor,
+  timerColor,
+  cancelTextColor,
+  holdPillBackground,
+  lockPillBackground,
+  lockColor,
+  chevronColor,
+  iconSize,
+  lockIconSize,
+  inputBarHeight,
+  micSize,
+  enableLockRecording,
+  renderInputPill,
+  renderMicIcon,
+  renderArrowIcon,
+  renderLockIcon,
+  containerStyleOverride,
+  timerTextStyle,
+  slideTextStyleOverride,
+  lockPillStyleOverride,
+  sendButtonStyle,
+}) => {
+  const holdPillStyle: ViewStyle = {
+    minHeight: inputBarHeight,
+    backgroundColor: holdPillBackground,
+  };
+
+  const micButtonStyle: ViewStyle = {
+    height: micSize,
+    width: micSize,
+    backgroundColor: primaryColor,
+  };
+
+  return (
+    <View
+      style={[tw`flex-row items-end gap-2 relative`, containerStyleOverride]}
+      pointerEvents="box-none"
+    >
+      {isHold ? (
+        <View
+          style={[
+            tw`flex-1 flex-row items-center px-4 rounded-3xl`,
+            holdPillStyle,
+          ]}
+        >
+          <Text
+            style={[
+              tw`text-base font-semibold`,
+              { color: timerColor, minWidth: 42 },
+              timerTextStyle,
+            ]}
+            numberOfLines={1}
+          >
+            {formatDuration(duration)}
+          </Text>
+
+          <Animated.View
+            style={[
+              tw`flex-1 flex-row items-center justify-center gap-1.5`,
+              slideTextAnimatedStyle,
+            ]}
+          >
+            {renderArrowIcon ? (
+              renderArrowIcon()
+            ) : (
+              <Text
+                style={[
+                  tw`text-base leading-none`,
+                  { color: cancelTextColor, marginTop: -2 },
+                ]}
+              >
+                ‹
+              </Text>
+            )}
+            <Text
+              style={[
+                tw`text-sm`,
+                { color: cancelTextColor },
+                slideTextStyleOverride,
+              ]}
+            >
+              Slide to cancel
+            </Text>
+          </Animated.View>
+        </View>
+      ) : (
+        renderInputPill?.()
+      )}
+
+      <View
+        style={[
+          tw`relative items-center justify-center`,
+          { height: inputBarHeight, width: inputBarHeight },
+        ]}
+      >
+        {enableLockRecording && isHold && (
+          <LockPill
+            width={micSize - 8}
+            bottomOffset={micSize + 6}
+            background={lockPillBackground}
+            lockColor={lockColor}
+            chevronColor={chevronColor}
+            lockIconSize={lockIconSize}
+            pillAnimatedStyle={lockPillAnimatedStyle}
+            chevronAnimatedStyle={chevronAnimatedStyle}
+            styleOverride={lockPillStyleOverride}
+            renderLockIcon={renderLockIcon}
+          />
+        )}
+
+        <GestureDetector gesture={composedGesture}>
+          <Animated.View
+            style={[
+              tw`items-center justify-center rounded-full`,
+              micButtonStyle,
+              sendButtonStyle,
+              micWrapperStyle,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Tap to record. Long-press and slide left to cancel or up to lock."
+          >
+            {renderMicIcon ? (
+              renderMicIcon()
+            ) : (
+              <MicrophoneIcon
+                style={{ width: iconSize + 6, height: iconSize + 6 }}
+                color={microphoneColor}
+              />
+            )}
+          </Animated.View>
+        </GestureDetector>
+      </View>
+    </View>
+  );
+};

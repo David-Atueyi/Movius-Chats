@@ -19,36 +19,19 @@ import { MicrophoneIcon } from '../../assets/Icons/MicrophoneIcon';
 import { formatDuration } from '../../utils/datefunc';
 
 export interface VoiceRecordingGestureProps {
-  /** App primary color used for the mic button background. */
   primaryColor?: string;
-  /** Recording bar background. */
   backgroundColor?: string;
-  /** Color of the running timer. */
   timerColor?: string;
-  /** Color of the microphone glyph. */
   microphoneColor?: string;
-  /** Color of the lock glyph + chevron. */
   lockColor?: string;
-  /** Background of the floating lock pill. */
   lockPillBackground?: string;
-  /** Color used for the "Slide to cancel" text. */
   cancelTextColor?: string;
-
-  /** Bar height. Default `48` (input-row sized). */
   barHeight?: number;
-  /** Mic size. Defaults to `barHeight`. */
   micSize?: number;
-
-  /** Replace the mic icon. */
   renderMicIcon?: () => ReactNode;
-  /** Replace the lock icon shown in the floating pill. */
   renderLockIcon?: () => ReactNode;
-  /** Replace the "<" arrow next to "Slide to cancel". */
   renderArrowIcon?: () => ReactNode;
-
-  /** Fired when the horizontal drag passes the cancel threshold. */
   onCancel?: () => void;
-  /** Fired when the upward drag passes the lock threshold. */
   onLock?: () => void;
 }
 
@@ -202,7 +185,6 @@ export const VoiceRecordingGesture: React.FC<VoiceRecordingGestureProps> = ({
 
   return (
     <View style={tw`w-full flex-row items-end gap-2 relative`} pointerEvents="box-none">
-      {/* Dark "input pill" with timer + slide-to-cancel */}
       <View
         style={[
           tw`flex-1 flex-row items-center px-4 rounded-3xl`,
@@ -243,7 +225,6 @@ export const VoiceRecordingGesture: React.FC<VoiceRecordingGestureProps> = ({
         </Animated.View>
       </View>
 
-      {/* Mic + lock pill stack */}
       <View
         style={[
           tw`relative items-center justify-center`,

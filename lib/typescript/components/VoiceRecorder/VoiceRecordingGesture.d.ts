@@ -10,6 +10,14 @@ export interface VoiceRecordingGestureProps {
     microphoneColor?: string;
     /** Color of the lock glyph + chevron. */
     lockColor?: string;
+    /** Background of the floating lock pill. */
+    lockPillBackground?: string;
+    /** Color used for the "Slide to cancel" text. */
+    cancelTextColor?: string;
+    /** Bar height. Default `48` (input-row sized). */
+    barHeight?: number;
+    /** Mic size. Defaults to `barHeight`. */
+    micSize?: number;
     /** Replace the mic icon. */
     renderMicIcon?: () => ReactNode;
     /** Replace the lock icon shown in the floating pill. */

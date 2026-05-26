@@ -12,26 +12,31 @@ export interface VoiceRecorderProps {
     sendButtonColor?: string;
     /** Stroke color of the trash / delete icon. */
     deleteIconColor?: string;
-    /** Container height. Default `110`. */
-    height?: number;
-    /** Top corner radius. Bottom corners always stay square. Default `18`. */
+    /** Color of the pause / play icon. */
+    pauseIconColor?: string;
+    /** Top corner radius. Bottom corners always stay square. Default `16`. */
     borderRadius?: number;
-    /** Number of bars rendered inside the waveform. Default `28`. */
+    /** Size of the circular send button. Default `50`. */
+    sendButtonSize?: number;
+    /** Number of bars rendered inside the waveform. Default `32`. */
     waveCount?: number;
-    /** Horizontal gap between waveform bars. Default `3`. */
-    waveSpacing?: number;
-    /** Width of each waveform bar. Default `3`. */
-    waveWidth?: number;
     /** Override the entire delete icon (keeps press handling intact). */
     renderDeleteIcon?: () => ReactNode;
     /** Override the entire send icon (keeps press handling intact). */
     renderSendIcon?: () => ReactNode;
+    /** Override the pause / play icon. */
+    renderPauseIcon?: () => ReactNode;
+    renderPlayIcon?: () => ReactNode;
     /** Replace the built-in waveform with any node. */
     renderWaveform?: () => ReactNode;
     /** Fired when the user taps the send button. */
     onSend?: () => void;
     /** Fired when the user taps the trash / cancel icon. */
     onDelete?: () => void;
+    /** Fired when the user taps pause. */
+    onPause?: () => void;
+    /** Fired when the user taps play (resume). */
+    onResume?: () => void;
 }
 export declare const VoiceRecorder: React.FC<VoiceRecorderProps>;
 export default VoiceRecorder;
