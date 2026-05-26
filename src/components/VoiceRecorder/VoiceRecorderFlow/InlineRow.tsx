@@ -5,6 +5,7 @@ import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import tw from 'twrnc';
 import { MicrophoneIcon } from '../../../assets/Icons/MicrophoneIcon';
 import { formatDuration } from '../../../utils/datefunc';
+import { withFontFamily } from '../../../utils/theme';
 import { LockPill } from './LockPill';
 
 interface InlineRowProps {
@@ -44,6 +45,9 @@ interface InlineRowProps {
   slideTextStyleOverride?: TextStyle;
   lockPillStyleOverride?: ViewStyle;
   sendButtonStyle?: ViewStyle;
+
+  // Typography
+  fontFamily?: string;
 }
 
 export const InlineRow: React.FC<InlineRowProps> = ({
@@ -76,6 +80,7 @@ export const InlineRow: React.FC<InlineRowProps> = ({
   slideTextStyleOverride,
   lockPillStyleOverride,
   sendButtonStyle,
+  fontFamily,
 }) => {
   const holdPillStyle: ViewStyle = {
     minHeight: inputBarHeight,
@@ -101,11 +106,14 @@ export const InlineRow: React.FC<InlineRowProps> = ({
           ]}
         >
           <Text
-            style={[
-              tw`text-base font-semibold`,
-              { color: timerColor, minWidth: 42 },
-              timerTextStyle,
-            ]}
+            style={withFontFamily(
+              [
+                tw`text-base font-semibold`,
+                { color: timerColor, minWidth: 42 },
+                timerTextStyle,
+              ],
+              fontFamily
+            )}
             numberOfLines={1}
           >
             {formatDuration(duration)}
@@ -121,20 +129,26 @@ export const InlineRow: React.FC<InlineRowProps> = ({
               renderArrowIcon()
             ) : (
               <Text
-                style={[
-                  tw`text-base leading-none`,
-                  { color: cancelTextColor, marginTop: -2 },
-                ]}
+                style={withFontFamily(
+                  [
+                    tw`text-base leading-none`,
+                    { color: cancelTextColor, marginTop: -2 },
+                  ],
+                  fontFamily
+                )}
               >
                 ‹
               </Text>
             )}
             <Text
-              style={[
-                tw`text-sm`,
-                { color: cancelTextColor },
-                slideTextStyleOverride,
-              ]}
+              style={withFontFamily(
+                [
+                  tw`text-sm`,
+                  { color: cancelTextColor },
+                  slideTextStyleOverride,
+                ],
+                fontFamily
+              )}
             >
               Slide to cancel
             </Text>

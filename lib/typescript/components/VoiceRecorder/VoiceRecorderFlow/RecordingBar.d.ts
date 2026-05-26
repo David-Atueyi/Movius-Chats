@@ -34,6 +34,7 @@ interface RecordingBarProps {
     waveformStyle?: ViewStyle;
     trashButtonStyle?: ViewStyle;
     sendButtonStyle?: ViewStyle;
+    fontFamily?: string;
 }
 export declare const RecordingBar: React.FC<RecordingBarProps>;
 export {};

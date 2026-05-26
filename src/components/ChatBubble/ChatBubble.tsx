@@ -6,6 +6,7 @@ import { useChatContext } from '../../context/ChatContext';
 import { getBubbleBackgroundColor } from '../../utils/bubbleTheme';
 import { collectMediaItems } from '../../utils/messageMedia';
 import { withFontFamily } from '../../utils/theme';
+import { SwipeableMessage } from '../Reply/SwipeableMessage';
 import MessageContent from './MessageContent';
 import MessageStatus from './MessageStatus';
 import { ChatBubbleProps } from './types';
@@ -25,7 +26,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     showBubbleTail,
     setMediaViewerGallery,
     isVideoPlaying,
+    replyProps,
+    startReply,
   } = useChatContext();
+
+  const replyEnabled = replyProps?.enableReply ?? true;
+  const swipeThreshold = replyProps?.swipeThreshold ?? 60;
 
   const mediaItems = collectMediaItems(message);
 
@@ -39,7 +45,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     !message.text &&
     !message.audio;
 
-  return (
+  const bubble = (
     <Pressable
       onLongPress={onLongPress}
       style={[
@@ -145,6 +151,17 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         hasFileAttachments={hasFilesOnly}
       />
     </Pressable>
+  );
+
+  return (
+    <SwipeableMessage
+      isCurrentUser={isCurrentUser}
+      enabled={replyEnabled}
+      swipeThreshold={swipeThreshold}
+      onReply={() => startReply(message)}
+    >
+      {bubble}
+    </SwipeableMessage>
   );
 };
 

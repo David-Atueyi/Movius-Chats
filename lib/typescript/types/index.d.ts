@@ -77,6 +77,20 @@ export interface MessageFileAttachment {
     type: string;
     name: string;
 }
+/** Lightweight reference to the message being replied to. */
+export interface MessageReply {
+    /** id of the original message being replied to. */
+    messageId: string;
+    /** Display name shown in the reply chip. */
+    senderName?: string;
+    /** Short text preview of the original message. */
+    preview?: string;
+    /**
+     * Optional media kind so the reply chip can show an icon hint
+     * (image / video / audio / file) when there is no preview text.
+     */
+    mediaKind?: 'image' | 'video' | 'audio' | 'file';
+}
 export interface Message {
     id: string;
     text?: string;
@@ -90,6 +104,108 @@ export interface Message {
     senderAvatar?: string;
     mediaItems?: MessageMediaItem[];
     fileAttachments?: MessageFileAttachment[];
+    /** Optional reference to a quoted message (rendered as a WhatsApp-style chip). */
+    replyTo?: MessageReply;
+}
+/** Feature flags for slide-to-reply. */
+export interface ReplyConfig {
+    /** Master switch — when `false` the gesture is disabled and the chip never shows. */
+    enableReply?: boolean;
+    /** Horizontal pixels the bubble must travel before the reply fires. Default `60`. */
+    swipeThreshold?: number;
+    /** Lines shown in the reply preview above the input. Default `2`. */
+    previewMaxLines?: number;
+}
+/** Style overrides for the reply chip + reply preview row. */
+export interface ReplyStyleOverrides {
+    /** Outer container of the reply preview above the input. */
+    container?: ViewStyle;
+    /** Vertical accent bar on the left of the chip. */
+    replyBar?: ViewStyle;
+    /** Sender name text inside the chip. */
+    senderName?: TextStyle;
+    /** Preview text inside the chip. */
+    previewText?: TextStyle;
+}
+export interface MessageActionFlags {
+    enableReply?: boolean;
+    enableCopy?: boolean;
+    enableEdit?: boolean;
+    enableDelete?: boolean;
+    enableForward?: boolean;
+}
+/** Identifier for one of the default long-press actions. */
+export type MessageActionId = 'reply' | 'copy' | 'edit' | 'delete' | 'forward';
+/** Result handed back to the host app when the user finishes capturing. */
+export interface CameraCaptureResult {
+    uri: string;
+    type: 'image' | 'video';
+    /** Video duration in seconds (only set for videos). */
+    duration?: number;
+    width?: number;
+    height?: number;
+}
+/** Feature flags for the built-in camera screen. */
+export interface CameraConfig {
+    /** Allow photo capture. Default `true`. */
+    enablePhoto?: boolean;
+    /** Allow video recording. Default `true`. */
+    enableVideo?: boolean;
+    /** Allow pinch-to-zoom. Default `true`. */
+    enableZoom?: boolean;
+    /** Allow switching between front and back. Default `true`. */
+    enableSwitchCamera?: boolean;
+    /** Capture audio along with video. Default `true`. */
+    enableAudio?: boolean;
+    /** Maximum video recording length in seconds. Default `60`. */
+    maxVideoDuration?: number;
+    /** Maximum pinch zoom factor. Default `8`. */
+    maxZoom?: number;
+    /** Native photo quality preset. */
+    photoQuality?: 'speed' | 'balanced' | 'quality';
+    /** Native video quality preset (a vision-camera Format quality string). */
+    videoQuality?: string;
+}
+/** Color / sizing knobs for the built-in camera screen UI. */
+export interface CameraUIProps {
+    /** Diameter of the round capture button. Default `72`. */
+    captureButtonSize?: number;
+    /** Diameter of the close / switch buttons. Default `40`. */
+    controlButtonSize?: number;
+    /** Style for the recording timer text. */
+    timerTextStyle?: TextStyle;
+    /** Camera scrim background color. Default `#000`. */
+    backgroundColor?: string;
+    /** Color of the capture ring while idle. Default `#FFFFFF`. */
+    captureRingColor?: string;
+    /** Color of the capture ring while recording. Default `#EF4444`. */
+    recordingRingColor?: string;
+    /** Color of the round dot inside the capture ring while idle. Default `#FFFFFF`. */
+    captureDotColor?: string;
+    /** Color of the recording dot indicator next to the timer. Default `#EF4444`. */
+    recordingIndicatorColor?: string;
+    /** Color of mode selector active text. Defaults to theme primary. */
+    activeModeTextColor?: string;
+    /** Color of mode selector inactive text. Default `rgba(255,255,255,0.7)`. */
+    inactiveModeTextColor?: string;
+    /** Color of the close / switch icons. Default `#FFFFFF`. */
+    iconColor?: string;
+}
+/** Live state passed to a custom camera renderer. */
+export interface CameraExposedState {
+    isCameraReady: boolean;
+    isRecording: boolean;
+    facing: 'front' | 'back';
+    zoom: number;
+    /** Recording elapsed time in seconds (0 when not recording). */
+    elapsed: number;
+    capturePhoto: () => Promise<CameraCaptureResult | null>;
+    startRecording: () => Promise<void>;
+    stopRecording: () => Promise<CameraCaptureResult | null>;
+    switchCamera: () => void;
+    setZoom: (zoom: number) => void;
+    /** Close the camera screen. */
+    close: () => void;
 }
 export interface PreviewAttachment {
     uri: string;
@@ -108,6 +224,34 @@ export interface ChatScreenProps {
     onFileAttachmentPress?: (file: MessageFileAttachment) => void;
     /** Replace the entire built-in voice recorder UI. */
     CustomVoiceRecorder?: (state: VoiceRecorderExposedState) => React.ReactNode;
+    /** Fired when the user picks a message to reply to (via swipe or action sheet). */
+    onReplyMessage?: (message: Message) => void;
+    /** Feature flags for the reply gesture. */
+    replyProps?: ReplyConfig;
+    /** Style overrides for the reply chip + preview row. */
+    replyStyle?: ReplyStyleOverrides;
+    /** Replace the default reply preview (above the input) with a custom node. */
+    renderReplyPreview?: (message: Message, cancel: () => void) => React.ReactNode;
+    /** Replace the inline reply chip rendered inside a quoting bubble. */
+    renderInlineReply?: (reply: MessageReply, isCurrentUser: boolean) => React.ReactNode;
+    /** Toggle individual default actions on / off. */
+    messageActionProps?: MessageActionFlags;
+    /** Replace the default long-press action sheet entirely. */
+    renderMessageActions?: (message: Message, close: () => void) => React.ReactNode;
+    onCopyMessage?: (message: Message) => void;
+    onEditMessage?: (message: Message) => void;
+    onDeleteMessage?: (message: Message) => void;
+    onForwardMessage?: (message: Message) => void;
+    /** Enable the built-in camera screen (otherwise the package only fires `onCameraPress`). */
+    enableBuiltInCamera?: boolean;
+    /** Camera feature flags / limits. */
+    cameraProps?: CameraConfig;
+    /** Camera UI knobs (sizes / colors). */
+    cameraUIProps?: CameraUIProps;
+    /** Replace the entire built-in camera screen UI. */
+    renderCameraScreen?: (state: CameraExposedState) => React.ReactNode;
+    /** Fired when a photo or video is captured by the built-in camera. */
+    onCameraCapture?: (media: CameraCaptureResult) => void;
     keyboardVerticalOffset?: number;
     disableKeyboardAvoiding?: boolean;
     typingUsers?: Array<{

@@ -70,6 +70,7 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
     lockPillStyle,
     trashButtonStyle,
     sendButtonStyle,
+    fontFamily,
     onRecordingStart,
     onRecordingStop,
     onSend,
@@ -140,6 +141,7 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
         waveformStyle={waveformStyle}
         trashButtonStyle={trashButtonStyle}
         sendButtonStyle={sendButtonStyle}
+        fontFamily={fontFamily}
       />
     );
   }
@@ -175,6 +177,7 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
       slideTextStyleOverride={slideTextStyle}
       lockPillStyleOverride={lockPillStyle}
       sendButtonStyle={sendButtonStyle}
+      fontFamily={fontFamily}
     />
   );
 };

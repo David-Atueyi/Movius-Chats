@@ -11,6 +11,7 @@ import { PauseIcon } from '../../../assets/Icons/PauseIcon';
 import { PlayIcon } from '../../../assets/Icons/PlayIcon';
 import { TrashIcon } from '../../../assets/Icons/TrashIcon';
 import { formatDuration } from '../../../utils/datefunc';
+import { withFontFamily } from '../../../utils/theme';
 import { Waveform } from './Waveform';
 
 interface RecordingBarProps {
@@ -53,6 +54,9 @@ interface RecordingBarProps {
   waveformStyle?: ViewStyle;
   trashButtonStyle?: ViewStyle;
   sendButtonStyle?: ViewStyle;
+
+  // Typography
+  fontFamily?: string;
 }
 
 export const RecordingBar: React.FC<RecordingBarProps> = ({
@@ -87,6 +91,7 @@ export const RecordingBar: React.FC<RecordingBarProps> = ({
   waveformStyle,
   trashButtonStyle,
   sendButtonStyle,
+  fontFamily,
 }) => {
   const fullBarStyle: ViewStyle = {
     minHeight: inputBarHeight + 50,
@@ -118,11 +123,14 @@ export const RecordingBar: React.FC<RecordingBarProps> = ({
           ]}
         />
         <Text
-          style={[
-            tw`text-base font-semibold`,
-            { color: timerColor, minWidth: 42 },
-            timerTextStyle,
-          ]}
+          style={withFontFamily(
+            [
+              tw`text-base font-semibold`,
+              { color: timerColor, minWidth: 42 },
+              timerTextStyle,
+            ],
+            fontFamily
+          )}
           numberOfLines={1}
         >
           {formatDuration(duration)}

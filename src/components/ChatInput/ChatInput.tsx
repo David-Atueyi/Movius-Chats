@@ -20,6 +20,7 @@ import {
   getInputBarIconStyle,
   withFontFamily,
 } from '../../utils/theme';
+import { ReplyPreview } from '../Reply/ReplyPreview';
 import { VoiceRecorderFlow } from '../VoiceRecorder/VoiceRecorderFlow';
 import FilePreview from './FilePreview';
 import { ChatInputProps, InputHeightState } from './types';
@@ -71,6 +72,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
     closePreview,
     onRemovePreviewItem,
     CustomVoiceRecorder,
+    // reply state
+    replyTarget,
+    cancelReply,
+    replyProps,
+    replyStyle,
+    renderReplyPreview,
   } = useChatContext();
 
   // ── Preview list ───────────────────────────────────────────────────────────
@@ -124,18 +131,55 @@ const ChatInput: React.FC<ChatInputProps> = ({
     []
   );
 
+  const buildReplyTo = useCallback(() => {
+    if (!replyTarget) return undefined;
+    return {
+      messageId: replyTarget.id,
+      senderName: replyTarget.senderName,
+      preview:
+        replyTarget.text ??
+        (replyTarget.audio
+          ? '🎤 Audio message'
+          : replyTarget.image
+            ? '📷 Photo'
+            : replyTarget.video
+              ? '🎥 Video'
+              : replyTarget.fileAttachments?.[0]?.name
+                ? `📎 ${replyTarget.fileAttachments[0].name}`
+                : ''),
+      mediaKind: replyTarget.audio
+        ? ('audio' as const)
+        : replyTarget.video
+          ? ('video' as const)
+          : replyTarget.image ||
+              (replyTarget.mediaItems ?? []).some((m) => m.kind === 'image')
+            ? ('image' as const)
+            : (replyTarget.fileAttachments ?? []).length
+              ? ('file' as const)
+              : undefined,
+    };
+  }, [replyTarget]);
+
   const handleSendMessage = useCallback(() => {
     const trimmedText = inputText.trim();
     if (!trimmedText && !hasPreviewAttachments) return;
-    onSendMessage({ text: trimmedText, senderId: currentUserId });
+    onSendMessage({
+      text: trimmedText,
+      senderId: currentUserId,
+      ...(replyTarget ? { replyTo: buildReplyTo() } : {}),
+    });
     setInputText('');
     resetInputLayout();
+    if (replyTarget) cancelReply();
   }, [
     inputText,
     onSendMessage,
     currentUserId,
     hasPreviewAttachments,
     resetInputLayout,
+    replyTarget,
+    buildReplyTo,
+    cancelReply,
   ]);
 
   useEffect(() => {
@@ -176,9 +220,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const handleFlowSend = useCallback(async () => {
     const result = await recorderRef.current.stopRecording();
     if (result) {
-      onSendMessage({ audio: result.uri, senderId: currentUserId });
+      onSendMessage({
+        audio: result.uri,
+        senderId: currentUserId,
+        ...(replyTarget ? { replyTo: buildReplyTo() } : {}),
+      });
+      if (replyTarget) cancelReply();
     }
-  }, [onSendMessage, currentUserId]);
+  }, [onSendMessage, currentUserId, replyTarget, buildReplyTo, cancelReply]);
 
   const handleFlowCancel = useCallback(() => {
     recorderRef.current.cancelRecording();
@@ -353,9 +402,45 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const useVoiceFlowRow =
     !showSendButton && showVoiceRecordButton && !customVoiceUI;
 
+  // ── Reply preview row ────────────────────────────────────────────────────
+  const replyEnabled = replyProps?.enableReply ?? true;
+  const replyPreviewNode =
+    replyTarget && replyEnabled
+      ? renderReplyPreview
+        ? renderReplyPreview(replyTarget, cancelReply)
+        : (
+            <ReplyPreview
+              message={replyTarget}
+              onCancel={cancelReply}
+              previewMaxLines={replyProps?.previewMaxLines}
+              replyStyle={replyStyle}
+              fontFamily={theme?.fontFamily}
+              accentColor={
+                theme?.colors?.sentMessageTailColor ||
+                theme?.colors?.receivedMessageTailColor ||
+                '#22c55e'
+              }
+              senderNameColor={
+                theme?.colors?.sentMessageTailColor ||
+                theme?.colors?.receivedMessageTailColor ||
+                '#22c55e'
+              }
+              previewTextColor={
+                theme?.colors?.placeholderTextColor ||
+                'rgba(255,255,255,0.7)'
+              }
+              closeIconColor={
+                theme?.colors?.inputsIconsColor ||
+                'rgba(255,255,255,0.7)'
+              }
+            />
+          )
+      : null;
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <View style={tw`w-full px-2`}>
+      {replyPreviewNode}
       {hasPreviewAttachments && (
         <FilePreview
           previews={previewList}
@@ -399,6 +484,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               mergedRecordingUIProps.timerTextStyle ??
               mergedRecorderStyles?.timer
             }
+            fontFamily={theme?.fontFamily}
             containerStyle={mergedRecorderStyles?.container}
             barStyle={mergedRecorderStyles?.bar}
             slideTextStyle={mergedRecorderStyles?.slideText}

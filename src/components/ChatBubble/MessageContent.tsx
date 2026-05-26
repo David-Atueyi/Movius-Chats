@@ -12,6 +12,7 @@ import {
 import { collectMediaItems } from '../../utils/messageMedia';
 import { getFontFamilyStyle, withFontFamily } from '../../utils/theme';
 import AudioPlayer from '../AudioPlayer/AudioPlayer';
+import { InlineReply } from '../Reply/InlineReply';
 import { MediaGrid } from './MediaGrid';
 import { MessageContentProps } from './types';
 
@@ -21,12 +22,44 @@ const MessageContent: React.FC<MessageContentProps> = ({
   isVideoPlaying,
   isCurrentUser,
 }) => {
-  const { theme, showMessageStatus, onFileAttachmentPress } = useChatContext();
+  const { theme, showMessageStatus, onFileAttachmentPress, replyStyle, renderInlineReply } =
+    useChatContext();
 
   const mediaItems = useMemo(() => collectMediaItems(message), [message]);
 
+  // ── Inline reply chip ────────────────────────────────────────────────────
+  const replyChip = (() => {
+    if (!message.replyTo) return null;
+    if (renderInlineReply) {
+      return renderInlineReply(message.replyTo, isCurrentUser);
+    }
+    const accent = isCurrentUser
+      ? theme?.colors?.sentMessageTailColor || '#a7f3d0'
+      : theme?.colors?.receivedMessageTailColor || '#22c55e';
+    const bg = isCurrentUser
+      ? 'rgba(255,255,255,0.18)'
+      : 'rgba(0,0,0,0.06)';
+    const senderColor = accent;
+    const textColor = isCurrentUser
+      ? theme?.colors?.sentMessageTextColor || 'rgba(255,255,255,0.9)'
+      : theme?.colors?.receivedMessageTextColor || 'rgba(0,0,0,0.7)';
+    return (
+      <InlineReply
+        reply={message.replyTo}
+        isCurrentUser={isCurrentUser}
+        fontFamily={theme?.fontFamily}
+        replyStyle={replyStyle}
+        accentColor={accent}
+        backgroundColor={bg}
+        senderNameColor={senderColor}
+        previewTextColor={textColor}
+      />
+    );
+  })();
+
   return (
     <View>
+      {replyChip}
       {mediaItems.length > 0 && (
         <MediaGrid items={mediaItems} onOpenGallery={onGalleryOpen} />
       )}

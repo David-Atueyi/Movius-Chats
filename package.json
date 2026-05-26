@@ -46,18 +46,26 @@
   },
   "homepage": "https://github.com/David-Atueyi/Movius-Chats#readme",
   "peerDependencies": {
+    "@react-native-clipboard/clipboard": "*",
     "react": ">=16.8.0",
     "react-native": "*",
     "react-native-audio-record": "*",
     "react-native-fs": "*",
     "react-native-gesture-handler": ">=2.0.0",
-    "react-native-reanimated": "*"
+    "react-native-reanimated": "*",
+    "react-native-vision-camera": "4.7.3"
   },
   "peerDependenciesMeta": {
+    "@react-native-clipboard/clipboard": {
+      "optional": true
+    },
     "react-native-audio-record": {
       "optional": true
     },
     "react-native-fs": {
+      "optional": true
+    },
+    "react-native-vision-camera": {
       "optional": true
     }
   },

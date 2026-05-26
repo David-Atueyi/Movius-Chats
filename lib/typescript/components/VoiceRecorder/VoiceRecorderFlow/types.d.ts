@@ -65,6 +65,8 @@ export interface VoiceRecorderFlowProps {
     lockPillStyle?: ViewStyle;
     trashButtonStyle?: ViewStyle;
     sendButtonStyle?: ViewStyle;
+    /** Theme font family applied to every text element (timer, slide-to-cancel). */
+    fontFamily?: string;
     onRecordingStart?: () => void;
     onRecordingStop?: () => void;
     onSend?: (audio: VoiceRecorderFlowAudio) => void;

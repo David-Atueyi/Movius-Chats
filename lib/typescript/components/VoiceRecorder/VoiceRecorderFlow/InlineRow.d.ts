@@ -32,6 +32,7 @@ interface InlineRowProps {
     slideTextStyleOverride?: TextStyle;
     lockPillStyleOverride?: ViewStyle;
     sendButtonStyle?: ViewStyle;
+    fontFamily?: string;
 }
 export declare const InlineRow: React.FC<InlineRowProps>;
 export {};
