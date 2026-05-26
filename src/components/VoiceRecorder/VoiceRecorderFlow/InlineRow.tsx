@@ -1,9 +1,10 @@
 import React, { ReactNode } from 'react';
-import { Text, TextStyle, View, ViewStyle } from 'react-native';
+import { Pressable, Text, TextStyle, View, ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import tw from 'twrnc';
 import { MicrophoneIcon } from '../../../assets/Icons/MicrophoneIcon';
+import { PaperPlaneIcon } from '../../../assets/Icons/PaperPlaneIcon';
 import { formatDuration } from '../../../utils/datefunc';
 import { withFontFamily } from '../../../utils/theme';
 import { LockPill } from './LockPill';
@@ -33,9 +34,16 @@ interface InlineRowProps {
   micSize: number;
   enableLockRecording: boolean;
 
+  // Trailing-slot send-button mode
+  showSendButton?: boolean;
+  onSendPress?: () => void;
+  sendButtonBackgroundColor?: string;
+  sendButtonIconColor?: string;
+
   // Render slots
   renderInputPill?: () => ReactNode;
   renderMicIcon?: () => ReactNode;
+  renderSendIcon?: () => ReactNode;
   renderArrowIcon?: () => ReactNode;
   renderLockIcon?: () => ReactNode;
 
@@ -71,8 +79,13 @@ export const InlineRow: React.FC<InlineRowProps> = ({
   inputBarHeight,
   micSize,
   enableLockRecording,
+  showSendButton,
+  onSendPress,
+  sendButtonBackgroundColor,
+  sendButtonIconColor,
   renderInputPill,
   renderMicIcon,
+  renderSendIcon,
   renderArrowIcon,
   renderLockIcon,
   containerStyleOverride,
@@ -179,27 +192,54 @@ export const InlineRow: React.FC<InlineRowProps> = ({
           />
         )}
 
-        <GestureDetector gesture={composedGesture}>
-          <Animated.View
+        {showSendButton && !isHold ? (
+          <Pressable
+            onPress={onSendPress}
             style={[
               tw`items-center justify-center rounded-full`,
-              micButtonStyle,
+              {
+                height: micSize,
+                width: micSize,
+                backgroundColor:
+                  sendButtonBackgroundColor ?? primaryColor,
+              },
               sendButtonStyle,
-              micWrapperStyle,
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Tap to record. Long-press and slide left to cancel or up to lock."
+            accessibilityLabel="Send"
           >
-            {renderMicIcon ? (
-              renderMicIcon()
+            {renderSendIcon ? (
+              renderSendIcon()
             ) : (
-              <MicrophoneIcon
-                style={{ width: iconSize + 6, height: iconSize + 6 }}
-                color={microphoneColor}
+              <PaperPlaneIcon
+                style={{ width: iconSize, height: iconSize }}
+                color={sendButtonIconColor ?? microphoneColor}
               />
             )}
-          </Animated.View>
-        </GestureDetector>
+          </Pressable>
+        ) : (
+          <GestureDetector gesture={composedGesture}>
+            <Animated.View
+              style={[
+                tw`items-center justify-center rounded-full`,
+                micButtonStyle,
+                sendButtonStyle,
+                micWrapperStyle,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Tap to record. Long-press and slide left to cancel or up to lock."
+            >
+              {renderMicIcon ? (
+                renderMicIcon()
+              ) : (
+                <MicrophoneIcon
+                  style={{ width: iconSize + 6, height: iconSize + 6 }}
+                  color={microphoneColor}
+                />
+              )}
+            </Animated.View>
+          </GestureDetector>
+        )}
       </View>
     </View>
   );

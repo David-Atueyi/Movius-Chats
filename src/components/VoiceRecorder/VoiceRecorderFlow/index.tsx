@@ -53,6 +53,10 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
     lockSlideDistance = DEFAULT_LOCK_DISTANCE,
     cancelSlideDistance = DEFAULT_CANCEL_DISTANCE,
     waveCount = DEFAULT_WAVE_COUNT,
+    showSendButton,
+    onSendPress,
+    sendButtonBackgroundColor,
+    sendButtonIconColor,
     renderInputPill,
     renderMicIcon,
     renderSendIcon,
@@ -168,8 +172,13 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
       inputBarHeight={inputBarHeight}
       micSize={micSize}
       enableLockRecording={enableLockRecording}
+      showSendButton={showSendButton}
+      onSendPress={onSendPress}
+      sendButtonBackgroundColor={sendButtonBackgroundColor}
+      sendButtonIconColor={sendButtonIconColor}
       renderInputPill={renderInputPill}
       renderMicIcon={renderMicIcon}
+      renderSendIcon={renderSendIcon}
       renderArrowIcon={renderArrowIcon}
       renderLockIcon={renderLockIcon}
       containerStyleOverride={containerStyle}

@@ -97,6 +97,8 @@ export interface MessageReply {
    * (image / video / audio / file) when there is no preview text.
    */
   mediaKind?: 'image' | 'video' | 'audio' | 'file';
+  /** Thumbnail uri (only meaningful when `mediaKind` is `image` or `video`). */
+  thumbnailUri?: string;
 }
 
 export interface Message {
@@ -114,6 +116,8 @@ export interface Message {
   fileAttachments?: MessageFileAttachment[];
   /** Optional reference to a quoted message (rendered as a WhatsApp-style chip). */
   replyTo?: MessageReply;
+  /** Marks the message as edited (renders a small italic "edited" before the timestamp). */
+  edited?: boolean;
 }
 
 // ─── Reply ────────────────────────────────────────────────────────────────────
@@ -138,6 +142,8 @@ export interface ReplyStyleOverrides {
   senderName?: TextStyle;
   /** Preview text inside the chip. */
   previewText?: TextStyle;
+  /** Style override for the optional thumbnail on the right end. */
+  thumbnail?: ImageStyle;
 }
 
 // ─── Long-press message actions ───────────────────────────────────────────────
@@ -148,10 +154,63 @@ export interface MessageActionFlags {
   enableEdit?: boolean;
   enableDelete?: boolean;
   enableForward?: boolean;
+  /** Toggle the "Select" action (enters multi-select mode). Default `true`. */
+  enableSelect?: boolean;
 }
 
 /** Identifier for one of the default long-press actions. */
-export type MessageActionId = 'reply' | 'copy' | 'edit' | 'delete' | 'forward';
+export type MessageActionId =
+  | 'reply'
+  | 'copy'
+  | 'edit'
+  | 'delete'
+  | 'forward'
+  | 'select';
+
+/** Anchor info passed to the popover so it can position itself near the bubble. */
+export interface MessageActionAnchor {
+  /** Bubble x position in screen coordinates. */
+  x: number;
+  /** Bubble y position in screen coordinates. */
+  y: number;
+  /** Bubble width. */
+  width: number;
+  /** Bubble height. */
+  height: number;
+  /** Whether the bubble belongs to the current user (right-aligned). */
+  isCurrentUser: boolean;
+}
+
+/** Visual knobs for the long-press popover (the dropdown menu shown next to a bubble). */
+export interface MessageActionUIProps {
+  /** Card background color. Default `#FFFFFF`. */
+  backgroundColor?: string;
+  /** Default label color. Default `#111827`. */
+  textColor?: string;
+  /** Default icon color. Defaults to `textColor`. */
+  iconColor?: string;
+  /** Color used for the destructive Delete action. Default `#EF4444`. */
+  destructiveColor?: string;
+  /** Width of the popover card. Default `200`. */
+  width?: number;
+  /** Border radius of the popover card. Default `12`. */
+  borderRadius?: number;
+  /** Style override for individual action rows. */
+  rowStyle?: ViewStyle;
+  /** Style override for action labels. */
+  rowTextStyle?: TextStyle;
+  /** Optional override of the entire backdrop dim color. */
+  backdropColor?: string;
+}
+
+// ─── Selection mode (multi-select after pressing "Select") ──────────────────
+
+export interface SelectionUIProps {
+  /** Color used for the selected-bubble overlay (semi-transparent). */
+  overlayColor?: string;
+  /** Background color of the entire row when one of its bubbles is selected. */
+  rowBackgroundColor?: string;
+}
 
 // ─── Camera ───────────────────────────────────────────────────────────────────
 
@@ -270,15 +329,40 @@ export interface ChatScreenProps {
   // ── Long-press message actions ────────────────────────────────────────────
   /** Toggle individual default actions on / off. */
   messageActionProps?: MessageActionFlags;
-  /** Replace the default long-press action sheet entirely. */
+  /** Visual customization knobs for the default popover. */
+  messageActionUI?: MessageActionUIProps;
+  /** Replace the default long-press action popover entirely. */
   renderMessageActions?: (
     message: Message,
-    close: () => void
+    close: () => void,
+    anchor?: MessageActionAnchor
   ) => React.ReactNode;
   onCopyMessage?: (message: Message) => void;
-  onEditMessage?: (message: Message) => void;
+  /**
+   * Fired when the user confirms an edit. The package will pre-fill the input
+   * with the original text and clear the draft when this returns.
+   */
+  onEditMessage?: (message: Message, newText: string) => void;
   onDeleteMessage?: (message: Message) => void;
   onForwardMessage?: (message: Message) => void;
+
+  // ── Multi-select mode ─────────────────────────────────────────────────────
+  /** Visual knobs for selected-bubble overlay. */
+  selectionUI?: SelectionUIProps;
+  /** Fired any time the selection set changes (entering / leaving select mode). */
+  onSelectionChange?: (selectedIds: string[]) => void;
+  /** Fired when the user taps Delete while in selection mode. */
+  onDeleteSelected?: (messages: Message[]) => void;
+  /** Fired when the user taps Forward while in selection mode. */
+  onForwardSelected?: (messages: Message[]) => void;
+  /** Fired when the user taps Copy while in selection mode. */
+  onCopySelected?: (messages: Message[]) => void;
+
+  // ── "edited" indicator ────────────────────────────────────────────────────
+  /** Text rendered before the timestamp when `message.edited === true`. Default `edited`. */
+  editedLabel?: string;
+  /** Style override for the edited indicator. */
+  editedTextStyle?: TextStyle;
 
   // ── Camera ────────────────────────────────────────────────────────────────
   /** Enable the built-in camera screen (otherwise the package only fires `onCameraPress`). */
@@ -384,6 +468,8 @@ export interface ChatScreenProps {
       audioDurationStyle?: TextStyle;
       audioSpeedButtonStyle?: ViewStyle;
       audioSpeedTextStyle?: TextStyle;
+      /** Style for the small italic "edited" indicator. */
+      editedTextStyle?: TextStyle;
     };
     inputStyles?: {
       inputSectionContainerStyle?: ViewStyle;

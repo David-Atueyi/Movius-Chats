@@ -4,7 +4,7 @@ import tw from 'twrnc';
 import ChatBubble from './components/ChatBubble/ChatBubble';
 import ChatInput from './components/ChatInput/ChatInput';
 import {
-  MessageActionsSheet,
+  MessageActionsPopover,
   tryCopyMessage,
 } from './components/MessageActions';
 import MediaViewer from './components/MediaViewer/MediaViewer';
@@ -13,7 +13,12 @@ import { CameraScreen } from './components/CameraScreen';
 import { AudioProvider } from './context/AudioContext';
 import { ChatProvider, useChatContext } from './context/ChatContext';
 import { useKeyboardInset } from './hooks/useKeyboardInset';
-import { ChatScreenProps, Message, MessageActionId } from './types';
+import {
+  ChatScreenProps,
+  Message,
+  MessageActionAnchor,
+  MessageActionId,
+} from './types';
 
 const ChatScreenContent = () => {
   const {
@@ -45,16 +50,23 @@ const ChatScreenContent = () => {
     // ── Reply
     startReply,
 
-    // ── Action sheet
+    // ── Action popover
     actionSheetMessage,
+    actionAnchor,
     openActionSheet,
     closeActionSheet,
     messageActionProps,
+    messageActionUI,
     renderMessageActions,
     onCopyMessage,
-    onEditMessage,
     onDeleteMessage,
     onForwardMessage,
+
+    // ── Edit flow
+    startEdit,
+
+    // ── Selection mode
+    enterSelectionMode,
 
     // ── Camera
     cameraVisible,
@@ -70,14 +82,14 @@ const ChatScreenContent = () => {
 
   const keyboardInset = useKeyboardInset(!disableKeyboardAvoiding);
 
-  // ── Long-press handler: delegate or open default sheet ─────────────────────
+  // ── Long-press handler: capture anchor and open the popover ──────────────
   const handleLongPress = useCallback(
-    (message: Message) => {
+    (message: Message, anchor: MessageActionAnchor) => {
       if (onMessageLongPress) {
         onMessageLongPress(message);
         return;
       }
-      openActionSheet(message);
+      openActionSheet(message, anchor);
     },
     [onMessageLongPress, openActionSheet]
   );
@@ -95,7 +107,7 @@ const ChatScreenContent = () => {
           else tryCopyMessage(message);
           break;
         case 'edit':
-          onEditMessage?.(message);
+          startEdit(message);
           break;
         case 'delete':
           onDeleteMessage?.(message);
@@ -103,15 +115,19 @@ const ChatScreenContent = () => {
         case 'forward':
           onForwardMessage?.(message);
           break;
+        case 'select':
+          enterSelectionMode(message);
+          break;
       }
     },
     [
       closeActionSheet,
       startReply,
       onCopyMessage,
-      onEditMessage,
       onDeleteMessage,
       onForwardMessage,
+      startEdit,
+      enterSelectionMode,
     ]
   );
 
@@ -152,18 +168,24 @@ const ChatScreenContent = () => {
     theme?.colors?.sentBubbleBackgroundColor ??
     undefined) as string | undefined;
 
-  // ── Action sheet render (default OR custom override) ───────────────────────
+  // ── Action popover render (default OR custom override) ─────────────────────
   const actionSheetNode = (() => {
     if (!actionSheetMessage) return null;
     if (renderMessageActions) {
-      return renderMessageActions(actionSheetMessage, closeActionSheet);
+      return renderMessageActions(
+        actionSheetMessage,
+        closeActionSheet,
+        actionAnchor ?? undefined
+      );
     }
     return (
-      <MessageActionsSheet
+      <MessageActionsPopover
         message={actionSheetMessage}
+        anchor={actionAnchor}
         visible
         onClose={closeActionSheet}
         flags={messageActionProps}
+        ui={messageActionUI}
         fontFamily={theme?.fontFamily}
         onAction={handleAction}
       />
@@ -180,7 +202,7 @@ const ChatScreenContent = () => {
           <ChatBubble
             message={item}
             isCurrentUser={item.senderId === currentUserId}
-            onLongPress={() => handleLongPress(item)}
+            onLongPress={(anchor) => handleLongPress(item, anchor)}
             isFirstInSequence={
               index === messages.length - 1 ||
               messages[index + 1]?.senderId !== item.senderId
@@ -284,6 +306,7 @@ export { CameraScreen } from './components/CameraScreen';
 export type { CameraScreenProps } from './components/CameraScreen';
 
 export {
+  MessageActionsPopover,
   MessageActionsSheet,
   tryCopyMessage,
 } from './components/MessageActions';
@@ -302,8 +325,10 @@ export type {
   CameraUIProps,
   ChatScreenProps,
   Message,
+  MessageActionAnchor,
   MessageActionFlags,
   MessageActionId,
+  MessageActionUIProps,
   MessageFileAttachment,
   MessageMediaItem,
   MessageReply,
@@ -312,6 +337,7 @@ export type {
   RecordingUIProps,
   ReplyConfig,
   ReplyStyleOverrides,
+  SelectionUIProps,
   VoiceRecorderConfig,
   VoiceRecorderExposedState,
   VoiceRecorderStyleOverrides,

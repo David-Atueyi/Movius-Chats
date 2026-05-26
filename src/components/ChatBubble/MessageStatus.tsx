@@ -20,10 +20,11 @@ const MessageStatus: React.FC<MessageStatusProps> = ({
   hasAudio,
   hasGalleryMedia,
   hasFileAttachments,
+  edited,
 }) => {
-  const { theme, showMessageStatus } = useChatContext();
-  const galleryOnlyOverlay =
-    hasGalleryMedia && !hasText && !hasAudio;
+  const { theme, showMessageStatus, editedLabel, editedTextStyle } =
+    useChatContext();
+  const galleryOnlyOverlay = hasGalleryMedia && !hasText && !hasAudio;
   const mediaOverlay =
     (hasGalleryMedia || hasFileAttachments) && !hasText && !hasAudio;
 
@@ -32,6 +33,11 @@ const MessageStatus: React.FC<MessageStatusProps> = ({
     : mediaOverlay
       ? getMediaTimestampColor(theme, isCurrentUser)
       : getMessageTimestampColor(theme, isCurrentUser);
+
+  const editedColor =
+    galleryOnlyOverlay || mediaOverlay
+      ? 'rgba(255,255,255,0.85)'
+      : timestampColor;
 
   return (
     <>
@@ -54,6 +60,25 @@ const MessageStatus: React.FC<MessageStatusProps> = ({
                     ],
           ]}
         >
+          {edited && (
+            <Text
+              style={withFontFamily(
+                [
+                  tw`text-[11px] mr-1.5`,
+                  {
+                    fontStyle: 'italic',
+                    color: editedColor,
+                    opacity: 0.85,
+                  },
+                  theme?.messageStyle?.editedTextStyle,
+                  editedTextStyle,
+                ],
+                theme?.fontFamily
+              )}
+            >
+              {editedLabel ?? 'edited'}
+            </Text>
+          )}
           <Text
             style={withFontFamily(
               [tw`text-xs`, { color: timestampColor }],

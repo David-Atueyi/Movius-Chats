@@ -115,6 +115,22 @@ export interface VoiceRecorderFlowProps {
   /** Theme font family applied to every text element (timer, slide-to-cancel). */
   fontFamily?: string;
 
+  // ── Trailing button (text mode) ───────────────────────────────────────────
+  /**
+   * When `true`, the IDLE-state trailing slot renders a send button instead of
+   * the recording mic. Recording-state UIs are unaffected. Use this so the
+   * input pill stays mounted in the same parent across the
+   * "empty input" ↔ "user is typing" transition (otherwise the TextInput
+   * unmounts and the keyboard dismisses on the first character).
+   */
+  showSendButton?: boolean;
+  /** Fired when the user taps the trailing send button (only meaningful when `showSendButton` is true). */
+  onSendPress?: () => void;
+  /** Background color for the trailing send button (defaults to `primaryColor`). */
+  sendButtonBackgroundColor?: string;
+  /** Color for the default paper-plane icon. */
+  sendButtonIconColor?: string;
+
   // ── Callbacks ─────────────────────────────────────────────────────────────
   onRecordingStart?: () => void;
   onRecordingStop?: () => void;

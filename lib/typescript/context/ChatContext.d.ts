@@ -1,0 +1,42 @@
+import React from 'react';
+import { ChatScreenProps, Message, MessageActionAnchor, MessageMediaItem } from '../types';
+/** Full-screen swipe viewer state */
+export interface MediaViewerGalleryState {
+    items: MessageMediaItem[];
+    initialIndex: number;
+}
+interface ChatContextType extends ChatScreenProps {
+    mediaViewerGallery: MediaViewerGalleryState | null;
+    setMediaViewerGallery: (items: MessageMediaItem[], initialIndex: number) => void;
+    clearMediaViewerGallery: () => void;
+    isVideoPlaying: boolean;
+    setIsVideoPlaying: (playing: boolean) => void;
+    /** The message currently being replied to (null when no draft reply). */
+    replyTarget: Message | null;
+    /** Begin a reply. Mirrors `onReplyMessage`. */
+    startReply: (message: Message) => void;
+    /** Cancel the current reply draft. */
+    cancelReply: () => void;
+    actionSheetMessage: Message | null;
+    /** Anchor info captured at long-press time so the popover can position itself. */
+    actionAnchor: MessageActionAnchor | null;
+    openActionSheet: (message: Message, anchor?: MessageActionAnchor) => void;
+    closeActionSheet: () => void;
+    selectionMode: boolean;
+    selectedIds: string[];
+    enterSelectionMode: (initial?: Message) => void;
+    exitSelectionMode: () => void;
+    toggleSelection: (message: Message) => void;
+    isSelected: (id: string) => boolean;
+    editingMessage: Message | null;
+    startEdit: (message: Message) => void;
+    cancelEdit: () => void;
+    cameraVisible: boolean;
+    openCamera: () => void;
+    closeCamera: () => void;
+}
+export declare const ChatProvider: React.FC<ChatScreenProps & {
+    children: React.ReactNode;
+}>;
+export declare const useChatContext: () => ChatContextType;
+export {};
