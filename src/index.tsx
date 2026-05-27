@@ -4,7 +4,7 @@ import tw from 'twrnc';
 import ChatBubble from './components/ChatBubble/ChatBubble';
 import ChatInput from './components/ChatInput/ChatInput';
 import {
-  MessageActionsPopover,
+  LongPressOverlay,
   tryCopyMessage,
 } from './components/MessageActions';
 import MediaViewer from './components/MediaViewer/MediaViewer';
@@ -168,7 +168,7 @@ const ChatScreenContent = () => {
     theme?.colors?.sentBubbleBackgroundColor ??
     undefined) as string | undefined;
 
-  // ── Action popover render (default OR custom override) ─────────────────────
+  // ── Long-press overlay (scrim + lifted bubble + anchored menu) ───────────
   const actionSheetNode = (() => {
     if (!actionSheetMessage) return null;
     if (renderMessageActions) {
@@ -179,7 +179,7 @@ const ChatScreenContent = () => {
       );
     }
     return (
-      <MessageActionsPopover
+      <LongPressOverlay
         message={actionSheetMessage}
         anchor={actionAnchor}
         visible
@@ -306,6 +306,7 @@ export { CameraScreen } from './components/CameraScreen';
 export type { CameraScreenProps } from './components/CameraScreen';
 
 export {
+  LongPressOverlay,
   MessageActionsPopover,
   MessageActionsSheet,
   tryCopyMessage,

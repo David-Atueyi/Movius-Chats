@@ -7,6 +7,7 @@ import { withFontFamily } from '../../utils/theme';
 interface InlineReplyProps {
   reply: MessageReply;
   isCurrentUser: boolean;
+  isFirstInSequence?: boolean;
   fontFamily?: string;
   replyStyle?: ReplyStyleOverrides;
   /** Vertical accent bar color (defaults to a lighter shade of the bubble). */
@@ -52,6 +53,8 @@ const iconFor = (kind: MessageReply['mediaKind']): string | null => {
 
 export const InlineReply: React.FC<InlineReplyProps> = ({
   reply,
+  isCurrentUser,
+  isFirstInSequence,
   fontFamily,
   replyStyle,
   accentColor,
@@ -63,11 +66,33 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
   const preview = previewFor(reply);
   const showThumb = !!reply.thumbnailUri;
 
+  // Match the bubble's outer corners on top so the full-width chip sits
+  // flush against the bubble edges (the bubble's tail-side top corner is
+  // squared off when the message is first in a sequence).
+  const bubbleRadius = 8;
+  const topLeftRadius =
+    isFirstInSequence && !isCurrentUser ? 0 : bubbleRadius;
+  const topRightRadius =
+    isFirstInSequence && isCurrentUser ? 0 : bubbleRadius;
+
   return (
     <View
       style={[
-        tw`flex-row mt-1.5 mb-0.5 rounded-md overflow-hidden`,
-        { backgroundColor, minHeight: 44 },
+        tw`flex-row overflow-hidden`,
+        {
+          backgroundColor,
+          minHeight: 44,
+          // Break out of the bubble's `px-2` content padding so the chip spans
+          // the bubble's full visual width (matches reference image 3).
+          marginLeft: -8,
+          marginRight: -8,
+          marginTop: -2,
+          marginBottom: 4,
+          borderTopLeftRadius: topLeftRadius,
+          borderTopRightRadius: topRightRadius,
+          borderBottomLeftRadius: 0,
+          borderBottomRightRadius: 0,
+        },
         replyStyle?.container,
       ]}
     >
@@ -79,7 +104,7 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
         ]}
       />
 
-      <View style={tw`flex-1 flex-row items-center pl-2 pr-2 py-1.5`}>
+      <View style={tw`flex-1 flex-row items-center pl-2.5 pr-2.5 py-2`}>
         <View style={tw`flex-1`}>
           <Text
             numberOfLines={1}
@@ -114,7 +139,7 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
             source={{ uri: reply.thumbnailUri }}
             style={[
               tw`ml-2`,
-              { width: 36, height: 36, borderRadius: 4 },
+              { width: 40, height: 40, borderRadius: 4 },
               replyStyle?.thumbnail,
             ]}
             resizeMode="cover"

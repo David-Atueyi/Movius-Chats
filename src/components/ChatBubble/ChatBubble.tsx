@@ -18,6 +18,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   isCurrentUser,
   isFirstInSequence,
   onLongPress,
+  staticMode = false,
 }) => {
   const {
     theme,
@@ -36,8 +37,9 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
   const bubbleRef = useRef<View>(null);
 
+  // Disable swipe-to-reply while in static mode (overlay clone) or selection mode.
   const replyEnabled =
-    (replyProps?.enableReply ?? true) && !selectionMode;
+    (replyProps?.enableReply ?? true) && !selectionMode && !staticMode;
   const swipeThreshold = replyProps?.swipeThreshold ?? 60;
 
   const mediaItems = collectMediaItems(message);
@@ -64,11 +66,20 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
       return;
     }
     bubbleRef.current?.measureInWindow((x, y, width, height) => {
-      onLongPress?.({ x, y, width, height, isCurrentUser });
+      onLongPress?.({
+        x,
+        y,
+        width,
+        height,
+        isCurrentUser,
+        isFirstInSequence,
+      });
     });
   };
 
   const handlePress = () => {
+    // Tapping a selected bubble's overlay deselects it (or the bubble itself
+    // toggles selection while in selection mode).
     if (selectionMode) {
       toggleSelection(message);
     }
@@ -82,38 +93,34 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     theme?.colors?.sentBubbleBackgroundColor ||
     theme?.colors?.sentMessageTailColor ||
     '#22c55e';
-  const resolvedOverlay = overlayColor || addAlpha(themePrimary, 0.28);
+  const resolvedOverlay = overlayColor || addAlpha(themePrimary, 0.32);
   const resolvedRowBg = rowBackgroundColor || addAlpha(themePrimary, 0.12);
 
-  const bubble = (
-    <Pressable
-      ref={bubbleRef as any}
-      onLongPress={handleLongPress}
-      onPress={handlePress}
-      delayLongPress={250}
-      style={[
-        tw`px-2 my-1 max-w-[75%] relative`,
-        isCurrentUser ? tw`self-end mr-3` : tw`self-start ml-9`,
-        isFirstInSequence
-          ? isCurrentUser
-            ? tw`bg-green-500 rounded-tr-none`
-            : tw`bg-white rounded-tl-none`
-          : isCurrentUser
-            ? tw`bg-green-500`
-            : tw`bg-white`,
-        {
-          borderRadius: 8,
-          ...(getBubbleBackgroundColor(theme, isCurrentUser)
-            ? {
-                backgroundColor: getBubbleBackgroundColor(theme, isCurrentUser),
-              }
-            : {}),
-          ...(isCurrentUser
-            ? theme?.bubbleStyle?.sent
-            : theme?.bubbleStyle?.received),
-        },
-      ]}
-    >
+  const bubbleStyle = [
+    tw`px-2 my-1 max-w-[75%] relative`,
+    isCurrentUser ? tw`self-end mr-3` : tw`self-start ml-9`,
+    isFirstInSequence
+      ? isCurrentUser
+        ? tw`bg-green-500 rounded-tr-none`
+        : tw`bg-white rounded-tl-none`
+      : isCurrentUser
+        ? tw`bg-green-500`
+        : tw`bg-white`,
+    {
+      borderRadius: 8,
+      ...(getBubbleBackgroundColor(theme, isCurrentUser)
+        ? {
+            backgroundColor: getBubbleBackgroundColor(theme, isCurrentUser),
+          }
+        : {}),
+      ...(isCurrentUser
+        ? theme?.bubbleStyle?.sent
+        : theme?.bubbleStyle?.received),
+    },
+  ];
+
+  const bubbleInner = (
+    <>
       {/* Avatar & Sender Name for Group Chat */}
       {!isCurrentUser && isFirstInSequence && showAvatars && (
         <>
@@ -195,7 +202,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         hasFileAttachments={hasFilesOnly}
       />
 
-      {selectionMode && selected && (
+      {!staticMode && selectionMode && selected && (
         <View
           pointerEvents="none"
           style={[
@@ -204,6 +211,24 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
           ]}
         />
       )}
+    </>
+  );
+
+  // ── Static mode: render the visual without any gestures (used by the
+  //    long-press overlay to lift a copy of the bubble above the scrim).
+  if (staticMode) {
+    return <View style={bubbleStyle}>{bubbleInner}</View>;
+  }
+
+  const bubble = (
+    <Pressable
+      ref={bubbleRef as any}
+      onLongPress={handleLongPress}
+      onPress={handlePress}
+      delayLongPress={250}
+      style={bubbleStyle}
+    >
+      {bubbleInner}
     </Pressable>
   );
 

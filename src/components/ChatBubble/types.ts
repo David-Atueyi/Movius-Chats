@@ -7,6 +7,11 @@ export interface ChatBubbleProps {
   isFirstInSequence: boolean;
   /** Long-press handler. Receives the bubble's screen-space anchor for positioning popovers. */
   onLongPress?: (anchor: MessageActionAnchor) => void;
+  /**
+   * Render the bubble as a static visual (no gestures, no selection overlay).
+   * Used by the long-press overlay to lift a copy of the bubble above the scrim.
+   */
+  staticMode?: boolean;
 }
 
 export interface MessageContentProps extends ChatBubbleProps {

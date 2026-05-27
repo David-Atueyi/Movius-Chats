@@ -21,6 +21,7 @@ const MessageContent: React.FC<MessageContentProps> = ({
   onGalleryOpen,
   isVideoPlaying,
   isCurrentUser,
+  isFirstInSequence,
 }) => {
   const { theme, showMessageStatus, onFileAttachmentPress, replyStyle, renderInlineReply } =
     useChatContext();
@@ -33,20 +34,25 @@ const MessageContent: React.FC<MessageContentProps> = ({
     if (renderInlineReply) {
       return renderInlineReply(message.replyTo, isCurrentUser);
     }
-    const accent = isCurrentUser
-      ? theme?.colors?.sentMessageTailColor || '#a7f3d0'
-      : theme?.colors?.receivedMessageTailColor || '#22c55e';
+    // A translucent black overlay produces a slightly darker block on top
+    // of any bubble color, matching reference image 3.
     const bg = isCurrentUser
-      ? 'rgba(255,255,255,0.18)'
+      ? 'rgba(0,0,0,0.18)'
       : 'rgba(0,0,0,0.06)';
+    const accent = isCurrentUser
+      ? theme?.colors?.sentMessageTextColor || 'rgba(255,255,255,0.95)'
+      : theme?.colors?.sentBubbleBackgroundColor ||
+        theme?.colors?.sentMessageTailColor ||
+        '#22c55e';
     const senderColor = accent;
     const textColor = isCurrentUser
-      ? theme?.colors?.sentMessageTextColor || 'rgba(255,255,255,0.9)'
-      : theme?.colors?.receivedMessageTextColor || 'rgba(0,0,0,0.7)';
+      ? theme?.colors?.sentMessageTextColor || 'rgba(255,255,255,0.85)'
+      : theme?.colors?.receivedMessageTextColor || 'rgba(0,0,0,0.75)';
     return (
       <InlineReply
         reply={message.replyTo}
         isCurrentUser={isCurrentUser}
+        isFirstInSequence={isFirstInSequence}
         fontFamily={theme?.fontFamily}
         replyStyle={replyStyle}
         accentColor={accent}

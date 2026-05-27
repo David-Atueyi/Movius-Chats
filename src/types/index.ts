@@ -179,6 +179,8 @@ export interface MessageActionAnchor {
   height: number;
   /** Whether the bubble belongs to the current user (right-aligned). */
   isCurrentUser: boolean;
+  /** Whether the bubble was the first in a sequence of messages from the same sender. */
+  isFirstInSequence: boolean;
 }
 
 /** Visual knobs for the long-press popover (the dropdown menu shown next to a bubble). */
@@ -201,6 +203,11 @@ export interface MessageActionUIProps {
   rowTextStyle?: TextStyle;
   /** Optional override of the entire backdrop dim color. */
   backdropColor?: string;
+  /**
+   * Color of the scrim shown behind the lifted bubble during long-press.
+   * Default `rgba(0,0,0,0.4)`.
+   */
+  scrimColor?: string;
 }
 
 // ─── Selection mode (multi-select after pressing "Select") ──────────────────

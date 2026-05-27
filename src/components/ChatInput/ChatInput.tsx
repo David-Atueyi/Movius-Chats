@@ -5,7 +5,14 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Platform, Pressable, Text, TextInput, View } from 'react-native';
+import {
+  Image,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import Svg, { Line } from 'react-native-svg';
 import tw from 'twrnc';
 import { CameraIcon } from '../../assets/Icons/CameraIcon';
@@ -22,7 +29,6 @@ import {
   getInputBarIconStyle,
   withFontFamily,
 } from '../../utils/theme';
-import { ReplyPreview } from '../Reply/ReplyPreview';
 import { VoiceRecorderFlow } from '../VoiceRecorder/VoiceRecorderFlow';
 import type { VoiceRecorderFlowProps } from '../VoiceRecorder/VoiceRecorderFlow';
 import FilePreview from './FilePreview';
@@ -329,102 +335,314 @@ const ChatInput: React.FC<ChatInputProps> = ({
     : null;
 
   // ── Inline render helpers ──────────────────────────────────────────────────
+  const replyEnabledPill = replyProps?.enableReply ?? true;
+  const showInPillReply =
+    !!replyTarget && replyEnabledPill && !isEditing && !renderReplyPreview;
+  const showInPillEdit = isEditing;
+  const hasInPillTopSection = showInPillReply || showInPillEdit;
+
+  const inPillReplyPreview = useMemo(() => {
+    if (!showInPillReply || !replyTarget) return null;
+    const firstMedia = replyTarget.mediaItems?.[0];
+    const thumbnail =
+      replyTarget.image ??
+      (firstMedia?.kind === 'image' || firstMedia?.kind === 'video'
+        ? firstMedia.uri
+        : undefined);
+
+    let preview = '';
+    if (replyTarget.text) preview = replyTarget.text;
+    else if (replyTarget.audio) preview = '🎤 Audio message';
+    else if (replyTarget.video || firstMedia?.kind === 'video')
+      preview = '🎥 Video';
+    else if (replyTarget.image || firstMedia?.kind === 'image')
+      preview = '📷 Photo';
+    else if ((replyTarget.fileAttachments ?? []).length)
+      preview = `📎 ${replyTarget.fileAttachments?.[0]?.name ?? 'File'}`;
+
+    return (
+      <View
+        style={[
+          tw`flex-row items-center px-3.5 pt-2 pb-1.5`,
+          { minHeight: 40 },
+          replyStyle?.container,
+        ]}
+      >
+        <View style={tw`flex-1 mr-2`}>
+          <Text
+            numberOfLines={1}
+            style={withFontFamily(
+              [
+                tw`text-[13px] font-semibold`,
+                { color: themePrimary },
+                replyStyle?.senderName,
+              ],
+              theme?.fontFamily
+            )}
+          >
+            {replyTarget.senderName || 'You'}
+          </Text>
+          <Text
+            numberOfLines={replyProps?.previewMaxLines ?? 1}
+            style={withFontFamily(
+              [
+                tw`text-[12.5px] mt-0.5`,
+                { color: 'rgba(0,0,0,0.55)' },
+                replyStyle?.previewText,
+              ],
+              theme?.fontFamily
+            )}
+          >
+            {preview}
+          </Text>
+        </View>
+
+        {thumbnail && (
+          <Image
+            source={{ uri: thumbnail }}
+            style={[
+              { width: 32, height: 32, borderRadius: 4, marginRight: 6 },
+              replyStyle?.thumbnail,
+            ]}
+            resizeMode="cover"
+          />
+        )}
+
+        <Pressable
+          onPress={cancelReply}
+          hitSlop={10}
+          style={tw`w-7 h-7 items-center justify-center`}
+        >
+          <Svg width={14} height={14} viewBox="0 0 24 24">
+            <Line
+              x1="18"
+              y1="6"
+              x2="6"
+              y2="18"
+              stroke={
+                theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.5)'
+              }
+              strokeWidth={2.5}
+              strokeLinecap="round"
+            />
+            <Line
+              x1="6"
+              y1="6"
+              x2="18"
+              y2="18"
+              stroke={
+                theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.5)'
+              }
+              strokeWidth={2.5}
+              strokeLinecap="round"
+            />
+          </Svg>
+        </Pressable>
+      </View>
+    );
+  }, [
+    showInPillReply,
+    replyTarget,
+    replyProps?.previewMaxLines,
+    replyStyle,
+    theme?.fontFamily,
+    theme?.colors?.inputsIconsColor,
+    themePrimary,
+    cancelReply,
+  ]);
+
+  const inPillEditPreview = useMemo(() => {
+    if (!showInPillEdit) return null;
+    return (
+      <View
+        style={[
+          tw`flex-row items-center px-3.5 pt-2 pb-1.5`,
+          { minHeight: 40 },
+        ]}
+      >
+        <View style={tw`mr-2.5`}>
+          <EditIcon style={{ width: 16, height: 16 }} color={themePrimary} />
+        </View>
+        <View style={tw`flex-1 mr-2`}>
+          <Text
+            numberOfLines={1}
+            style={withFontFamily(
+              [
+                tw`text-[13px] font-semibold`,
+                { color: themePrimary },
+              ],
+              theme?.fontFamily
+            )}
+          >
+            Edit message
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={withFontFamily(
+              [tw`text-[12.5px] mt-0.5`, { color: 'rgba(0,0,0,0.55)' }],
+              theme?.fontFamily
+            )}
+          >
+            {editingMessage?.text}
+          </Text>
+        </View>
+        <Pressable
+          onPress={() => {
+            cancelEdit();
+            setInputText('');
+            resetInputLayout();
+          }}
+          hitSlop={10}
+          style={tw`w-7 h-7 items-center justify-center`}
+        >
+          <Svg width={14} height={14} viewBox="0 0 24 24">
+            <Line
+              x1="18"
+              y1="6"
+              x2="6"
+              y2="18"
+              stroke="rgba(0,0,0,0.5)"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+            />
+            <Line
+              x1="6"
+              y1="6"
+              x2="18"
+              y2="18"
+              stroke="rgba(0,0,0,0.5)"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+            />
+          </Svg>
+        </Pressable>
+      </View>
+    );
+  }, [
+    showInPillEdit,
+    editingMessage?.text,
+    themePrimary,
+    theme?.fontFamily,
+    cancelEdit,
+    resetInputLayout,
+  ]);
+
+  const isPillRound = isCompactInput && !hasInPillTopSection;
+
   const renderInputPill = useCallback(
     () => (
       <View
         style={[
-          tw`flex-1 flex-row bg-white overflow-hidden px-3.5`,
+          tw`flex-1 flex-col bg-white overflow-hidden`,
           {
             minHeight: INPUT_BAR_SHELL_HEIGHT,
-            borderRadius: isCompactInput ? 9999 : 24,
-            alignItems: isCompactInput ? 'center' : 'flex-end',
+            borderRadius: isPillRound ? 9999 : 24,
           },
           theme?.inputStyles?.inputContainerStyle,
         ]}
       >
-        {showEmojiButton && (
-          <View style={iconSlotStyle}>
-            <Pressable>
-              {CustomEmojiIcon ? (
-                <CustomEmojiIcon />
-              ) : (
-                <EmojiFunnySquareIcon
-                  style={inputBarIconStyle}
-                  color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
-                />
-              )}
-            </Pressable>
-          </View>
-        )}
+        {inPillReplyPreview}
+        {inPillEditPreview}
 
-        <TextInput
-          ref={inputRef}
-          value={inputText}
-          onChangeText={handleChangeText}
-          placeholder={placeholder || 'Message'}
-          style={withFontFamily(
-            [
-              tw`bg-transparent flex-1 pl-2`,
-              Platform.OS === 'ios' ? tw`text-[17px]` : tw`text-[16px]`,
-              {
-                minHeight: MIN_INPUT_HEIGHT,
-                maxHeight: MAX_INPUT_HEIGHT,
-                paddingVertical: isCompactInput ? 0 : 8,
-                marginVertical: isCompactInput
-                  ? (INPUT_BAR_SHELL_HEIGHT - MIN_INPUT_HEIGHT) / 2
-                  : 4,
-              },
-              {
-                color: theme?.colors?.inputTextColor || 'rgba(0, 0, 0, 0.87)',
-              },
-            ],
-            theme?.fontFamily
+        <View
+          style={[
+            tw`flex-row px-3.5`,
+            {
+              minHeight: INPUT_BAR_SHELL_HEIGHT,
+              alignItems: isCompactInput ? 'center' : 'flex-end',
+            },
+          ]}
+        >
+          {showEmojiButton && (
+            <View style={iconSlotStyle}>
+              <Pressable>
+                {CustomEmojiIcon ? (
+                  <CustomEmojiIcon />
+                ) : (
+                  <EmojiFunnySquareIcon
+                    style={inputBarIconStyle}
+                    color={
+                      theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
+                    }
+                  />
+                )}
+              </Pressable>
+            </View>
           )}
-          placeholderTextColor={
-            theme?.colors?.placeholderTextColor || 'rgba(0, 0, 0, 0.4)'
-          }
-          multiline
-          textAlignVertical={
-            inputHeight.isMultiline && inputText.length > 0 ? 'top' : 'center'
-          }
-          onContentSizeChange={handleContentSizeChange}
-        />
 
-        {!isEditing && (
-          <View style={[tw`flex-row items-center gap-4`, iconSlotStyle]}>
-            {showAttachmentsButton && (
-              <Pressable onPress={onAttachmentPress}>
-                {CustomAttachmentIcon ? (
-                  <CustomAttachmentIcon />
-                ) : (
-                  <PaperClipIcon
-                    style={inputBarIconStyle}
-                    color={
-                      theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
-                    }
-                  />
-                )}
-              </Pressable>
+          <TextInput
+            ref={inputRef}
+            value={inputText}
+            onChangeText={handleChangeText}
+            placeholder={placeholder || 'Message'}
+            style={withFontFamily(
+              [
+                tw`bg-transparent flex-1 pl-2`,
+                Platform.OS === 'ios' ? tw`text-[17px]` : tw`text-[16px]`,
+                {
+                  minHeight: MIN_INPUT_HEIGHT,
+                  maxHeight: MAX_INPUT_HEIGHT,
+                  paddingVertical: isCompactInput ? 0 : 8,
+                  marginVertical: isCompactInput
+                    ? (INPUT_BAR_SHELL_HEIGHT - MIN_INPUT_HEIGHT) / 2
+                    : 4,
+                },
+                {
+                  color:
+                    theme?.colors?.inputTextColor || 'rgba(0, 0, 0, 0.87)',
+                },
+              ],
+              theme?.fontFamily
             )}
-            {showCameraButton && !inputText.trim() && (
-              <Pressable onPress={onCameraPress}>
-                {CustomCameraIcon ? (
-                  <CustomCameraIcon />
-                ) : (
-                  <CameraIcon
-                    style={inputBarIconStyle}
-                    color={
-                      theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
-                    }
-                  />
-                )}
-              </Pressable>
-            )}
-          </View>
-        )}
+            placeholderTextColor={
+              theme?.colors?.placeholderTextColor || 'rgba(0, 0, 0, 0.4)'
+            }
+            multiline
+            textAlignVertical={
+              inputHeight.isMultiline && inputText.length > 0
+                ? 'top'
+                : 'center'
+            }
+            onContentSizeChange={handleContentSizeChange}
+          />
+
+          {!isEditing && (
+            <View style={[tw`flex-row items-center gap-4`, iconSlotStyle]}>
+              {showAttachmentsButton && (
+                <Pressable onPress={onAttachmentPress}>
+                  {CustomAttachmentIcon ? (
+                    <CustomAttachmentIcon />
+                  ) : (
+                    <PaperClipIcon
+                      style={inputBarIconStyle}
+                      color={
+                        theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
+                      }
+                    />
+                  )}
+                </Pressable>
+              )}
+              {showCameraButton && !inputText.trim() && (
+                <Pressable onPress={onCameraPress}>
+                  {CustomCameraIcon ? (
+                    <CustomCameraIcon />
+                  ) : (
+                    <CameraIcon
+                      style={inputBarIconStyle}
+                      color={
+                        theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
+                      }
+                    />
+                  )}
+                </Pressable>
+              )}
+            </View>
+          )}
+        </View>
       </View>
     ),
     [
+      isPillRound,
       isCompactInput,
       isEditing,
       inputText,
@@ -443,6 +661,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
       CustomCameraIcon,
       inputBarIconStyle,
       theme,
+      inPillReplyPreview,
+      inPillEditPreview,
     ]
   );
 
@@ -499,111 +719,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
    */
   const useVoiceFlow = showVoiceRecordButton && !customVoiceUI && !isEditing;
 
-  // ── Reply preview row ────────────────────────────────────────────────────
-  const replyEnabled = replyProps?.enableReply ?? true;
-  const replyPreviewNode =
-    replyTarget && replyEnabled && !isEditing ? (
-      renderReplyPreview ? (
-        renderReplyPreview(replyTarget, cancelReply)
-      ) : (
-        <ReplyPreview
-          message={replyTarget}
-          onCancel={cancelReply}
-          previewMaxLines={replyProps?.previewMaxLines}
-          replyStyle={replyStyle}
-          fontFamily={theme?.fontFamily}
-          accentColor={themePrimary}
-          senderNameColor={themePrimary}
-          previewTextColor={
-            theme?.colors?.placeholderTextColor || 'rgba(0,0,0,0.55)'
-          }
-          closeIconColor={
-            theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.5)'
-          }
-          backgroundColor="#FFFFFF"
-        />
-      )
-    ) : null;
-
-  // ── Edit-mode chip (replaces reply preview while editing) ────────────────
-  const editChipNode = isEditing ? (
-    <View
-      style={[
-        tw`flex-row items-stretch mx-2 mb-1 rounded-xl overflow-hidden`,
-        {
-          backgroundColor: '#FFFFFF',
-          minHeight: 52,
-          shadowColor: '#000',
-          shadowOpacity: 0.06,
-          shadowRadius: 4,
-          shadowOffset: { width: 0, height: 1 },
-          elevation: 1,
-        },
-      ]}
-    >
-      <View
-        style={[tw`w-[3px] self-stretch`, { backgroundColor: themePrimary }]}
-      />
-      <View style={tw`flex-1 flex-row items-center pl-3 pr-2 py-2`}>
-        <View style={tw`mr-3`}>
-          <EditIcon
-            style={{ width: 18, height: 18 }}
-            color={themePrimary}
-          />
-        </View>
-        <View style={tw`flex-1 mr-2`}>
-          <Text
-            numberOfLines={1}
-            style={withFontFamily(
-              [tw`text-[13.5px] font-semibold`, { color: themePrimary }],
-              theme?.fontFamily
-            )}
-          >
-            Edit message
-          </Text>
-          <Text
-            numberOfLines={1}
-            style={withFontFamily(
-              [tw`text-[12.5px] mt-0.5`, { color: 'rgba(0,0,0,0.55)' }],
-              theme?.fontFamily
-            )}
-          >
-            {editingMessage?.text}
-          </Text>
-        </View>
-        <Pressable
-          onPress={() => {
-            cancelEdit();
-            setInputText('');
-            resetInputLayout();
-          }}
-          hitSlop={10}
-          style={tw`w-7 h-7 items-center justify-center`}
-        >
-          <Svg width={14} height={14} viewBox="0 0 24 24">
-            <Line
-              x1="18"
-              y1="6"
-              x2="6"
-              y2="18"
-              stroke="rgba(0,0,0,0.5)"
-              strokeWidth={2.5}
-              strokeLinecap="round"
-            />
-            <Line
-              x1="6"
-              y1="6"
-              x2="18"
-              y2="18"
-              stroke="rgba(0,0,0,0.5)"
-              strokeWidth={2.5}
-              strokeLinecap="round"
-            />
-          </Svg>
-        </Pressable>
-      </View>
-    </View>
-  ) : null;
+  // ── Custom reply preview escape hatch ────────────────────────────────────
+  // Default reply/edit previews live INSIDE the input pill (above the text
+  // field) — see `inPillReplyPreview` / `inPillEditPreview`. If the consumer
+  // provided a custom `renderReplyPreview`, render it ABOVE the pill so they
+  // retain full control over layout.
+  const customReplyPreviewNode =
+    replyTarget && replyEnabledPill && !isEditing && renderReplyPreview
+      ? renderReplyPreview(replyTarget, cancelReply)
+      : null;
 
   // ── Voice flow props (typed for safety) ──────────────────────────────────
   const voiceFlowProps: VoiceRecorderFlowProps = {
@@ -656,8 +780,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <View style={tw`w-full px-2`}>
-      {editChipNode}
-      {replyPreviewNode}
+      {customReplyPreviewNode}
       {hasPreviewAttachments && (
         <FilePreview
           previews={previewList}

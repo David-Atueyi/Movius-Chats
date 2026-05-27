@@ -6,7 +6,7 @@ export { VoiceRecordingGesture, type VoiceRecordingGestureProps, } from './compo
 export { VoiceRecorderFlow, type VoiceRecorderFlowProps, type VoiceRecorderFlowAudio, type RecordingState, } from './components/VoiceRecorder/VoiceRecorderFlow';
 export { CameraScreen } from './components/CameraScreen';
 export type { CameraScreenProps } from './components/CameraScreen';
-export { MessageActionsPopover, MessageActionsSheet, tryCopyMessage, } from './components/MessageActions';
+export { LongPressOverlay, MessageActionsPopover, MessageActionsSheet, tryCopyMessage, } from './components/MessageActions';
 export { InlineReply, ReplyPreview, SwipeableMessage, } from './components/Reply';
 export type { CameraCaptureResult, CameraConfig, CameraExposedState, CameraUIProps, ChatScreenProps, Message, MessageActionAnchor, MessageActionFlags, MessageActionId, MessageActionUIProps, MessageFileAttachment, MessageMediaItem, MessageReply, PreviewAttachment, RecordingResult, RecordingUIProps, ReplyConfig, ReplyStyleOverrides, SelectionUIProps, VoiceRecorderConfig, VoiceRecorderExposedState, VoiceRecorderStyleOverrides, } from './types';
 export default ChatScreen;

@@ -148,6 +148,8 @@ export const ChatProvider: React.FC<
           ? prev.filter((id) => id !== message.id)
           : [...prev, message.id];
         emitSelection(next);
+        // Auto-exit selection mode when the user deselects the last item.
+        if (next.length === 0) setSelectionMode(false);
         return next;
       });
     },
