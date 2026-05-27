@@ -83,5 +83,5 @@ export function getRecordingPreviewBackground(
   replyUI?: ReplyUIProps
 ): string {
   const ui = mergeReplyUI(theme, replyUI);
-  return ui.recordingPreviewBackground ?? 'rgba(255, 255, 255, 0.12)';
+  return ui.recordingPreviewBackground ?? 'rgba(0, 0, 0, 0.08)';
 }

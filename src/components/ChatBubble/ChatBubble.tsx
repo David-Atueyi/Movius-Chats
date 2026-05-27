@@ -186,7 +186,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
       {isFirstInSequence && showBubbleTail && (
         <ArrowBack2RoundedIcon
           style={tw.style(
-            'absolute  w-6 h-6',
+            'absolute  w-6 h-6 z-10',
             isCurrentUser
               ? 'rotate-90 -right-3.5 mt-[1.24px] -top-1'
               : 'rotate-180 -left-3.5 mt-[1.5px] -top-[3px]'
@@ -223,7 +223,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         <View
           pointerEvents="none"
           style={[
-            tw`absolute inset-0`,
+            tw`absolute inset-0 z-20`,
             { backgroundColor: resolvedOverlay, borderRadius: 8 },
           ]}
         />

@@ -507,7 +507,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 tw`text-[13px] font-semibold`,
                 {
                   color:
-                    resolvedReplyUI.previewSenderNameColor || themeOnPrimary,
+                    resolvedReplyUI.previewSenderNameColor || themePrimary,
                 },
               ],
               theme?.fontFamily
