@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import tw from 'twrnc';
 import { ArrowBack2RoundedIcon } from '../../assets/Icons/ArrowBack2RoundedIcon';
@@ -37,20 +37,11 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
   const bubbleRef = useRef<View>(null);
 
-  // Disable swipe-to-reply while in static mode (overlay clone) or selection mode.
   const replyEnabled =
     (replyProps?.enableReply ?? true) && !selectionMode && !staticMode;
   const swipeThreshold = replyProps?.swipeThreshold ?? 60;
 
   const mediaItems = collectMediaItems(message);
-
-  const handleGalleryOpen = (items: MessageMediaItem[], index: number) => {
-    if (selectionMode) {
-      toggleSelection(message);
-      return;
-    }
-    setMediaViewerGallery(items, index);
-  };
 
   const hasFilesOnly =
     (message.fileAttachments?.length ?? 0) > 0 &&
@@ -60,7 +51,9 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
   const selected = isSelected(message.id);
 
-  const handleLongPress = () => {
+ 
+  const handleLongPress = useCallback(() => {
+    if (staticMode) return;
     if (selectionMode) {
       toggleSelection(message);
       return;
@@ -75,20 +68,37 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         isFirstInSequence,
       });
     });
-  };
+  }, [
+    staticMode,
+    selectionMode,
+    toggleSelection,
+    message,
+    onLongPress,
+    isCurrentUser,
+    isFirstInSequence,
+  ]);
 
-  const handlePress = () => {
-    // Tapping a selected bubble's overlay deselects it (or the bubble itself
-    // toggles selection while in selection mode).
+  const handlePress = useCallback(() => {
     if (selectionMode) {
       toggleSelection(message);
     }
-  };
+  }, [selectionMode, toggleSelection, message]);
 
-  const overlayColor = selectionUI?.overlayColor;
+ 
+  const handleGalleryOpen = useCallback(
+    (items: MessageMediaItem[], index: number) => {
+      if (selectionMode) {
+        toggleSelection(message);
+        return;
+      }
+      setMediaViewerGallery(items, index);
+    },
+    [selectionMode, toggleSelection, message, setMediaViewerGallery]
+  );
+
   const rowBackgroundColor = selectionUI?.rowBackgroundColor;
+  const overlayColor = selectionUI?.overlayColor;
 
-  // ── Default the selection overlay to the same hue as the user's bubble ──
   const themePrimary =
     theme?.colors?.sentBubbleBackgroundColor ||
     theme?.colors?.sentMessageTailColor ||
@@ -166,7 +176,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         </>
       )}
 
-      {/* Bubble Tail */}
+    
       {isFirstInSequence && showBubbleTail && (
         <ArrowBack2RoundedIcon
           style={tw.style(
@@ -189,6 +199,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         isFirstInSequence={isFirstInSequence}
         onGalleryOpen={handleGalleryOpen}
         isVideoPlaying={isVideoPlaying}
+        onLongPress={!staticMode ? handleLongPress : undefined}
       />
 
       <MessageStatus
@@ -214,13 +225,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     </>
   );
 
-  // ── Static mode: render the visual without any gestures (used by the
-  //    long-press overlay to lift a copy of the bubble above the scrim).
+  // ── Static mode (used inside the long-press overlay) ───────────────────
   if (staticMode) {
     return <View style={bubbleStyle}>{bubbleInner}</View>;
   }
 
-  const bubble = (
+  const innerBubble = (
     <Pressable
       ref={bubbleRef as any}
       onLongPress={handleLongPress}
@@ -232,25 +242,38 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     </Pressable>
   );
 
-  const wrappedBubble = (
+  const swipeWrapped = (
     <SwipeableMessage
       isCurrentUser={isCurrentUser}
       enabled={replyEnabled}
       swipeThreshold={swipeThreshold}
       onReply={() => startReply(message)}
     >
-      {bubble}
+      {innerBubble}
     </SwipeableMessage>
   );
 
-  // Full-row tinted background while in selection mode (matches reference image 6).
-  if (selectionMode && selected) {
-    return (
-      <View style={{ backgroundColor: resolvedRowBg }}>{wrappedBubble}</View>
-    );
-  }
-
-  return wrappedBubble;
+  // ── Outer row-level Pressable ────────────────────────────────────────────
+  // Spans the FULL row width, so a tap or long-press anywhere on the row
+  // (including the dead space outside the bubble) selects the bubble.
+  // Inner gestures still take priority — the inner Pressable handles taps
+  // on the bubble itself, and `MessageContent` forwards long-press from
+  // file rows / media tiles.
+  return (
+    <Pressable
+      onPress={handlePress}
+      onLongPress={handleLongPress}
+      delayLongPress={250}
+      style={[
+        tw`w-full`,
+        selectionMode && selected
+          ? { backgroundColor: resolvedRowBg }
+          : null,
+      ]}
+    >
+      {swipeWrapped}
+    </Pressable>
+  );
 };
 
 /** Best-effort hex/rgb → rgba(...,alpha) helper. */

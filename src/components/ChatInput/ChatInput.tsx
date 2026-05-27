@@ -451,6 +451,109 @@ const ChatInput: React.FC<ChatInputProps> = ({
     cancelReply,
   ]);
 
+
+  const inBarReplyPreview = useMemo(() => {
+    if (!showInPillReply || !replyTarget) return null;
+    const firstMedia = replyTarget.mediaItems?.[0];
+    const thumbnail =
+      replyTarget.image ??
+      (firstMedia?.kind === 'image' || firstMedia?.kind === 'video'
+        ? firstMedia.uri
+        : undefined);
+
+    let preview = '';
+    if (replyTarget.text) preview = replyTarget.text;
+    else if (replyTarget.audio) preview = '🎤 Audio message';
+    else if (replyTarget.video || firstMedia?.kind === 'video')
+      preview = '🎥 Video';
+    else if (replyTarget.image || firstMedia?.kind === 'image')
+      preview = '📷 Photo';
+    else if ((replyTarget.fileAttachments ?? []).length)
+      preview = `📎 ${replyTarget.fileAttachments?.[0]?.name ?? 'File'}`;
+
+    return (
+      <View
+        style={[
+          tw`flex-row items-center px-2.5 py-1.5 mb-1 rounded-md`,
+          {
+            backgroundColor: 'rgba(255,255,255,0.08)',
+            minHeight: 40,
+          },
+        ]}
+      >
+        <View style={tw`flex-1 mr-2`}>
+          <Text
+            numberOfLines={1}
+            style={withFontFamily(
+              [
+                tw`text-[13px] font-semibold`,
+                { color: themePrimary },
+              ],
+              theme?.fontFamily
+            )}
+          >
+            {replyTarget.senderName || 'You'}
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={withFontFamily(
+              [
+                tw`text-[12.5px] mt-0.5`,
+                { color: 'rgba(255,255,255,0.7)' },
+              ],
+              theme?.fontFamily
+            )}
+          >
+            {preview}
+          </Text>
+        </View>
+
+        {thumbnail && (
+          <Image
+            source={{ uri: thumbnail }}
+            style={[
+              { width: 30, height: 30, borderRadius: 4, marginRight: 6 },
+            ]}
+            resizeMode="cover"
+          />
+        )}
+
+        <Pressable
+          onPress={cancelReply}
+          hitSlop={10}
+          style={tw`w-7 h-7 items-center justify-center`}
+        >
+          <Svg width={14} height={14} viewBox="0 0 24 24">
+            <Line
+              x1="18"
+              y1="6"
+              x2="6"
+              y2="18"
+              stroke="rgba(255,255,255,0.7)"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+            />
+            <Line
+              x1="6"
+              y1="6"
+              x2="18"
+              y2="18"
+              stroke="rgba(255,255,255,0.7)"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+            />
+          </Svg>
+        </Pressable>
+      </View>
+    );
+  }, [
+    showInPillReply,
+    replyTarget,
+    themePrimary,
+    theme?.fontFamily,
+    cancelReply,
+  ]);
+
   const inPillEditPreview = useMemo(() => {
     if (!showInPillEdit) return null;
     return (
@@ -760,6 +863,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     lockPillStyle: mergedRecorderStyles?.lockPill,
     trashButtonStyle: mergedRecorderStyles?.trashButton,
     sendButtonStyle: mergedRecorderStyles?.sendButton,
+    headerSlot: inBarReplyPreview,
     showSendButton,
     onSendPress: handleSendMessage,
     sendButtonBackgroundColor: themePrimary,

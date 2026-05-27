@@ -115,6 +115,13 @@ export interface VoiceRecorderFlowProps {
   /** Theme font family applied to every text element (timer, slide-to-cancel). */
   fontFamily?: string;
 
+  /**
+   * Optional header slot rendered INSIDE the recording container, above the
+   * timer / waveform row. Used to keep things like the reply preview visible
+   * while the user is recording or in the locked-recording state.
+   */
+  headerSlot?: ReactNode;
+
   // ── Trailing button (text mode) ───────────────────────────────────────────
   /**
    * When `true`, the IDLE-state trailing slot renders a send button instead of

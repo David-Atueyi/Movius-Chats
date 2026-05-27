@@ -135,6 +135,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   senderAvatar,
   senderName,
   reserveStatusSpace = true,
+  onLongPress,
 }) => {
   const { theme, CustomPlayIcon, CustomPauseIcon, showMessageStatus } =
     useChatContext();
@@ -236,7 +237,13 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   );
 
   const playPause = (
-    <Pressable onPress={togglePlay} hitSlop={8} style={tw`shrink-0 px-0.5`}>
+    <Pressable
+      onPress={togglePlay}
+      onLongPress={onLongPress}
+      delayLongPress={250}
+      hitSlop={8}
+      style={tw`shrink-0 px-0.5`}
+    >
       {effectivePlaying ? (
         CustomPauseIcon ? (
           <CustomPauseIcon />

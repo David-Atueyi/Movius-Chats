@@ -157,11 +157,12 @@ export const LongPressOverlay: React.FC<LongPressOverlayProps> = ({
   const text = ui?.textColor ?? '#111827';
   const icon = ui?.iconColor ?? text;
   const destructive = ui?.destructiveColor ?? '#EF4444';
-  const scrim = ui?.scrimColor ?? 'rgba(0,0,0,0.4)';
+  const scrim = ui?.scrimColor ?? 'rgba(0,0,0,0.55)';
 
+  const ROW_HEIGHT = 36;
   const menuPosition = useMemo(() => {
     if (!anchor) return null;
-    return resolveMenuPosition(anchor, width, 48, actions.length);
+    return resolveMenuPosition(anchor, width, ROW_HEIGHT, actions.length);
   }, [anchor, width, actions.length]);
 
   if (!message || !anchor) return null;
@@ -183,15 +184,20 @@ export const LongPressOverlay: React.FC<LongPressOverlayProps> = ({
         onPress={onClose}
         style={[tw`flex-1`, { backgroundColor: scrim }]}
       >
-        {/* Lifted bubble — actual content rendered above the scrim. */}
+        {/* Lifted bubble — actual content rendered above the scrim.
+            `px-2` matches the host chat's left/right padding so the lifted
+            clone sits at exactly the same horizontal offset as the original. */}
         <View
           pointerEvents="none"
-          style={{
-            position: 'absolute',
-            top: bubbleTop,
-            left: 0,
-            right: 0,
-          }}
+          style={[
+            tw`px-2`,
+            {
+              position: 'absolute',
+              top: bubbleTop,
+              left: 0,
+              right: 0,
+            },
+          ]}
         >
           <ChatBubble
             message={message}
@@ -230,21 +236,21 @@ export const LongPressOverlay: React.FC<LongPressOverlayProps> = ({
                   onPress={() => onAction(a.id, message)}
                   android_ripple={{ color: 'rgba(0,0,0,0.06)' }}
                   style={[
-                    tw`flex-row items-center px-4`,
-                    { height: 48 },
+                    tw`flex-row items-center px-3`,
+                    { height: ROW_HEIGHT },
                     ui?.rowStyle,
                   ]}
                 >
-                  <View style={{ width: 22, height: 22, marginRight: 14 }}>
+                  <View style={{ width: 16, height: 16, marginRight: 10 }}>
                     <a.Icon
-                      style={{ width: 22, height: 22 }}
+                      style={{ width: 16, height: 16 }}
                       color={ic}
                     />
                   </View>
                   <Text
                     style={withFontFamily(
                       [
-                        tw`text-[15px] font-medium`,
+                        tw`text-[13px] font-medium`,
                         { color },
                         ui?.rowTextStyle,
                       ],

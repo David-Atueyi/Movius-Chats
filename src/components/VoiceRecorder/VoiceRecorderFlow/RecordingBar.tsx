@@ -40,6 +40,9 @@ interface RecordingBarProps {
   waveCount: number;
   enableWaveform: boolean;
 
+  /** Optional header slot rendered inside the bar above the timer / waveform. */
+  headerSlot?: ReactNode;
+
   // Render slots
   renderDeleteIcon?: () => ReactNode;
   renderPauseIcon?: () => ReactNode;
@@ -80,6 +83,7 @@ export const RecordingBar: React.FC<RecordingBarProps> = ({
   inputBarHeight,
   waveCount,
   enableWaveform,
+  headerSlot,
   renderDeleteIcon,
   renderPauseIcon,
   renderPlayIcon,
@@ -113,6 +117,9 @@ export const RecordingBar: React.FC<RecordingBarProps> = ({
         barStyleOverride,
       ]}
     >
+      
+      {headerSlot}
+
       {/* Top row: rec dot + timer + waveform */}
       <View style={tw`flex-row items-center gap-3 px-1 pt-1.5 pb-2`}>
         <Animated.View

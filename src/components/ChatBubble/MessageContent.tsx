@@ -22,9 +22,17 @@ const MessageContent: React.FC<MessageContentProps> = ({
   isVideoPlaying,
   isCurrentUser,
   isFirstInSequence,
+  onLongPress,
 }) => {
-  const { theme, showMessageStatus, onFileAttachmentPress, replyStyle, renderInlineReply } =
-    useChatContext();
+  const {
+    theme,
+    showMessageStatus,
+    onFileAttachmentPress,
+    replyStyle,
+    renderInlineReply,
+    selectionMode,
+    toggleSelection,
+  } = useChatContext();
 
   const mediaItems = useMemo(() => collectMediaItems(message), [message]);
 
@@ -34,11 +42,9 @@ const MessageContent: React.FC<MessageContentProps> = ({
     if (renderInlineReply) {
       return renderInlineReply(message.replyTo, isCurrentUser);
     }
-    // A translucent black overlay produces a slightly darker block on top
-    // of any bubble color, matching reference image 3.
-    const bg = isCurrentUser
-      ? 'rgba(0,0,0,0.18)'
-      : 'rgba(0,0,0,0.06)';
+    // Reuse the file-attachment background color so the reply chip blends
+    // visually with the rest of the embedded blocks inside the bubble.
+    const bg = getFileAttachmentBackground(theme, isCurrentUser);
     const accent = isCurrentUser
       ? theme?.colors?.sentMessageTextColor || 'rgba(255,255,255,0.95)'
       : theme?.colors?.sentBubbleBackgroundColor ||
@@ -67,13 +73,21 @@ const MessageContent: React.FC<MessageContentProps> = ({
     <View>
       {replyChip}
       {mediaItems.length > 0 && (
-        <MediaGrid items={mediaItems} onOpenGallery={onGalleryOpen} />
+        <MediaGrid
+          items={mediaItems}
+          onOpenGallery={onGalleryOpen}
+          onLongPress={onLongPress}
+        />
       )}
 
       {(message.fileAttachments ?? []).map((file, idx) => (
         <Pressable
           key={`${file.uri}-${idx}`}
           onPress={() => {
+            if (selectionMode) {
+              toggleSelection(message);
+              return;
+            }
             if (onFileAttachmentPress) {
               onFileAttachmentPress(file);
             } else {
@@ -84,6 +98,8 @@ const MessageContent: React.FC<MessageContentProps> = ({
               );
             }
           }}
+          onLongPress={onLongPress}
+          delayLongPress={250}
           style={[
             tw`my-1.5 py-2 px-3 rounded-lg max-w-[220px]`,
             {
@@ -142,6 +158,7 @@ const MessageContent: React.FC<MessageContentProps> = ({
           senderAvatar={message.senderAvatar}
           senderName={message.senderName}
           reserveStatusSpace={!message.text}
+          onLongPress={onLongPress}
         />
       )}
 

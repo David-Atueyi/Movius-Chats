@@ -7,6 +7,7 @@ import { withFontFamily } from '../../utils/theme';
 interface InlineReplyProps {
   reply: MessageReply;
   isCurrentUser: boolean;
+  /** Whether this is the first bubble in a sequence — controls top-corner radii. */
   isFirstInSequence?: boolean;
   fontFamily?: string;
   replyStyle?: ReplyStyleOverrides;
@@ -51,6 +52,8 @@ const iconFor = (kind: MessageReply['mediaKind']): string | null => {
   }
 };
 
+const BUBBLE_RADIUS = 8;
+
 export const InlineReply: React.FC<InlineReplyProps> = ({
   reply,
   isCurrentUser,
@@ -66,14 +69,14 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
   const preview = previewFor(reply);
   const showThumb = !!reply.thumbnailUri;
 
-  // Match the bubble's outer corners on top so the full-width chip sits
-  // flush against the bubble edges (the bubble's tail-side top corner is
-  // squared off when the message is first in a sequence).
-  const bubbleRadius = 8;
+  // ── Top corners of the chip mirror the bubble's outer corners so a
+  //    full-width chip with negative margins blends seamlessly with the
+  //    bubble's rounded shell. The square corner of the bubble's "tail
+  //    side" stays square on the chip.
   const topLeftRadius =
-    isFirstInSequence && !isCurrentUser ? 0 : bubbleRadius;
+    isFirstInSequence && !isCurrentUser ? 0 : BUBBLE_RADIUS;
   const topRightRadius =
-    isFirstInSequence && isCurrentUser ? 0 : bubbleRadius;
+    isFirstInSequence && isCurrentUser ? 0 : BUBBLE_RADIUS;
 
   return (
     <View
@@ -81,9 +84,9 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
         tw`flex-row overflow-hidden`,
         {
           backgroundColor,
-          minHeight: 44,
-          // Break out of the bubble's `px-2` content padding so the chip spans
-          // the bubble's full visual width (matches reference image 3).
+          minHeight: 48,
+          // Break out of the bubble's `px-2` padding so the chip spans the
+          // full bubble width (edge-to-edge).
           marginLeft: -8,
           marginRight: -8,
           marginTop: -2,
@@ -98,13 +101,13 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
     >
       <View
         style={[
-          tw`w-[3px] self-stretch`,
+          tw`w-1 self-stretch`,
           { backgroundColor: accentColor },
           replyStyle?.replyBar,
         ]}
       />
 
-      <View style={tw`flex-1 flex-row items-center pl-2.5 pr-2.5 py-2`}>
+      <View style={tw`flex-1 flex-row items-center pl-3 pr-2 py-2`}>
         <View style={tw`flex-1`}>
           <Text
             numberOfLines={1}

@@ -53,6 +53,7 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
     lockSlideDistance = DEFAULT_LOCK_DISTANCE,
     cancelSlideDistance = DEFAULT_CANCEL_DISTANCE,
     waveCount = DEFAULT_WAVE_COUNT,
+    headerSlot,
     showSendButton,
     onSendPress,
     sendButtonBackgroundColor,
@@ -134,6 +135,7 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
         inputBarHeight={inputBarHeight}
         waveCount={waveCount}
         enableWaveform={enableWaveform}
+        headerSlot={headerSlot}
         renderDeleteIcon={renderDeleteIcon}
         renderPauseIcon={renderPauseIcon}
         renderPlayIcon={renderPlayIcon}
