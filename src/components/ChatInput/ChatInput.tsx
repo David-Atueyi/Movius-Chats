@@ -312,10 +312,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
     recorderRef.current.resumeRecording();
   }, []);
 
-  // ── Resolve the package primary (bubble) color and use it as the default
-  //    for trailing buttons + reply previews. This keeps the recently-added
-  //    UIs aligned with the host app's bubble theme instead of hard-coded
-  //    green.
   const themePrimary =
     (theme?.inputStyles?.sendButtonStyle?.backgroundColor as
       | string
@@ -323,8 +319,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     theme?.colors?.sentBubbleBackgroundColor ||
     theme?.colors?.sentMessageTailColor ||
     FALLBACK_PRIMARY;
-  const themeOnPrimary =
-    theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.95)';
+  const themeOnPrimary = theme?.colors?.sendIconsColor || themePrimary;
 
   const recordingPrimary =
     mergedRecordingUIProps.recordingSendButtonBackground ?? themePrimary;

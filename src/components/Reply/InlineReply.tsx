@@ -63,7 +63,7 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
   return (
     <View
       style={[
-        tw`m-2 rounded-md overflow-hidden`,
+        tw`my-2 rounded-md overflow-hidden`,
         { backgroundColor, minHeight: 48 },
         replyStyle?.inlineContainer,
         replyStyle?.container,
