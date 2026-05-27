@@ -1,6 +1,6 @@
 {
   "name": "movius-chats",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "A highly customizable, feature-rich chat interface component for React Native applications",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
