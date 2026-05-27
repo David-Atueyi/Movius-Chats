@@ -7,8 +7,6 @@ interface InlineReplyProps {
     isFirstInSequence?: boolean;
     fontFamily?: string;
     replyStyle?: ReplyStyleOverrides;
-    /** Vertical accent bar color (defaults to a lighter shade of the bubble). */
-    accentColor: string;
     /** Background tint for the chip itself. */
     backgroundColor: string;
     /** Sender name color. */

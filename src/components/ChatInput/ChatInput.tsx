@@ -13,7 +13,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { ClosePreviewIcon } from 'src/assets/Icons/ClosePreviewIcon';
+import { ClosePreviewIcon } from '../../assets/Icons/ClosePreviewIcon';
 import tw from 'twrnc';
 import { CameraIcon } from '../../assets/Icons/CameraIcon';
 import { EditIcon } from '../../assets/Icons/EditIcon';
