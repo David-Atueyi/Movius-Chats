@@ -32,8 +32,13 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     selectionMode,
     isSelected,
     toggleSelection,
-    selectionUI,
+    selectionUI: selectionUIProp,
   } = useChatContext();
+
+  const selectionUI = {
+    ...theme?.selection,
+    ...selectionUIProp,
+  };
 
   const bubbleRef = useRef<View>(null);
 
@@ -108,7 +113,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
   const bubbleStyle = [
     tw`px-2 my-1 max-w-[75%] relative`,
-    message.replyTo ? tw`w-[75%]` : null,
     isCurrentUser ? tw`self-end mr-3` : tw`self-start ml-9`,
     isFirstInSequence
       ? isCurrentUser
@@ -243,12 +247,16 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     </Pressable>
   );
 
+  const swipeUi = replyProps?.swipe;
   const swipeWrapped = (
     <SwipeableMessage
       isCurrentUser={isCurrentUser}
       enabled={replyEnabled}
       swipeThreshold={swipeThreshold}
       onReply={() => startReply(message)}
+      iconColor={swipeUi?.iconColor}
+      iconBackground={swipeUi?.iconBackground}
+      iconSize={swipeUi?.iconSize}
     >
       {innerBubble}
     </SwipeableMessage>

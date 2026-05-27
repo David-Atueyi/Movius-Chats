@@ -6,17 +6,13 @@ import { withFontFamily } from '../../utils/theme';
 
 interface InlineReplyProps {
   reply: MessageReply;
-  isCurrentUser: boolean;
-  /** Whether this is the first bubble in a sequence — controls top-corner radii. */
-  isFirstInSequence?: boolean;
   fontFamily?: string;
   replyStyle?: ReplyStyleOverrides;
-  /** Background tint for the chip itself. */
   backgroundColor: string;
-  /** Sender name color. */
   senderNameColor: string;
-  /** Preview text color. */
   previewTextColor: string;
+  thumbnailSize?: number;
+  defaultSenderName?: string;
 }
 
 const previewFor = (reply: MessageReply): string => {
@@ -50,43 +46,26 @@ const iconFor = (kind: MessageReply['mediaKind']): string | null => {
   }
 };
 
-const BUBBLE_RADIUS = 8;
-
 export const InlineReply: React.FC<InlineReplyProps> = ({
   reply,
-  isCurrentUser,
-  isFirstInSequence,
   fontFamily,
   replyStyle,
   backgroundColor,
   senderNameColor,
   previewTextColor,
+  thumbnailSize = 40,
+  defaultSenderName = 'Reply',
 }) => {
   const icon = iconFor(reply.mediaKind);
   const preview = previewFor(reply);
   const showThumb = !!reply.thumbnailUri;
 
-  const topLeftRadius =
-    isFirstInSequence && !isCurrentUser ? 0 : BUBBLE_RADIUS;
-  const topRightRadius =
-    isFirstInSequence && isCurrentUser ? 0 : BUBBLE_RADIUS;
-
   return (
     <View
       style={[
-        tw`flex-row overflow-hidden`,
-        {
-          backgroundColor,
-          minHeight: 48,
-          marginLeft: -8,
-          marginRight: -8,
-          marginTop: -2,
-          marginBottom: 4,
-          borderTopLeftRadius: topLeftRadius,
-          borderTopRightRadius: topRightRadius,
-          borderBottomLeftRadius: 0,
-          borderBottomRightRadius: 0,
-        },
+        tw`m-2 rounded-md overflow-hidden`,
+        { backgroundColor, minHeight: 48 },
+        replyStyle?.inlineContainer,
         replyStyle?.container,
       ]}
     >
@@ -103,7 +82,7 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
               fontFamily
             )}
           >
-            {reply.senderName || 'Reply'}
+            {reply.senderName || defaultSenderName}
           </Text>
           <Text
             numberOfLines={2}
@@ -125,7 +104,11 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
             source={{ uri: reply.thumbnailUri }}
             style={[
               tw`ml-2`,
-              { width: 40, height: 40, borderRadius: 4 },
+              {
+                width: thumbnailSize,
+                height: thumbnailSize,
+                borderRadius: 4,
+              },
               replyStyle?.thumbnail,
             ]}
             resizeMode="cover"

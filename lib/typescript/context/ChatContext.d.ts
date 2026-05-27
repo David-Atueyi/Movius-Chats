@@ -31,9 +31,6 @@ interface ChatContextType extends ChatScreenProps {
     editingMessage: Message | null;
     startEdit: (message: Message) => void;
     cancelEdit: () => void;
-    cameraVisible: boolean;
-    openCamera: () => void;
-    closeCamera: () => void;
 }
 export declare const ChatProvider: React.FC<ChatScreenProps & {
     children: React.ReactNode;

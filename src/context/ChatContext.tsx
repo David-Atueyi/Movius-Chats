@@ -50,10 +50,6 @@ interface ChatContextType extends ChatScreenProps {
   startEdit: (message: Message) => void;
   cancelEdit: () => void;
 
-  // ── Built-in camera modal state ─────────────────────────────────────────
-  cameraVisible: boolean;
-  openCamera: () => void;
-  closeCamera: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -76,8 +72,6 @@ export const ChatProvider: React.FC<
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
-
-  const [cameraVisible, setCameraVisible] = useState(false);
 
   const setMediaViewerGallery = useCallback(
     (items: MessageMediaItem[], initialIndex: number) => {
@@ -169,9 +163,6 @@ export const ChatProvider: React.FC<
     setEditingMessage(null);
   }, []);
 
-  const openCamera = useCallback(() => setCameraVisible(true), []);
-  const closeCamera = useCallback(() => setCameraVisible(false), []);
-
   return (
     <ChatContext.Provider
       value={{
@@ -197,9 +188,6 @@ export const ChatProvider: React.FC<
         editingMessage,
         startEdit,
         cancelEdit,
-        cameraVisible,
-        openCamera,
-        closeCamera,
       }}
     >
       {children}

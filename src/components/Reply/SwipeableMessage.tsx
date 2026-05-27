@@ -23,6 +23,7 @@ interface SwipeableMessageProps {
   onReply: () => void;
   iconColor?: string;
   iconBackground?: string;
+  iconSize?: number;
   children: React.ReactNode;
 }
 
@@ -35,8 +36,10 @@ export const SwipeableMessage: React.FC<SwipeableMessageProps> = ({
   onReply,
   iconColor = 'rgba(255,255,255,0.95)',
   iconBackground = 'rgba(0,0,0,0.35)',
+  iconSize: iconSizeProp,
   children,
 }) => {
+  const iconSize = iconSizeProp ?? ICON_SIZE;
   const translateX = useSharedValue(0);
   const triggered = useSharedValue(0);
 
@@ -124,14 +127,14 @@ export const SwipeableMessage: React.FC<SwipeableMessageProps> = ({
           style={[
             tw`rounded-full items-center justify-center`,
             {
-              width: ICON_SIZE,
-              height: ICON_SIZE,
+              width: iconSize,
+              height: iconSize,
               backgroundColor: iconBackground,
             },
           ]}
         >
           <ReplyIcon
-            style={{ width: ICON_SIZE * 0.55, height: ICON_SIZE * 0.55 }}
+            style={{ width: iconSize * 0.55, height: iconSize * 0.55 }}
             color={iconColor}
           />
         </View>

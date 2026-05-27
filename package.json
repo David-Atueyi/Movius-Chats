@@ -52,8 +52,7 @@
     "react-native-audio-record": "*",
     "react-native-fs": "*",
     "react-native-gesture-handler": ">=2.0.0",
-    "react-native-reanimated": "*",
-    "react-native-vision-camera": "4.7.3"
+    "react-native-reanimated": "*"
   },
   "peerDependenciesMeta": {
     "@react-native-clipboard/clipboard": {
@@ -63,9 +62,6 @@
       "optional": true
     },
     "react-native-fs": {
-      "optional": true
-    },
-    "react-native-vision-camera": {
       "optional": true
     }
   },

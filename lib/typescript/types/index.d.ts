@@ -1,3 +1,4 @@
+import type { ComponentType, ReactNode } from 'react';
 import { ImageStyle, TextStyle, ViewStyle } from 'react-native';
 /** Returned by the recorder when a recording successfully completes. */
 export interface RecordingResult {
@@ -99,11 +100,37 @@ export interface Message {
     replyTo?: MessageReply;
     edited?: boolean;
 }
+/** Swipe-to-reply icon styling. */
+export interface SwipeReplyUIProps {
+    iconColor?: string;
+    iconBackground?: string;
+    iconSize?: number;
+}
 /** Feature flags for slide-to-reply. */
 export interface ReplyConfig {
     enableReply?: boolean;
     swipeThreshold?: number;
     previewMaxLines?: number;
+    swipe?: SwipeReplyUIProps;
+}
+/** Color / text knobs for reply UI (inline chip, input preview, recording bar). */
+export interface ReplyUIProps {
+    accentColor?: string;
+    closeIconColor?: string;
+    inputPreviewBackground?: string;
+    recordingPreviewBackground?: string;
+    previewCardBackground?: string;
+    previewSenderNameColor?: string;
+    previewTextColor?: string;
+    sentInlineBackground?: string;
+    receivedInlineBackground?: string;
+    sentSenderNameColor?: string;
+    receivedSenderNameColor?: string;
+    sentPreviewTextColor?: string;
+    receivedPreviewTextColor?: string;
+    editChipTitle?: string;
+    defaultReplySenderName?: string;
+    thumbnailSize?: number;
 }
 /** Style overrides for the reply chip + reply preview row. */
 export interface ReplyStyleOverrides {
@@ -112,6 +139,11 @@ export interface ReplyStyleOverrides {
     senderName?: TextStyle;
     previewText?: TextStyle;
     thumbnail?: ImageStyle;
+    inlineContainer?: ViewStyle;
+    inputPreviewContainer?: ViewStyle;
+    recordingPreviewContainer?: ViewStyle;
+    editPreviewContainer?: ViewStyle;
+    closeButton?: ViewStyle;
 }
 export interface MessageActionFlags {
     enableReply?: boolean;
@@ -130,6 +162,18 @@ export interface MessageActionAnchor {
     isCurrentUser: boolean;
     isFirstInSequence: boolean;
 }
+export interface MessageActionLabels {
+    reply?: string;
+    copy?: string;
+    edit?: string;
+    delete?: string;
+    forward?: string;
+    select?: string;
+}
+export type MessageActionIconComponents = Partial<Record<MessageActionId, ComponentType<{
+    style?: ViewStyle;
+    color?: string;
+}>>>;
 export interface MessageActionUIProps {
     backgroundColor?: string;
     textColor?: string;
@@ -137,61 +181,19 @@ export interface MessageActionUIProps {
     destructiveColor?: string;
     width?: number;
     borderRadius?: number;
+    rowHeight?: number;
+    iconSize?: number;
     rowStyle?: ViewStyle;
     rowTextStyle?: TextStyle;
+    menuStyle?: ViewStyle;
+    scrimPressableStyle?: ViewStyle;
+    liftedBubblePaddingHorizontal?: number;
     backdropColor?: string;
     scrimColor?: string;
 }
 export interface SelectionUIProps {
     overlayColor?: string;
     rowBackgroundColor?: string;
-}
-export interface CameraCaptureResult {
-    uri: string;
-    type: 'image' | 'video';
-    duration?: number;
-    width?: number;
-    height?: number;
-}
-/** Feature flags for the built-in camera screen. */
-export interface CameraConfig {
-    enablePhoto?: boolean;
-    enableVideo?: boolean;
-    enableZoom?: boolean;
-    enableSwitchCamera?: boolean;
-    enableAudio?: boolean;
-    maxVideoDuration?: number;
-    maxZoom?: number;
-    photoQuality?: 'speed' | 'balanced' | 'quality';
-    videoQuality?: string;
-}
-/** Color / sizing knobs for the built-in camera screen UI. */
-export interface CameraUIProps {
-    captureButtonSize?: number;
-    controlButtonSize?: number;
-    timerTextStyle?: TextStyle;
-    backgroundColor?: string;
-    captureRingColor?: string;
-    recordingRingColor?: string;
-    captureDotColor?: string;
-    recordingIndicatorColor?: string;
-    activeModeTextColor?: string;
-    inactiveModeTextColor?: string;
-    iconColor?: string;
-}
-/** Live state passed to a custom camera renderer. */
-export interface CameraExposedState {
-    isCameraReady: boolean;
-    isRecording: boolean;
-    facing: 'front' | 'back';
-    zoom: number;
-    elapsed: number;
-    capturePhoto: () => Promise<CameraCaptureResult | null>;
-    startRecording: () => Promise<void>;
-    stopRecording: () => Promise<CameraCaptureResult | null>;
-    switchCamera: () => void;
-    setZoom: (zoom: number) => void;
-    close: () => void;
 }
 export interface PreviewAttachment {
     uri: string;
@@ -211,11 +213,14 @@ export interface ChatScreenProps {
     CustomVoiceRecorder?: (state: VoiceRecorderExposedState) => React.ReactNode;
     onReplyMessage?: (message: Message) => void;
     replyProps?: ReplyConfig;
+    replyUI?: ReplyUIProps;
     replyStyle?: ReplyStyleOverrides;
     renderReplyPreview?: (message: Message, cancel: () => void) => React.ReactNode;
     renderInlineReply?: (reply: MessageReply, isCurrentUser: boolean) => React.ReactNode;
     messageActionProps?: MessageActionFlags;
     messageActionUI?: MessageActionUIProps;
+    messageActionLabels?: MessageActionLabels;
+    messageActionIcons?: MessageActionIconComponents;
     renderMessageActions?: (message: Message, close: () => void, anchor?: MessageActionAnchor) => React.ReactNode;
     onCopyMessage?: (message: Message) => void;
     onEditMessage?: (message: Message, newText: string) => void;
@@ -228,11 +233,6 @@ export interface ChatScreenProps {
     onCopySelected?: (messages: Message[]) => void;
     editedLabel?: string;
     editedTextStyle?: TextStyle;
-    enableBuiltInCamera?: boolean;
-    cameraProps?: CameraConfig;
-    cameraUIProps?: CameraUIProps;
-    renderCameraScreen?: (state: CameraExposedState) => React.ReactNode;
-    onCameraCapture?: (media: CameraCaptureResult) => void;
     keyboardVerticalOffset?: number;
     disableKeyboardAvoiding?: boolean;
     typingUsers?: Array<{
@@ -351,6 +351,16 @@ export interface ChatScreenProps {
             styles?: VoiceRecorderStyleOverrides;
             config?: VoiceRecorderConfig;
         };
+        reply?: {
+            ui?: ReplyUIProps;
+            styles?: ReplyStyleOverrides;
+        };
+        messageActions?: {
+            ui?: MessageActionUIProps;
+            labels?: MessageActionLabels;
+            icons?: MessageActionIconComponents;
+        };
+        selection?: SelectionUIProps;
     };
     showAvatars?: boolean;
     showUserNames?: boolean;
@@ -370,4 +380,7 @@ export interface ChatScreenProps {
     CustomMicrophoneIcon?: () => React.ReactNode;
     CustomPlayIcon?: () => React.ReactNode;
     CustomPauseIcon?: () => React.ReactNode;
+    CustomClosePreviewIcon?: () => ReactNode;
+    CustomEditPreviewIcon?: () => ReactNode;
+    renderEditPreview?: (message: Message, cancel: () => void) => ReactNode;
 }

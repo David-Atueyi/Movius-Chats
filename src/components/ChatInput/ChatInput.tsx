@@ -25,6 +25,11 @@ import { useChatContext } from '../../context/ChatContext';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import { RecordingResult, VoiceRecorderExposedState } from '../../types';
 import {
+  getInputPreviewBackground,
+  getRecordingPreviewBackground,
+  mergeReplyUI,
+} from '../../utils/replyTheme';
+import {
   getInputBarIconPixelSize,
   getInputBarIconStyle,
   withFontFamily,
@@ -86,13 +91,32 @@ const ChatInput: React.FC<ChatInputProps> = ({
     replyTarget,
     cancelReply,
     replyProps,
+    replyUI,
     replyStyle,
     renderReplyPreview,
+    renderEditPreview,
+    CustomClosePreviewIcon,
+    CustomEditPreviewIcon,
     // edit state
     editingMessage,
     cancelEdit,
     onEditMessage,
   } = useChatContext();
+
+  const resolvedReplyUI = mergeReplyUI(theme, replyUI);
+  const mergedReplyStyle = { ...theme?.reply?.styles, ...replyStyle };
+  const inputPreviewBg = getInputPreviewBackground(theme, resolvedReplyUI);
+  const recordingPreviewBg = getRecordingPreviewBackground(
+    theme,
+    resolvedReplyUI
+  );
+  const closePreviewColor =
+    resolvedReplyUI.closeIconColor ??
+    theme?.colors?.inputsIconsColor ??
+    'rgba(0,0,0,0.5)';
+  const previewTextColor =
+    resolvedReplyUI.previewTextColor ?? 'rgba(0,0,0,0.55)';
+  const thumbSize = resolvedReplyUI.thumbnailSize ?? 32;
 
   const lastEditingIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -360,9 +384,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
     return (
       <View
         style={[
-          tw`flex-row items-center px-3.5 pt-2 pb-1.5`,
-          { backgroundColor: 'rgba(0, 0, 0, 0.08)', minHeight: 40 },
-          replyStyle?.container,
+          tw`flex-row items-center m-2 rounded-md px-3 py-2`,
+          { backgroundColor: inputPreviewBg, minHeight: 40 },
+          mergedReplyStyle?.inputPreviewContainer,
+          mergedReplyStyle?.container,
         ]}
       >
         <View style={tw`flex-1 mr-2`}>
@@ -371,21 +396,26 @@ const ChatInput: React.FC<ChatInputProps> = ({
             style={withFontFamily(
               [
                 tw`text-[13px] font-semibold`,
-                { color: themePrimary },
-                replyStyle?.senderName,
+                {
+                  color:
+                    resolvedReplyUI.previewSenderNameColor ?? themePrimary,
+                },
+                mergedReplyStyle?.senderName,
               ],
               theme?.fontFamily
             )}
           >
-            {replyTarget.senderName || 'You'}
+            {replyTarget.senderName ||
+              resolvedReplyUI.defaultReplySenderName ||
+              'You'}
           </Text>
           <Text
             numberOfLines={replyProps?.previewMaxLines ?? 1}
             style={withFontFamily(
               [
                 tw`text-[12.5px] mt-0.5`,
-                { color: 'rgba(0,0,0,0.55)' },
-                replyStyle?.previewText,
+                { color: previewTextColor },
+                mergedReplyStyle?.previewText,
               ],
               theme?.fontFamily
             )}
@@ -398,8 +428,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
           <Image
             source={{ uri: thumbnail }}
             style={[
-              { width: 32, height: 32, borderRadius: 4, marginRight: 6 },
-              replyStyle?.thumbnail,
+              {
+                width: thumbSize,
+                height: thumbSize,
+                borderRadius: 4,
+                marginRight: 6,
+              },
+              mergedReplyStyle?.thumbnail,
             ]}
             resizeMode="cover"
           />
@@ -408,11 +443,16 @@ const ChatInput: React.FC<ChatInputProps> = ({
         <Pressable
           onPress={cancelReply}
           hitSlop={10}
-          style={tw`w-7 h-7 items-center justify-center`}
+          style={[
+            tw`w-7 h-7 items-center justify-center`,
+            mergedReplyStyle?.closeButton,
+          ]}
         >
-          <ClosePreviewIcon
-            color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.5)'}
-          />
+          {CustomClosePreviewIcon ? (
+            <CustomClosePreviewIcon />
+          ) : (
+            <ClosePreviewIcon color={closePreviewColor} />
+          )}
         </Pressable>
       </View>
     );
@@ -420,10 +460,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
     showInPillReply,
     replyTarget,
     replyProps?.previewMaxLines,
-    replyStyle,
+    mergedReplyStyle,
+    resolvedReplyUI,
     theme?.fontFamily,
-    theme?.colors?.inputsIconsColor,
     themePrimary,
+    inputPreviewBg,
+    previewTextColor,
+    thumbSize,
+    closePreviewColor,
+    CustomClosePreviewIcon,
     cancelReply,
   ]);
 
@@ -449,27 +494,41 @@ const ChatInput: React.FC<ChatInputProps> = ({
     return (
       <View
         style={[
-          tw`flex-row items-center px-2.5 py-1.5 mb-1 rounded-md`,
-          {
-            backgroundColor: 'rgba(0, 0, 0, 0.08)',
-            minHeight: 40,
-          },
+          tw`flex-row items-center m-2 rounded-md px-3 py-2`,
+          { backgroundColor: recordingPreviewBg, minHeight: 40 },
+          mergedReplyStyle?.recordingPreviewContainer,
         ]}
       >
         <View style={tw`flex-1 mr-2`}>
           <Text
             numberOfLines={1}
             style={withFontFamily(
-              [tw`text-[13px] font-semibold`, { color: themePrimary }],
+              [
+                tw`text-[13px] font-semibold`,
+                {
+                  color:
+                    resolvedReplyUI.previewSenderNameColor ?? themeOnPrimary,
+                },
+              ],
               theme?.fontFamily
             )}
           >
-            {replyTarget.senderName || 'You'}
+            {replyTarget.senderName ||
+              resolvedReplyUI.defaultReplySenderName ||
+              'You'}
           </Text>
           <Text
             numberOfLines={1}
             style={withFontFamily(
-              [tw`text-[12.5px] mt-0.5`, { color: 'rgba(0,0,0,0.55))' }],
+              [
+                tw`text-[12.5px] mt-0.5`,
+                {
+                  color:
+                    resolvedReplyUI.previewTextColor ??
+                    'rgba(255,255,255,0.75)',
+                },
+                mergedReplyStyle?.previewText,
+              ],
               theme?.fontFamily
             )}
           >
@@ -480,7 +539,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
         {thumbnail && (
           <Image
             source={{ uri: thumbnail }}
-            style={[{ width: 30, height: 30, borderRadius: 4, marginRight: 6 }]}
+            style={[
+              {
+                width: thumbSize - 2,
+                height: thumbSize - 2,
+                borderRadius: 4,
+                marginRight: 6,
+              },
+              mergedReplyStyle?.thumbnail,
+            ]}
             resizeMode="cover"
           />
         )}
@@ -488,33 +555,56 @@ const ChatInput: React.FC<ChatInputProps> = ({
         <Pressable
           onPress={cancelReply}
           hitSlop={10}
-          style={tw`w-7 h-7 items-center justify-center`}
+          style={[
+            tw`w-7 h-7 items-center justify-center`,
+            mergedReplyStyle?.closeButton,
+          ]}
         >
-          <ClosePreviewIcon
-            color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.5)'}
-          />
+          {CustomClosePreviewIcon ? (
+            <CustomClosePreviewIcon />
+          ) : (
+            <ClosePreviewIcon color={closePreviewColor} />
+          )}
         </Pressable>
       </View>
     );
   }, [
     showInPillReply,
     replyTarget,
-    themePrimary,
+    themeOnPrimary,
     theme?.fontFamily,
+    recordingPreviewBg,
+    mergedReplyStyle,
+    resolvedReplyUI,
+    thumbSize,
+    closePreviewColor,
+    CustomClosePreviewIcon,
     cancelReply,
   ]);
 
   const inPillEditPreview = useMemo(() => {
-    if (!showInPillEdit) return null;
+    if (!showInPillEdit || !editingMessage) return null;
+    if (renderEditPreview) {
+      return renderEditPreview(editingMessage, () => {
+        cancelEdit();
+        setInputText('');
+        resetInputLayout();
+      });
+    }
     return (
       <View
         style={[
-          tw`flex-row items-center px-3.5 pt-2 pb-1.5`,
-          { backgroundColor: 'rgba(0, 0, 0, 0.08)', minHeight: 40 },
+          tw`flex-row items-center m-2 rounded-md px-3 py-2`,
+          { backgroundColor: inputPreviewBg, minHeight: 40 },
+          mergedReplyStyle?.editPreviewContainer,
         ]}
       >
         <View style={tw`mr-2.5`}>
-          <EditIcon style={{ width: 16, height: 16 }} color={themePrimary} />
+          {CustomEditPreviewIcon ? (
+            <CustomEditPreviewIcon />
+          ) : (
+            <EditIcon style={{ width: 16, height: 16 }} color={themePrimary} />
+          )}
         </View>
         <View style={tw`flex-1 mr-2`}>
           <Text
@@ -524,16 +614,20 @@ const ChatInput: React.FC<ChatInputProps> = ({
               theme?.fontFamily
             )}
           >
-            Edit message
+            {resolvedReplyUI.editChipTitle ?? 'Edit message'}
           </Text>
           <Text
             numberOfLines={1}
             style={withFontFamily(
-              [tw`text-[12.5px] mt-0.5`, { color: 'rgba(0,0,0,0.55)' }],
+              [
+                tw`text-[12.5px] mt-0.5`,
+                { color: previewTextColor },
+                mergedReplyStyle?.previewText,
+              ],
               theme?.fontFamily
             )}
           >
-            {editingMessage?.text}
+            {editingMessage.text}
           </Text>
         </View>
         <Pressable
@@ -543,19 +637,32 @@ const ChatInput: React.FC<ChatInputProps> = ({
             resetInputLayout();
           }}
           hitSlop={10}
-          style={tw`w-7 h-7 items-center justify-center`}
+          style={[
+            tw`w-7 h-7 items-center justify-center`,
+            mergedReplyStyle?.closeButton,
+          ]}
         >
-          <ClosePreviewIcon
-            color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.5)'}
-          />
+          {CustomClosePreviewIcon ? (
+            <CustomClosePreviewIcon />
+          ) : (
+            <ClosePreviewIcon color={closePreviewColor} />
+          )}
         </Pressable>
       </View>
     );
   }, [
     showInPillEdit,
-    editingMessage?.text,
+    editingMessage,
+    renderEditPreview,
+    mergedReplyStyle,
+    resolvedReplyUI,
     themePrimary,
     theme?.fontFamily,
+    inputPreviewBg,
+    previewTextColor,
+    closePreviewColor,
+    CustomClosePreviewIcon,
+    CustomEditPreviewIcon,
     cancelEdit,
     resetInputLayout,
   ]);

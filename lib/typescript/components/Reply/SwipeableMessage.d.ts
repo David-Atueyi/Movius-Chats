@@ -6,6 +6,7 @@ interface SwipeableMessageProps {
     onReply: () => void;
     iconColor?: string;
     iconBackground?: string;
+    iconSize?: number;
     children: React.ReactNode;
 }
 export declare const SwipeableMessage: React.FC<SwipeableMessageProps>;

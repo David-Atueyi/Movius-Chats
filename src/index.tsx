@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, View } from 'react-native';
 import tw from 'twrnc';
 import ChatBubble from './components/ChatBubble/ChatBubble';
@@ -9,10 +9,14 @@ import {
 } from './components/MessageActions';
 import MediaViewer from './components/MediaViewer/MediaViewer';
 import { TypingIndicator } from './components/TypingComponent/TypingIndicator';
-import { CameraScreen } from './components/CameraScreen';
 import { AudioProvider } from './context/AudioContext';
 import { ChatProvider, useChatContext } from './context/ChatContext';
 import { useKeyboardInset } from './hooks/useKeyboardInset';
+import {
+  mergeMessageActionIcons,
+  mergeMessageActionLabels,
+  mergeMessageActionUI,
+} from './utils/messageActions';
 import {
   ChatScreenProps,
   Message,
@@ -47,42 +51,42 @@ const ChatScreenContent = () => {
     keyboardVerticalOffset = 0,
     disableKeyboardAvoiding = false,
 
-    // ── Reply
     startReply,
 
-    // ── Action popover
     actionSheetMessage,
     actionAnchor,
     openActionSheet,
     closeActionSheet,
     messageActionProps,
     messageActionUI,
+    messageActionLabels,
+    messageActionIcons,
     renderMessageActions,
     onCopyMessage,
     onDeleteMessage,
     onForwardMessage,
 
-    // ── Edit flow
     startEdit,
-
-    // ── Selection mode
     enterSelectionMode,
 
-    // ── Camera
-    cameraVisible,
-    openCamera,
-    closeCamera,
-    enableBuiltInCamera,
-    cameraProps,
-    cameraUIProps,
-    renderCameraScreen,
-    onCameraCapture,
     theme,
   } = useChatContext();
 
   const keyboardInset = useKeyboardInset(!disableKeyboardAvoiding);
 
-  // ── Long-press handler: capture anchor and open the popover ──────────────
+  const mergedMessageActionUI = useMemo(
+    () => mergeMessageActionUI(theme, messageActionUI),
+    [theme, messageActionUI]
+  );
+  const mergedMessageActionLabels = useMemo(
+    () => mergeMessageActionLabels(theme, messageActionLabels),
+    [theme, messageActionLabels]
+  );
+  const mergedMessageActionIcons = useMemo(
+    () => mergeMessageActionIcons(theme, messageActionIcons),
+    [theme, messageActionIcons]
+  );
+
   const handleLongPress = useCallback(
     (message: Message, anchor: MessageActionAnchor) => {
       if (onMessageLongPress) {
@@ -94,7 +98,6 @@ const ChatScreenContent = () => {
     [onMessageLongPress, openActionSheet]
   );
 
-  // ── Default action handler ────────────────────────────────────────────────
   const handleAction = useCallback(
     (id: MessageActionId, message: Message) => {
       closeActionSheet();
@@ -131,17 +134,6 @@ const ChatScreenContent = () => {
     ]
   );
 
-  // ── Camera button handler ─────────────────────────────────────────────────
-  const handleCameraPress = useCallback(() => {
-    if (onCameraPress) {
-      onCameraPress();
-      return;
-    }
-    if (enableBuiltInCamera) {
-      openCamera();
-    }
-  }, [onCameraPress, enableBuiltInCamera, openCamera]);
-
   const inputSection = renderCustomInput ? (
     renderCustomInput()
   ) : (
@@ -152,7 +144,7 @@ const ChatScreenContent = () => {
       onAttachmentPress={onAttachmentPress}
       onAudioRecordEnd={onAudioRecordEnd}
       onAudioRecordStart={onAudioRecordStart}
-      onCameraPress={handleCameraPress}
+      onCameraPress={onCameraPress}
       CustomEmojiIcon={CustomEmojiIcon}
       CustomAttachmentIcon={CustomAttachmentIcon}
       CustomCameraIcon={CustomCameraIcon}
@@ -164,11 +156,6 @@ const ChatScreenContent = () => {
     />
   );
 
-  const themePrimary = (theme?.inputStyles?.sendButtonStyle?.backgroundColor ??
-    theme?.colors?.sentBubbleBackgroundColor ??
-    undefined) as string | undefined;
-
-  // ── Long-press overlay (scrim + lifted bubble + anchored menu) ───────────
   const actionSheetNode = (() => {
     if (!actionSheetMessage) return null;
     if (renderMessageActions) {
@@ -185,7 +172,9 @@ const ChatScreenContent = () => {
         visible
         onClose={closeActionSheet}
         flags={messageActionProps}
-        ui={messageActionUI}
+        ui={mergedMessageActionUI}
+        labels={mergedMessageActionLabels}
+        icons={mergedMessageActionIcons}
         fontFamily={theme?.fontFamily}
         onAction={handleAction}
       />
@@ -237,22 +226,6 @@ const ChatScreenContent = () => {
       />
 
       {actionSheetNode}
-
-      {enableBuiltInCamera && (
-        <CameraScreen
-          visible={cameraVisible}
-          onClose={closeCamera}
-          onCapture={(media) => {
-            closeCamera();
-            onCameraCapture?.(media);
-          }}
-          cameraProps={cameraProps}
-          cameraUIProps={cameraUIProps}
-          renderCameraScreen={renderCameraScreen}
-          themePrimary={themePrimary}
-          fontFamily={theme?.fontFamily}
-        />
-      )}
     </View>
   );
 
@@ -302,9 +275,6 @@ export {
   type RecordingState,
 } from './components/VoiceRecorder/VoiceRecorderFlow';
 
-export { CameraScreen } from './components/CameraScreen';
-export type { CameraScreenProps } from './components/CameraScreen';
-
 export {
   LongPressOverlay,
   MessageActionsPopover,
@@ -318,17 +288,16 @@ export {
   SwipeableMessage,
 } from './components/Reply';
 
-// Chat + voice recorder configuration types (public API)
+export { SelectIcon } from './assets/Icons/SelectIcon';
+
 export type {
-  CameraCaptureResult,
-  CameraConfig,
-  CameraExposedState,
-  CameraUIProps,
   ChatScreenProps,
   Message,
   MessageActionAnchor,
   MessageActionFlags,
+  MessageActionIconComponents,
   MessageActionId,
+  MessageActionLabels,
   MessageActionUIProps,
   MessageFileAttachment,
   MessageMediaItem,
@@ -338,7 +307,9 @@ export type {
   RecordingUIProps,
   ReplyConfig,
   ReplyStyleOverrides,
+  ReplyUIProps,
   SelectionUIProps,
+  SwipeReplyUIProps,
   VoiceRecorderConfig,
   VoiceRecorderExposedState,
   VoiceRecorderStyleOverrides,

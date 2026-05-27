@@ -9,6 +9,12 @@ import {
   getFileAttachmentTextColor,
   getMessageTextColor,
 } from '../../utils/bubbleTheme';
+import {
+  getInlineReplyBackground,
+  getInlineReplyPreviewColor,
+  getInlineReplySenderColor,
+  mergeReplyUI,
+} from '../../utils/replyTheme';
 import { collectMediaItems } from '../../utils/messageMedia';
 import { getFontFamilyStyle, withFontFamily } from '../../utils/theme';
 import AudioPlayer from '../AudioPlayer/AudioPlayer';
@@ -21,18 +27,21 @@ const MessageContent: React.FC<MessageContentProps> = ({
   onGalleryOpen,
   isVideoPlaying,
   isCurrentUser,
-  isFirstInSequence,
   onLongPress,
 }) => {
   const {
     theme,
     showMessageStatus,
     onFileAttachmentPress,
+    replyUI,
     replyStyle,
     renderInlineReply,
     selectionMode,
     toggleSelection,
   } = useChatContext();
+
+  const resolvedReplyUI = mergeReplyUI(theme, replyUI);
+  const mergedReplyStyle = { ...theme?.reply?.styles, ...replyStyle };
 
   const mediaItems = useMemo(() => collectMediaItems(message), [message]);
 
@@ -42,25 +51,28 @@ const MessageContent: React.FC<MessageContentProps> = ({
     if (renderInlineReply) {
       return renderInlineReply(message.replyTo, isCurrentUser);
     }
-    const bg = getFileAttachmentBackground(theme, isCurrentUser);
-    const senderColor = isCurrentUser
-      ? theme?.colors?.sentMessageTextColor || 'rgba(255,255,255,0.95)'
-      : theme?.colors?.sentBubbleBackgroundColor ||
-        theme?.colors?.sentMessageTailColor ||
-        '#22c55e';
-    const textColor = isCurrentUser
-      ? theme?.colors?.sentMessageTextColor || 'rgba(255,255,255,0.85)'
-      : theme?.colors?.receivedMessageTextColor || 'rgba(0,0,0,0.75)';
     return (
       <InlineReply
         reply={message.replyTo}
-        isCurrentUser={isCurrentUser}
-        isFirstInSequence={isFirstInSequence}
         fontFamily={theme?.fontFamily}
-        replyStyle={replyStyle}
-        backgroundColor={bg}
-        senderNameColor={senderColor}
-        previewTextColor={textColor}
+        replyStyle={mergedReplyStyle}
+        backgroundColor={getInlineReplyBackground(
+          theme,
+          isCurrentUser,
+          resolvedReplyUI
+        )}
+        senderNameColor={getInlineReplySenderColor(
+          theme,
+          isCurrentUser,
+          resolvedReplyUI
+        )}
+        previewTextColor={getInlineReplyPreviewColor(
+          theme,
+          isCurrentUser,
+          resolvedReplyUI
+        )}
+        thumbnailSize={resolvedReplyUI.thumbnailSize}
+        defaultSenderName={resolvedReplyUI.defaultReplySenderName}
       />
     );
   })();
