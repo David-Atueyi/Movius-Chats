@@ -13,7 +13,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Svg, { Line } from 'react-native-svg';
+import { ClosePreviewIcon } from 'src/assets/Icons/ClosePreviewIcon';
 import tw from 'twrnc';
 import { CameraIcon } from '../../assets/Icons/CameraIcon';
 import { EditIcon } from '../../assets/Icons/EditIcon';
@@ -29,8 +29,8 @@ import {
   getInputBarIconStyle,
   withFontFamily,
 } from '../../utils/theme';
-import { VoiceRecorderFlow } from '../VoiceRecorder/VoiceRecorderFlow';
 import type { VoiceRecorderFlowProps } from '../VoiceRecorder/VoiceRecorderFlow';
+import { VoiceRecorderFlow } from '../VoiceRecorder/VoiceRecorderFlow';
 import FilePreview from './FilePreview';
 import { ChatInputProps, InputHeightState } from './types';
 
@@ -94,9 +94,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
     onEditMessage,
   } = useChatContext();
 
-  // ── Edit-mode autofill ─────────────────────────────────────────────────────
-  // When the user picks "Edit" we pre-fill the input with the original text
-  // so they can amend it. Re-runs every time we enter a fresh edit session.
   const lastEditingIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (editingMessage && editingMessage.id !== lastEditingIdRef.current) {
@@ -364,7 +361,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       <View
         style={[
           tw`flex-row items-center px-3.5 pt-2 pb-1.5`,
-          { minHeight: 40 },
+          { backgroundColor: 'rgba(0, 0, 0, 0.08)', minHeight: 40 },
           replyStyle?.container,
         ]}
       >
@@ -413,30 +410,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
           hitSlop={10}
           style={tw`w-7 h-7 items-center justify-center`}
         >
-          <Svg width={14} height={14} viewBox="0 0 24 24">
-            <Line
-              x1="18"
-              y1="6"
-              x2="6"
-              y2="18"
-              stroke={
-                theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.5)'
-              }
-              strokeWidth={2.5}
-              strokeLinecap="round"
-            />
-            <Line
-              x1="6"
-              y1="6"
-              x2="18"
-              y2="18"
-              stroke={
-                theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.5)'
-              }
-              strokeWidth={2.5}
-              strokeLinecap="round"
-            />
-          </Svg>
+          <ClosePreviewIcon
+            color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.5)'}
+          />
         </Pressable>
       </View>
     );
@@ -450,7 +426,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
     themePrimary,
     cancelReply,
   ]);
-
 
   const inBarReplyPreview = useMemo(() => {
     if (!showInPillReply || !replyTarget) return null;
@@ -476,7 +451,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         style={[
           tw`flex-row items-center px-2.5 py-1.5 mb-1 rounded-md`,
           {
-            backgroundColor: 'rgba(255,255,255,0.08)',
+            backgroundColor: 'rgba(0, 0, 0, 0.08)',
             minHeight: 40,
           },
         ]}
@@ -485,10 +460,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           <Text
             numberOfLines={1}
             style={withFontFamily(
-              [
-                tw`text-[13px] font-semibold`,
-                { color: themePrimary },
-              ],
+              [tw`text-[13px] font-semibold`, { color: themePrimary }],
               theme?.fontFamily
             )}
           >
@@ -497,10 +469,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           <Text
             numberOfLines={1}
             style={withFontFamily(
-              [
-                tw`text-[12.5px] mt-0.5`,
-                { color: 'rgba(255,255,255,0.7)' },
-              ],
+              [tw`text-[12.5px] mt-0.5`, { color: 'rgba(0,0,0,0.55))' }],
               theme?.fontFamily
             )}
           >
@@ -511,9 +480,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         {thumbnail && (
           <Image
             source={{ uri: thumbnail }}
-            style={[
-              { width: 30, height: 30, borderRadius: 4, marginRight: 6 },
-            ]}
+            style={[{ width: 30, height: 30, borderRadius: 4, marginRight: 6 }]}
             resizeMode="cover"
           />
         )}
@@ -523,26 +490,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
           hitSlop={10}
           style={tw`w-7 h-7 items-center justify-center`}
         >
-          <Svg width={14} height={14} viewBox="0 0 24 24">
-            <Line
-              x1="18"
-              y1="6"
-              x2="6"
-              y2="18"
-              stroke="rgba(255,255,255,0.7)"
-              strokeWidth={2.5}
-              strokeLinecap="round"
-            />
-            <Line
-              x1="6"
-              y1="6"
-              x2="18"
-              y2="18"
-              stroke="rgba(255,255,255,0.7)"
-              strokeWidth={2.5}
-              strokeLinecap="round"
-            />
-          </Svg>
+          <ClosePreviewIcon
+            color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.5)'}
+          />
         </Pressable>
       </View>
     );
@@ -560,7 +510,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       <View
         style={[
           tw`flex-row items-center px-3.5 pt-2 pb-1.5`,
-          { minHeight: 40 },
+          { backgroundColor: 'rgba(0, 0, 0, 0.08)', minHeight: 40 },
         ]}
       >
         <View style={tw`mr-2.5`}>
@@ -570,10 +520,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           <Text
             numberOfLines={1}
             style={withFontFamily(
-              [
-                tw`text-[13px] font-semibold`,
-                { color: themePrimary },
-              ],
+              [tw`text-[13px] font-semibold`, { color: themePrimary }],
               theme?.fontFamily
             )}
           >
@@ -598,26 +545,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
           hitSlop={10}
           style={tw`w-7 h-7 items-center justify-center`}
         >
-          <Svg width={14} height={14} viewBox="0 0 24 24">
-            <Line
-              x1="18"
-              y1="6"
-              x2="6"
-              y2="18"
-              stroke="rgba(0,0,0,0.5)"
-              strokeWidth={2.5}
-              strokeLinecap="round"
-            />
-            <Line
-              x1="6"
-              y1="6"
-              x2="18"
-              y2="18"
-              stroke="rgba(0,0,0,0.5)"
-              strokeWidth={2.5}
-              strokeLinecap="round"
-            />
-          </Svg>
+          <ClosePreviewIcon
+            color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.5)'}
+          />
         </Pressable>
       </View>
     );
@@ -664,9 +594,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 ) : (
                   <EmojiFunnySquareIcon
                     style={inputBarIconStyle}
-                    color={
-                      theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
-                    }
+                    color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
                   />
                 )}
               </Pressable>
@@ -691,8 +619,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                     : 4,
                 },
                 {
-                  color:
-                    theme?.colors?.inputTextColor || 'rgba(0, 0, 0, 0.87)',
+                  color: theme?.colors?.inputTextColor || 'rgba(0, 0, 0, 0.87)',
                 },
               ],
               theme?.fontFamily
@@ -702,9 +629,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             }
             multiline
             textAlignVertical={
-              inputHeight.isMultiline && inputText.length > 0
-                ? 'top'
-                : 'center'
+              inputHeight.isMultiline && inputText.length > 0 ? 'top' : 'center'
             }
             onContentSizeChange={handleContentSizeChange}
           />
@@ -806,27 +731,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
     CustomMicrophoneIcon ? (
       <CustomMicrophoneIcon />
     ) : (
-      <MicrophoneIcon
-        style={tw.style(MIC_ICON_CLASS)}
-        color={themeOnPrimary}
-      />
+      <MicrophoneIcon style={tw.style(MIC_ICON_CLASS)} color={themeOnPrimary} />
     );
 
-  /**
-   * Voice flow is always mounted when voice support is on (regardless of
-   * whether the user has typed). This keeps the TextInput inside a stable
-   * parent and prevents the keyboard from dismissing on the first keystroke.
-   *
-   * When `showSendButton` is true (text/preview/edit), the flow renders a
-   * send button in its trailing slot instead of the recording mic.
-   */
   const useVoiceFlow = showVoiceRecordButton && !customVoiceUI && !isEditing;
 
-  // ── Custom reply preview escape hatch ────────────────────────────────────
-  // Default reply/edit previews live INSIDE the input pill (above the text
-  // field) — see `inPillReplyPreview` / `inPillEditPreview`. If the consumer
-  // provided a custom `renderReplyPreview`, render it ABOVE the pill so they
-  // retain full control over layout.
   const customReplyPreviewNode =
     replyTarget && replyEnabledPill && !isEditing && renderReplyPreview
       ? renderReplyPreview(replyTarget, cancelReply)

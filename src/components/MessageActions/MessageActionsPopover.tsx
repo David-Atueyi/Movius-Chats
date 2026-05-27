@@ -12,6 +12,7 @@ import { CopyIcon } from '../../assets/Icons/CopyIcon';
 import { EditIcon } from '../../assets/Icons/EditIcon';
 import { ForwardIcon } from '../../assets/Icons/ForwardIcon';
 import { ReplyIcon } from '../../assets/Icons/ReplyIcon';
+import { SelectIcon } from '../../assets/Icons/SelectIcon';
 import { TrashIcon } from '../../assets/Icons/TrashIcon';
 import type {
   Message,
@@ -40,43 +41,6 @@ interface Action {
   destructive?: boolean;
 }
 
-const SelectIcon: React.FC<{ style?: ViewStyle; color?: string }> = ({
-  style,
-  color = '#111827',
-}) => {
-  // Compose a simple checkmark-in-circle SVG inline so we don't have to ship
-  // another asset just for this row.
-  return (
-    <View
-      style={[
-        {
-          width: 18,
-          height: 18,
-          borderRadius: 9,
-          borderWidth: 1.5,
-          borderColor: color,
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
-        style,
-      ]}
-    >
-      <View
-        style={{
-          width: 4,
-          height: 4,
-          borderRadius: 2,
-          backgroundColor: color,
-        }}
-      />
-    </View>
-  );
-};
-
-/**
- * Build the visible action list. We hide `Edit` automatically when the
- * message has no text body (audio / image / file only).
- */
 const buildActions = (
   message: Message,
   flags: MessageActionFlags | undefined
@@ -111,14 +75,6 @@ const buildActions = (
   });
 };
 
-/**
- * Compute popover position from the bubble anchor.
- *
- * - Horizontally aligns to the bubble's edge (right edge for outgoing,
- *   left edge for incoming) and clamps to the viewport.
- * - Vertically prefers below the bubble; flips above if the bubble is too
- *   close to the bottom of the screen.
- */
 function resolvePosition(
   anchor: MessageActionAnchor | null,
   popoverWidth: number,
@@ -229,18 +185,11 @@ export const MessageActionsPopover: React.FC<MessageActionsPopoverProps> = ({
                 ]}
               >
                 <View style={{ width: 22, height: 22, marginRight: 14 }}>
-                  <a.Icon
-                    style={{ width: 22, height: 22 }}
-                    color={ic}
-                  />
+                  <a.Icon style={{ width: 22, height: 22 }} color={ic} />
                 </View>
                 <Text
                   style={withFontFamily(
-                    [
-                      tw`text-[15px] font-medium`,
-                      { color },
-                      ui?.rowTextStyle,
-                    ],
+                    [tw`text-[15px] font-medium`, { color }, ui?.rowTextStyle],
                     fontFamily
                   )}
                 >

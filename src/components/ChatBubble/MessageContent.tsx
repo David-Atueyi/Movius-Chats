@@ -42,15 +42,12 @@ const MessageContent: React.FC<MessageContentProps> = ({
     if (renderInlineReply) {
       return renderInlineReply(message.replyTo, isCurrentUser);
     }
-    // Reuse the file-attachment background color so the reply chip blends
-    // visually with the rest of the embedded blocks inside the bubble.
     const bg = getFileAttachmentBackground(theme, isCurrentUser);
-    const accent = isCurrentUser
+    const senderColor = isCurrentUser
       ? theme?.colors?.sentMessageTextColor || 'rgba(255,255,255,0.95)'
       : theme?.colors?.sentBubbleBackgroundColor ||
         theme?.colors?.sentMessageTailColor ||
         '#22c55e';
-    const senderColor = accent;
     const textColor = isCurrentUser
       ? theme?.colors?.sentMessageTextColor || 'rgba(255,255,255,0.85)'
       : theme?.colors?.receivedMessageTextColor || 'rgba(0,0,0,0.75)';
@@ -61,7 +58,6 @@ const MessageContent: React.FC<MessageContentProps> = ({
         isFirstInSequence={isFirstInSequence}
         fontFamily={theme?.fontFamily}
         replyStyle={replyStyle}
-        accentColor={accent}
         backgroundColor={bg}
         senderNameColor={senderColor}
         previewTextColor={textColor}

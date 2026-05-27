@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
-import Svg, { Line } from 'react-native-svg';
+import { ClosePreviewIcon } from 'src/assets/Icons/ClosePreviewIcon';
 import tw from 'twrnc';
 import type { Message, ReplyStyleOverrides } from '../../types';
 import { withFontFamily } from '../../utils/theme';
@@ -11,15 +11,10 @@ interface ReplyPreviewProps {
   previewMaxLines?: number;
   replyStyle?: ReplyStyleOverrides;
   fontFamily?: string;
-  /** Color used for the left vertical accent bar AND sender name. */
   accentColor?: string;
-  /** Color used for the close X icon. */
   closeIconColor?: string;
-  /** Background of the preview row (the rounded card). */
   backgroundColor?: string;
-  /** Color for the sender name text (defaults to `accentColor`). */
   senderNameColor?: string;
-  /** Color for the preview text. */
   previewTextColor?: string;
 }
 
@@ -142,26 +137,7 @@ export const ReplyPreview: React.FC<ReplyPreviewProps> = ({
           hitSlop={10}
           style={tw`w-7 h-7 items-center justify-center`}
         >
-          <Svg width={14} height={14} viewBox="0 0 24 24">
-            <Line
-              x1="18"
-              y1="6"
-              x2="6"
-              y2="18"
-              stroke={closeIconColor}
-              strokeWidth={2.5}
-              strokeLinecap="round"
-            />
-            <Line
-              x1="6"
-              y1="6"
-              x2="18"
-              y2="18"
-              stroke={closeIconColor}
-              strokeWidth={2.5}
-              strokeLinecap="round"
-            />
-          </Svg>
+          <ClosePreviewIcon color={closeIconColor} />
         </Pressable>
       </View>
     </View>

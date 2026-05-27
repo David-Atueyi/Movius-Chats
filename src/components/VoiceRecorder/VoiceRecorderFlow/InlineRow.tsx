@@ -40,6 +40,9 @@ interface InlineRowProps {
   sendButtonBackgroundColor?: string;
   sendButtonIconColor?: string;
 
+  /** Rendered above the timer / slide-to-cancel row while holding to record. */
+  headerSlot?: ReactNode;
+
   // Render slots
   renderInputPill?: () => ReactNode;
   renderMicIcon?: () => ReactNode;
@@ -83,6 +86,7 @@ export const InlineRow: React.FC<InlineRowProps> = ({
   onSendPress,
   sendButtonBackgroundColor,
   sendButtonIconColor,
+  headerSlot,
   renderInputPill,
   renderMicIcon,
   renderSendIcon,
@@ -114,58 +118,62 @@ export const InlineRow: React.FC<InlineRowProps> = ({
       {isHold ? (
         <View
           style={[
-            tw`flex-1 flex-row items-center px-4 rounded-3xl`,
+            tw`flex-1 rounded-3xl overflow-hidden`,
             holdPillStyle,
           ]}
         >
-          <Text
-            style={withFontFamily(
-              [
-                tw`text-base font-semibold`,
-                { color: timerColor, minWidth: 42 },
-                timerTextStyle,
-              ],
-              fontFamily
-            )}
-            numberOfLines={1}
-          >
-            {formatDuration(duration)}
-          </Text>
+          {headerSlot}
 
-          <Animated.View
-            style={[
-              tw`flex-1 flex-row items-center justify-center gap-1.5`,
-              slideTextAnimatedStyle,
-            ]}
-          >
-            {renderArrowIcon ? (
-              renderArrowIcon()
-            ) : (
+          <View style={tw`flex-row items-center px-4 flex-1 min-h-[48px]`}>
+            <Text
+              style={withFontFamily(
+                [
+                  tw`text-base font-semibold`,
+                  { color: timerColor, minWidth: 42 },
+                  timerTextStyle,
+                ],
+                fontFamily
+              )}
+              numberOfLines={1}
+            >
+              {formatDuration(duration)}
+            </Text>
+
+            <Animated.View
+              style={[
+                tw`flex-1 flex-row items-center justify-center gap-1.5`,
+                slideTextAnimatedStyle,
+              ]}
+            >
+              {renderArrowIcon ? (
+                renderArrowIcon()
+              ) : (
+                <Text
+                  style={withFontFamily(
+                    [
+                      tw`text-base leading-none`,
+                      { color: cancelTextColor, marginTop: -2 },
+                    ],
+                    fontFamily
+                  )}
+                >
+                  ‹
+                </Text>
+              )}
               <Text
                 style={withFontFamily(
                   [
-                    tw`text-base leading-none`,
-                    { color: cancelTextColor, marginTop: -2 },
+                    tw`text-sm`,
+                    { color: cancelTextColor },
+                    slideTextStyleOverride,
                   ],
                   fontFamily
                 )}
               >
-                ‹
+                Slide to cancel
               </Text>
-            )}
-            <Text
-              style={withFontFamily(
-                [
-                  tw`text-sm`,
-                  { color: cancelTextColor },
-                  slideTextStyleOverride,
-                ],
-                fontFamily
-              )}
-            >
-              Slide to cancel
-            </Text>
-          </Animated.View>
+            </Animated.View>
+          </View>
         </View>
       ) : (
         renderInputPill?.()

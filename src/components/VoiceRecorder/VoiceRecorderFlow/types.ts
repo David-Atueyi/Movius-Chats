@@ -38,7 +38,6 @@ export function stateToInt(s: RecordingState): number {
 // ─── Audio payload passed to onSend ───────────────────────────────────────────
 
 export interface VoiceRecorderFlowAudio {
-  /** Final recording duration in seconds. */
   duration: number;
 }
 
@@ -47,9 +46,7 @@ export interface VoiceRecorderFlowAudio {
 export interface VoiceRecorderFlowProps {
   // ── Colors ────────────────────────────────────────────────────────────────
   primaryColor?: string;
-  /** Background of the dark recording bar (tap / locked screen). */
   backgroundColor?: string;
-  /** Background of the dark "input-shaped" pill shown while long-pressing. */
   holdPillBackground?: string;
   timerColor?: string;
   microphoneColor?: string;
@@ -58,18 +55,13 @@ export interface VoiceRecorderFlowProps {
   deleteIconColor?: string;
   cancelTextColor?: string;
   chevronColor?: string;
-  /** Recording-active pause/play button color. */
   pauseIconColor?: string;
   lockPillBackground?: string;
 
   // ── Sizes ─────────────────────────────────────────────────────────────────
-  /** Height of the surrounding chat-input row (used to size the mic). */
   inputBarHeight?: number;
-  /** Size of the mic / send button when idle. Defaults to `inputBarHeight`. */
   micSize?: number;
-  /** Scale multiplier applied to the mic while long-pressing. Default `1.18`. */
   holdMicScale?: number;
-  /** Size of glyph icons (mic, send, etc.). */
   iconSize?: number;
   lockIconSize?: number;
 
@@ -86,11 +78,6 @@ export interface VoiceRecorderFlowProps {
   waveCount?: number;
 
   // ── Render slots ──────────────────────────────────────────────────────────
-  /**
-   * Render the normal text input pill that lives next to the mic while idle.
-   * The flow takes ownership of the row layout, so the pill is rendered as
-   * the flex-1 child to the left of the mic.
-   */
   renderInputPill?: () => ReactNode;
 
   // ── Render props (icons) ──────────────────────────────────────────────────
@@ -112,30 +99,14 @@ export interface VoiceRecorderFlowProps {
   lockPillStyle?: ViewStyle;
   trashButtonStyle?: ViewStyle;
   sendButtonStyle?: ViewStyle;
-  /** Theme font family applied to every text element (timer, slide-to-cancel). */
   fontFamily?: string;
 
-  /**
-   * Optional header slot rendered INSIDE the recording container, above the
-   * timer / waveform row. Used to keep things like the reply preview visible
-   * while the user is recording or in the locked-recording state.
-   */
   headerSlot?: ReactNode;
 
   // ── Trailing button (text mode) ───────────────────────────────────────────
-  /**
-   * When `true`, the IDLE-state trailing slot renders a send button instead of
-   * the recording mic. Recording-state UIs are unaffected. Use this so the
-   * input pill stays mounted in the same parent across the
-   * "empty input" ↔ "user is typing" transition (otherwise the TextInput
-   * unmounts and the keyboard dismisses on the first character).
-   */
   showSendButton?: boolean;
-  /** Fired when the user taps the trailing send button (only meaningful when `showSendButton` is true). */
   onSendPress?: () => void;
-  /** Background color for the trailing send button (defaults to `primaryColor`). */
   sendButtonBackgroundColor?: string;
-  /** Color for the default paper-plane icon. */
   sendButtonIconColor?: string;
 
   // ── Callbacks ─────────────────────────────────────────────────────────────
@@ -145,10 +116,7 @@ export interface VoiceRecorderFlowProps {
   onDelete?: () => void;
   onLock?: () => void;
   onCancel?: () => void;
-  /** Fired when the user taps the in-bar pause icon. */
   onPauseRecording?: () => void;
-  /** Fired when the user taps the in-bar play icon to resume. */
   onResumeRecording?: () => void;
-  /** Notifies the parent whenever the internal state changes. */
   onStateChange?: (state: RecordingState) => void;
 }

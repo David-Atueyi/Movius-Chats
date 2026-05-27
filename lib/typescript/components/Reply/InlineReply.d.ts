@@ -3,6 +3,8 @@ import type { MessageReply, ReplyStyleOverrides } from '../../types';
 interface InlineReplyProps {
     reply: MessageReply;
     isCurrentUser: boolean;
+    /** Whether this is the first bubble in a sequence — controls top-corner radii. */
+    isFirstInSequence?: boolean;
     fontFamily?: string;
     replyStyle?: ReplyStyleOverrides;
     /** Vertical accent bar color (defaults to a lighter shade of the bubble). */

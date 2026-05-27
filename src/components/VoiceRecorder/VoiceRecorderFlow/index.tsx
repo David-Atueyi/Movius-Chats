@@ -174,6 +174,7 @@ export const VoiceRecorderFlow: React.FC<VoiceRecorderFlowProps> = (props) => {
       inputBarHeight={inputBarHeight}
       micSize={micSize}
       enableLockRecording={enableLockRecording}
+      headerSlot={headerSlot}
       showSendButton={showSendButton}
       onSendPress={onSendPress}
       sendButtonBackgroundColor={sendButtonBackgroundColor}

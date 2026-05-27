@@ -11,8 +11,6 @@ interface InlineReplyProps {
   isFirstInSequence?: boolean;
   fontFamily?: string;
   replyStyle?: ReplyStyleOverrides;
-  /** Vertical accent bar color (defaults to a lighter shade of the bubble). */
-  accentColor: string;
   /** Background tint for the chip itself. */
   backgroundColor: string;
   /** Sender name color. */
@@ -60,7 +58,6 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
   isFirstInSequence,
   fontFamily,
   replyStyle,
-  accentColor,
   backgroundColor,
   senderNameColor,
   previewTextColor,
@@ -69,10 +66,6 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
   const preview = previewFor(reply);
   const showThumb = !!reply.thumbnailUri;
 
-  // ── Top corners of the chip mirror the bubble's outer corners so a
-  //    full-width chip with negative margins blends seamlessly with the
-  //    bubble's rounded shell. The square corner of the bubble's "tail
-  //    side" stays square on the chip.
   const topLeftRadius =
     isFirstInSequence && !isCurrentUser ? 0 : BUBBLE_RADIUS;
   const topRightRadius =
@@ -85,8 +78,6 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
         {
           backgroundColor,
           minHeight: 48,
-          // Break out of the bubble's `px-2` padding so the chip spans the
-          // full bubble width (edge-to-edge).
           marginLeft: -8,
           marginRight: -8,
           marginTop: -2,
@@ -99,15 +90,7 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
         replyStyle?.container,
       ]}
     >
-      <View
-        style={[
-          tw`w-1 self-stretch`,
-          { backgroundColor: accentColor },
-          replyStyle?.replyBar,
-        ]}
-      />
-
-      <View style={tw`flex-1 flex-row items-center pl-3 pr-2 py-2`}>
+      <View style={tw`flex-1 flex-row items-center px-3 py-2`}>
         <View style={tw`flex-1`}>
           <Text
             numberOfLines={1}

@@ -15,6 +15,13 @@ export interface ChatBubbleProps {
 export interface MessageContentProps extends ChatBubbleProps {
     onGalleryOpen: (items: MessageMediaItem[], index: number) => void;
     isVideoPlaying?: boolean;
+    /**
+     * Long-press handler forwarded from the parent ChatBubble. Inner
+     * Pressables (file rows, media tiles) call this so a long-press on a
+     * file / image / video opens the action menu just like a long-press on
+     * the bubble shell.
+     */
+    onLongPress?: () => void;
 }
 export interface MessageStatusProps {
     time: string;

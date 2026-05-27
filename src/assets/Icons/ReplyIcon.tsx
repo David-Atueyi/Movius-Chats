@@ -1,5 +1,5 @@
 import { ViewStyle } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { G, Path } from 'react-native-svg';
 
 export const ReplyIcon = ({
   style,
@@ -9,9 +9,15 @@ export const ReplyIcon = ({
   color?: string;
 }) => (
   <Svg style={style} viewBox="0 0 24 24">
-    <Path
-      fill={color}
-      d="M10 9V5l-7 7l7 7v-4.1c5 0 8.5 1.6 11 5.1c-1-5-4-10-11-11"
-    />
+    <G fill="none" stroke={color} strokeLinecap="round" strokeWidth="1.5">
+      <Path
+        strokeLinejoin="round"
+        d="m11.336 5.479l-3.973 3.53C5.795 10.405 5.011 11.102 5.011 12s.784 1.596 2.352 2.99l3.973 3.53c.716.637 1.074.956 1.369.823s.295-.611.295-1.57v-2.344c3.6 0 7.5 1.714 9 4.571c0-9.142-5.333-11.428-9-11.428V6.226c0-.958 0-1.437-.295-1.57c-.295-.132-.653.186-1.37.823"
+      />
+      <Path
+        d="M8.461 4.5L3.245 9.344a3.897 3.897 0 0 0 .126 5.823L8.46 19.5"
+        opacity=".5"
+      />
+    </G>
   </Svg>
 );

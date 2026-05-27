@@ -108,6 +108,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
   const bubbleStyle = [
     tw`px-2 my-1 max-w-[75%] relative`,
+    message.replyTo ? tw`w-[75%]` : null,
     isCurrentUser ? tw`self-end mr-3` : tw`self-start ml-9`,
     isFirstInSequence
       ? isCurrentUser
@@ -253,12 +254,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     </SwipeableMessage>
   );
 
-  // ── Outer row-level Pressable ────────────────────────────────────────────
-  // Spans the FULL row width, so a tap or long-press anywhere on the row
-  // (including the dead space outside the bubble) selects the bubble.
-  // Inner gestures still take priority — the inner Pressable handles taps
-  // on the bubble itself, and `MessageContent` forwards long-press from
-  // file rows / media tiles.
   return (
     <Pressable
       onPress={handlePress}
@@ -276,7 +271,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   );
 };
 
-/** Best-effort hex/rgb → rgba(...,alpha) helper. */
 function addAlpha(color: string, alpha: number): string {
   if (color.startsWith('#')) {
     let hex = color.slice(1);
