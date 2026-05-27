@@ -113,6 +113,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
   const bubbleStyle = [
     tw`px-2 my-1 max-w-[75%] relative`,
+    message.replyTo ? tw`w-[75%]` : null,
     isCurrentUser ? tw`self-end mr-3` : tw`self-start ml-9`,
     isFirstInSequence
       ? isCurrentUser

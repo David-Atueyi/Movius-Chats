@@ -13,9 +13,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { ClosePreviewIcon } from '../../assets/Icons/ClosePreviewIcon';
 import tw from 'twrnc';
 import { CameraIcon } from '../../assets/Icons/CameraIcon';
+import { ClosePreviewIcon } from '../../assets/Icons/ClosePreviewIcon';
 import { EditIcon } from '../../assets/Icons/EditIcon';
 import { EmojiFunnySquareIcon } from '../../assets/Icons/EmojiFunnySquareIcon';
 import { MicrophoneIcon } from '../../assets/Icons/MicrophoneIcon';
@@ -115,7 +115,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     theme?.colors?.inputsIconsColor ??
     'rgba(0,0,0,0.5)';
   const previewTextColor =
-    resolvedReplyUI.previewTextColor ?? 'rgba(0,0,0,0.55)';
+    resolvedReplyUI.previewTextColor || 'rgba(0,0,0,0.55)';
   const thumbSize = resolvedReplyUI.thumbnailSize ?? 32;
 
   const lastEditingIdRef = useRef<string | null>(null);
@@ -385,7 +385,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
       <View
         style={[
           tw`flex-row items-center m-2 rounded-md px-3 py-2`,
-          { backgroundColor: inputPreviewBg, minHeight: 40 },
+          {
+            backgroundColor: inputPreviewBg || 'rgba(0, 0, 0, 0.08)',
+            minHeight: 40,
+          },
           mergedReplyStyle?.inputPreviewContainer,
           mergedReplyStyle?.container,
         ]}
@@ -397,8 +400,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               [
                 tw`text-[13px] font-semibold`,
                 {
-                  color:
-                    resolvedReplyUI.previewSenderNameColor ?? themePrimary,
+                  color: resolvedReplyUI.previewSenderNameColor || themePrimary,
                 },
                 mergedReplyStyle?.senderName,
               ],
@@ -414,7 +416,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             style={withFontFamily(
               [
                 tw`text-[12.5px] mt-0.5`,
-                { color: previewTextColor },
+                { color: previewTextColor || 'rgba(0, 0, 0, 0.55)' },
                 mergedReplyStyle?.previewText,
               ],
               theme?.fontFamily
@@ -495,7 +497,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
       <View
         style={[
           tw`flex-row items-center m-2 rounded-md px-3 py-2`,
-          { backgroundColor: recordingPreviewBg, minHeight: 40 },
+          {
+            backgroundColor: recordingPreviewBg || 'rgba(0, 0, 0, 0.08)',
+            minHeight: 40,
+          },
           mergedReplyStyle?.recordingPreviewContainer,
         ]}
       >
@@ -507,7 +512,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 tw`text-[13px] font-semibold`,
                 {
                   color:
-                    resolvedReplyUI.previewSenderNameColor ?? themeOnPrimary,
+                    resolvedReplyUI.previewSenderNameColor || themeOnPrimary,
                 },
               ],
               theme?.fontFamily
@@ -523,9 +528,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               [
                 tw`text-[12.5px] mt-0.5`,
                 {
-                  color:
-                    resolvedReplyUI.previewTextColor ??
-                    'rgba(255,255,255,0.75)',
+                  color: resolvedReplyUI.previewTextColor || 'rgba(0,0,0,0.55)',
                 },
                 mergedReplyStyle?.previewText,
               ],
@@ -595,7 +598,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
       <View
         style={[
           tw`flex-row items-center m-2 rounded-md px-3 py-2`,
-          { backgroundColor: inputPreviewBg, minHeight: 40 },
+          {
+            backgroundColor: inputPreviewBg || 'rgba(0, 0, 0, 0.08)',
+            minHeight: 40,
+          },
           mergedReplyStyle?.editPreviewContainer,
         ]}
       >
@@ -614,7 +620,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               theme?.fontFamily
             )}
           >
-            {resolvedReplyUI.editChipTitle ?? 'Edit message'}
+            {resolvedReplyUI.editChipTitle || 'Edit message'}
           </Text>
           <Text
             numberOfLines={1}
