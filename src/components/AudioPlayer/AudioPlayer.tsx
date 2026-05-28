@@ -190,6 +190,10 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     setCurrentlyPlayingId(null);
   }, [setCurrentlyPlayingId]);
 
+  const handleSeek = useCallback(() => {
+    seekBlockedUntilRef.current = 0;
+  }, []);
+
   const togglePlay = useCallback(() => {
     if (effectivePlaying) {
       setIsPlaying(false);
@@ -214,7 +218,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       if (w <= 0 || duration <= 0) return;
       const t = Math.max(0, Math.min(x / w, 1)) * duration;
       setCurrentTime(t);
-      seekBlockedUntilRef.current = Date.now() + 1200;
+      seekBlockedUntilRef.current = Date.now() + 3000;
       if (duration > 0) {
         videoRef.current?.seek(t);
       } else {
@@ -224,25 +228,28 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     [duration]
   );
 
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: (evt) => {
-          isDraggingRef.current = true;
-          seekTo(evt.nativeEvent.locationX);
-        },
-        onPanResponderMove: (evt) => seekTo(evt.nativeEvent.locationX),
-        onPanResponderRelease: () => {
-          isDraggingRef.current = false;
-        },
-        onPanResponderTerminate: () => {
-          isDraggingRef.current = false;
-        },
-      }),
-    [seekTo]
-  );
+ const panResponder = useMemo(
+   () =>
+     PanResponder.create({
+       onStartShouldSetPanResponder: () => true,
+       onStartShouldSetPanResponderCapture: () => true, // ← claim tap immediately
+       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > Math.abs(g.dy), // ← only horizontal drags
+       onMoveShouldSetPanResponderCapture: (_, g) =>
+         Math.abs(g.dx) > Math.abs(g.dy),
+       onPanResponderGrant: (evt) => {
+         isDraggingRef.current = true;
+         seekTo(evt.nativeEvent.locationX);
+       },
+       onPanResponderMove: (evt) => seekTo(evt.nativeEvent.locationX),
+       onPanResponderRelease: () => {
+         isDraggingRef.current = false;
+       },
+       onPanResponderTerminate: () => {
+         isDraggingRef.current = false;
+       },
+     }),
+   [seekTo]
+ );
 
   const playPause = (
     <Pressable
@@ -338,6 +345,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         onLoad={handleLoad}
         onProgress={handleProgress}
         onEnd={handleEnd}
+        onSeek={handleSeek}
         style={{ width: 0, height: 0 }}
         progressUpdateInterval={80}
       />
