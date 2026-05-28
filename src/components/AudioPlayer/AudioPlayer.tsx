@@ -146,7 +146,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [playbackRate, setPlaybackRate] = useState<PlaybackRate>(1);
-  const seekPendingRef = useRef<number | null>(null);
   const isDraggingRef = useRef(false);
   const waveformWRef = useRef(0);
   const waveformViewRef = useRef<View>(null);
@@ -170,10 +169,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   const handleLoad = useCallback((data: { duration: number }) => {
     setDuration(data.duration);
-    if (seekPendingRef.current !== null) {
-      videoRef.current?.seek(seekPendingRef.current);
-      seekPendingRef.current = null;
-    }
   }, []);
 
   const handleProgress = useCallback(
@@ -221,38 +216,34 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       const t = Math.max(0, Math.min(x / w, 1)) * duration;
       setCurrentTime(t);
       seekBlockedUntilRef.current = Date.now() + 3000;
-      if (duration > 0) {
-        videoRef.current?.seek(t);
-      } else {
-        seekPendingRef.current = t;
-      }
+      videoRef.current?.seek(t);
     },
     [duration]
   );
 
-const panResponder = useMemo(
-  () =>
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: () => true,
-      onPanResponderGrant: (_evt, gestureState) => {
-        isDraggingRef.current = true;
-        seekTo(gestureState.x0 - waveformPageXRef.current);
-      },
-      onPanResponderMove: (_evt, gestureState) => {
-        seekTo(gestureState.moveX - waveformPageXRef.current);
-      },
-      onPanResponderRelease: () => {
-        isDraggingRef.current = false;
-      },
-      onPanResponderTerminate: () => {
-        isDraggingRef.current = false;
-      },
-    }),
-  [seekTo]
-);
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onStartShouldSetPanResponderCapture: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponderCapture: () => true,
+        onPanResponderGrant: (_evt, gestureState) => {
+          isDraggingRef.current = true;
+          seekTo(gestureState.x0 - waveformPageXRef.current);
+        },
+        onPanResponderMove: (_evt, gestureState) => {
+          seekTo(gestureState.moveX - waveformPageXRef.current);
+        },
+        onPanResponderRelease: () => {
+          isDraggingRef.current = false;
+        },
+        onPanResponderTerminate: () => {
+          isDraggingRef.current = false;
+        },
+      }),
+    [seekTo]
+  );
 
   const playPause = (
     <Pressable
