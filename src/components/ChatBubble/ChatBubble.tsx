@@ -265,17 +265,17 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
       onPress={handlePress}
       onLongPress={handleLongPress}
       delayLongPress={250}
-      style={[
-        tw`w-full`,
-        selectionMode && selected
-          ? {
-              backgroundColor: resolvedRowBg,
-              paddingRight: isCurrentUser && isFirstInSequence ? 14 : 0,
-              paddingLeft: !isCurrentUser && isFirstInSequence ? 14 : 0,
-            }
-          : null,
-      ]}
+      style={tw`w-full`}
     >
+      {selectionMode && selected && (
+        <View
+          pointerEvents="none"
+          style={[
+            tw`absolute inset-0`,
+            { backgroundColor: resolvedRowBg, zIndex: 10 },
+          ]}
+        />
+      )}
       {swipeWrapped}
     </Pressable>
   );
