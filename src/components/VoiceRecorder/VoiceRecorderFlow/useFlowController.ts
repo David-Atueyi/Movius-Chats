@@ -67,13 +67,13 @@ export function useFlowController(args: FlowControllerArgs) {
     onStateChange,
   } = args;
 
-  // ── Threshold magnitudes (negative because "up" / "left" use negative deltas) ─
+  // Threshold magnitudes (negative because "up" / "left" use negative deltas)
   const cancelThreshold = -Math.abs(cancelSlideDistance);
   const lockThreshold = -Math.abs(lockSlideDistance);
   const maxLeft = cancelThreshold - 30;
   const maxUp = lockThreshold - 20;
 
-  // ── React state ────────────────────────────────────────────────────────────
+  // React state
   const [state, setState] = useState<RecordingState>('IDLE');
   const [duration, setDuration] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -95,7 +95,7 @@ export function useFlowController(args: FlowControllerArgs) {
     onStateChangeRef.current?.(state);
   }, [state]);
 
-  // ── Worklet-readable mirrors of dynamic prop values ──────────────────────
+  // Worklet-readable mirrors of dynamic prop values
   const stateShared = useSharedValue(STATE_IDLE);
   useEffect(() => {
     stateShared.value = stateToInt(state);
@@ -123,12 +123,12 @@ export function useFlowController(args: FlowControllerArgs) {
     enableSlideToCancel,
   ]);
 
-  // ── Timekeeping ────────────────────────────────────────────────────────────
+  // Timekeeping
   const startedAtRef = useRef<number>(0);
   const pausedAccumRef = useRef<number>(0);
   const pausedAtRef = useRef<number>(0);
 
-  // ── Animation shared values ───────────────────────────────────────────────
+  // Animation shared values
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
 
@@ -142,7 +142,7 @@ export function useFlowController(args: FlowControllerArgs) {
   const cancelFiredShared = useSharedValue(0);
   const lockFiredShared = useSharedValue(0);
 
-  // Continuous loops (start once, run for the lifetime of the component).
+  // Continuous loops (start once, run for the lifetime of the component)
   useEffect(() => {
     arrowPulse.value = withRepeat(
       withSequence(
@@ -210,7 +210,7 @@ export function useFlowController(args: FlowControllerArgs) {
     return () => clearInterval(id);
   }, [state, isPaused]);
 
-  // ── Stable callback refs (worklet-safe) ───────────────────────────────────
+  // Stable callback refs (worklet-safe)
   const onRecordingStartRef = useRef(onRecordingStart);
   onRecordingStartRef.current = onRecordingStart;
   const onRecordingStopRef = useRef(onRecordingStop);
@@ -228,7 +228,7 @@ export function useFlowController(args: FlowControllerArgs) {
   const onResumeRef = useRef(onResumeRecording);
   onResumeRef.current = onResumeRecording;
 
-  // ─── Lifecycle helpers ──────────────────────────────────────────────────────
+  // Lifecycle helpers
 
   const beginRecording = useCallback(() => {
     startedAtRef.current = Date.now();
@@ -253,7 +253,7 @@ export function useFlowController(args: FlowControllerArgs) {
     setState('IDLE');
   }, []);
 
-  // ─── Transitions ────────────────────────────────────────────────────────────
+  // Transitions
 
   const sendNow = useCallback(() => {
     const finalDuration =
@@ -327,7 +327,7 @@ export function useFlowController(args: FlowControllerArgs) {
     setIsPaused(willPause);
   }, []);
 
-  // ── Stable refs so gesture worklets never see stale handlers ─────────────
+  // Stable refs so gesture worklets never see stale handlers
   const handleQuickTapRef = useRef(handleQuickTap);
   handleQuickTapRef.current = handleQuickTap;
   const handleHoldStartRef = useRef(handleHoldStart);
@@ -345,7 +345,7 @@ export function useFlowController(args: FlowControllerArgs) {
   const fireLock = () => triggerLockRef.current();
   const fireCancel = () => triggerCancelRef.current();
 
-  // ─── Gestures ───────────────────────────────────────────────────────────────
+  // Gestures
 
   const composedGesture = useMemo(() => {
     const tap = Gesture.Tap()
@@ -431,7 +431,7 @@ export function useFlowController(args: FlowControllerArgs) {
     return Gesture.Race(tap, holdPan);
   }, []);
 
-  // ─── Animated styles ────────────────────────────────────────────────────────
+  // Animated styles
 
   const micWrapperStyle = useAnimatedStyle(() => {
     const isHold = stateShared.value === STATE_HOLD;

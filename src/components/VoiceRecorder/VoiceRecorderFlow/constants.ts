@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 export const DEFAULT_INPUT_BAR_HEIGHT = Platform.OS === 'ios' ? 50 : 48;
 export const DEFAULT_HOLD_SCALE = 1.18;
 
-/** How long the user must hold before the long-press pan gesture activates. */
+// How long the user must hold before the long-press pan gesture activates.
 export const LONG_PRESS_MS = 220;
 
 export const DEFAULT_CANCEL_DISTANCE = 90;
@@ -16,7 +16,7 @@ export const DEFAULT_LOCK_ICON_SIZE = 18;
 
 export const LOCK_ON_RELEASE_DELTA = 12;
 
-// ── Default colors ───────────────────────────────────────────────────────────
+// Default colors
 export const COLOR_PRIMARY_FALLBACK = '#16A34A';
 export const COLOR_BAR_BG_FALLBACK = '#0B141A';
 export const COLOR_HOLD_PILL_BG_FALLBACK = '#1F2C33';

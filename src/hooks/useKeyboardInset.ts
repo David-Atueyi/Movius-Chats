@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Keyboard, KeyboardEvent, Platform } from 'react-native';
 
-/**
- * Full keyboard height for lifting the input bar above the software keyboard.
- * Do not subtract header offset here — that is only for KeyboardAvoidingView on iOS.
- */
 export function useKeyboardInset(enabled = true) {
   const [inset, setInset] = useState(0);
 

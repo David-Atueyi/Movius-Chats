@@ -40,7 +40,6 @@ interface InlineRowProps {
   sendButtonBackgroundColor?: string;
   sendButtonIconColor?: string;
 
-  /** Rendered above the timer / slide-to-cancel row while holding to record. */
   headerSlot?: ReactNode;
 
   // Render slots

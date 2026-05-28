@@ -6,7 +6,6 @@ import {
   MessageMediaItem,
 } from '../types';
 
-/** Full-screen swipe viewer state */
 export interface MediaViewerGalleryState {
   items: MessageMediaItem[];
   initialIndex: number;
@@ -22,22 +21,18 @@ interface ChatContextType extends ChatScreenProps {
   isVideoPlaying: boolean;
   setIsVideoPlaying: (playing: boolean) => void;
 
-  // ── Reply state ─────────────────────────────────────────────────────────
-  /** The message currently being replied to (null when no draft reply). */
+  // Reply state
   replyTarget: Message | null;
-  /** Begin a reply. Mirrors `onReplyMessage`. */
   startReply: (message: Message) => void;
-  /** Cancel the current reply draft. */
   cancelReply: () => void;
 
-  // ── Long-press action popover state ─────────────────────────────────────
+  // Long-press action popover state
   actionSheetMessage: Message | null;
-  /** Anchor info captured at long-press time so the popover can position itself. */
   actionAnchor: MessageActionAnchor | null;
   openActionSheet: (message: Message, anchor?: MessageActionAnchor) => void;
   closeActionSheet: () => void;
 
-  // ── Multi-select mode ───────────────────────────────────────────────────
+  // Multi-select mode
   selectionMode: boolean;
   selectedIds: string[];
   enterSelectionMode: (initial?: Message) => void;
@@ -45,7 +40,7 @@ interface ChatContextType extends ChatScreenProps {
   toggleSelection: (message: Message) => void;
   isSelected: (id: string) => boolean;
 
-  // ── Edit-message draft state ────────────────────────────────────────────
+  // Edit-message draft state
   editingMessage: Message | null;
   startEdit: (message: Message) => void;
   cancelEdit: () => void;

@@ -45,7 +45,7 @@ const buildActions = (
   message: Message,
   flags: MessageActionFlags | undefined
 ): Action[] => {
-  const hasEditableText = !!message.text?.trim();
+  const hasEditableTextOrCopyText = !!message.text?.trim();
 
   const all: Action[] = [
     { id: 'reply', label: 'Reply', Icon: ReplyIcon },
@@ -60,9 +60,9 @@ const buildActions = (
       case 'reply':
         return flags?.enableReply !== false;
       case 'copy':
-        return flags?.enableCopy !== false;
+        return flags?.enableCopy !== false && hasEditableTextOrCopyText;
       case 'edit':
-        return flags?.enableEdit !== false && hasEditableText;
+        return flags?.enableEdit !== false && hasEditableTextOrCopyText;
       case 'delete':
         return flags?.enableDelete !== false;
       case 'forward':

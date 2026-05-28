@@ -13,7 +13,6 @@ export function getInputBarIconPixelSize(size?: string | number): number {
   return DEFAULT_INPUT_BAR_ICON_PX;
 }
 
-/** Size for emoji, attachment, and camera icons only (not send/mic). */
 export function getInputBarIconStyle(size?: string | number): ViewStyle {
   if (typeof size === 'number' && size > 0) {
     return { width: size, height: size };
@@ -27,7 +26,6 @@ export function getInputBarIconStyle(size?: string | number): ViewStyle {
   return tw.style(sizeClass);
 }
 
-/** Applies theme.fontFamily to any Text / ParsedText style array. */
 export function withFontFamily(
   style: StyleProp<TextStyle>,
   fontFamily?: string

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { TextStyle, ViewStyle } from 'react-native';
 
-// ─── State machine ────────────────────────────────────────────────────────────
+// State machine
 
 export type RecordingState =
   | 'IDLE'
@@ -35,16 +35,16 @@ export function stateToInt(s: RecordingState): number {
   }
 }
 
-// ─── Audio payload passed to onSend ───────────────────────────────────────────
+// Audio payload passed to onSend
 
 export interface VoiceRecorderFlowAudio {
   duration: number;
 }
 
-// ─── Public props ─────────────────────────────────────────────────────────────
+// Public props
 
 export interface VoiceRecorderFlowProps {
-  // ── Colors ────────────────────────────────────────────────────────────────
+  // Colors
   primaryColor?: string;
   backgroundColor?: string;
   holdPillBackground?: string;
@@ -58,29 +58,29 @@ export interface VoiceRecorderFlowProps {
   pauseIconColor?: string;
   lockPillBackground?: string;
 
-  // ── Sizes ─────────────────────────────────────────────────────────────────
+  // Sizes
   inputBarHeight?: number;
   micSize?: number;
   holdMicScale?: number;
   iconSize?: number;
   lockIconSize?: number;
 
-  // ── Behavior flags ────────────────────────────────────────────────────────
+  // Behavior flags
   enableLockRecording?: boolean;
   enableSlideToCancel?: boolean;
   enableWaveform?: boolean;
 
-  // ── Thresholds (positive values; signs handled internally) ────────────────
+  // Thresholds (positive values; signs handled internally)
   lockSlideDistance?: number;
   cancelSlideDistance?: number;
 
-  // ── Waveform ──────────────────────────────────────────────────────────────
+  // Waveform
   waveCount?: number;
 
-  // ── Render slots ──────────────────────────────────────────────────────────
+  // Render slots
   renderInputPill?: () => ReactNode;
 
-  // ── Render props (icons) ──────────────────────────────────────────────────
+  // Render props (icons)
   renderMicIcon?: () => ReactNode;
   renderSendIcon?: () => ReactNode;
   renderLockIcon?: () => ReactNode;
@@ -90,7 +90,7 @@ export interface VoiceRecorderFlowProps {
   renderPlayIcon?: () => ReactNode;
   renderWaveform?: () => ReactNode;
 
-  // ── Style overrides ───────────────────────────────────────────────────────
+  // Style overrides
   containerStyle?: ViewStyle;
   barStyle?: ViewStyle;
   timerTextStyle?: TextStyle;
@@ -103,13 +103,13 @@ export interface VoiceRecorderFlowProps {
 
   headerSlot?: ReactNode;
 
-  // ── Trailing button (text mode) ───────────────────────────────────────────
+  // Trailing button (text mode)
   showSendButton?: boolean;
   onSendPress?: () => void;
   sendButtonBackgroundColor?: string;
   sendButtonIconColor?: string;
 
-  // ── Callbacks ─────────────────────────────────────────────────────────────
+  // Callbacks
   onRecordingStart?: () => void;
   onRecordingStop?: () => void;
   onSend?: (audio: VoiceRecorderFlowAudio) => void;

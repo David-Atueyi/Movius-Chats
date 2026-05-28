@@ -40,7 +40,7 @@ interface RecordingBarProps {
   waveCount: number;
   enableWaveform: boolean;
 
-  /** Optional header slot rendered inside the bar above the timer / waveform. */
+  // Optional header slot rendered inside the bar above the timer / waveform.
   headerSlot?: ReactNode;
 
   // Render slots

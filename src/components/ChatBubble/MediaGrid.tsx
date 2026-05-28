@@ -28,7 +28,6 @@ const FOUR_CELL_H = Math.round((MULTI_HEIGHT - ROW_GAP) / 2);
 interface MediaGridProps {
   items: MessageMediaItem[];
   onOpenGallery: (items: MessageMediaItem[], index: number) => void;
-  /** Long-press handler forwarded from the bubble. */
   onLongPress?: () => void;
 }
 

@@ -1,9 +1,8 @@
 import type { ComponentType, ReactNode } from 'react';
 import { ImageStyle, TextStyle, ViewStyle } from 'react-native';
 
-// ─── Voice recording ──────────────────────────────────────────────────────────
+// Voice recording
 
-/** Returned by the recorder when a recording successfully completes. */
 export interface RecordingResult {
   uri: string;
   duration: number;
@@ -11,7 +10,6 @@ export interface RecordingResult {
   mimeType?: string;
 }
 
-/** Passed to `CustomVoiceRecorder` so a custom UI has full control. */
 export interface VoiceRecorderExposedState {
   isRecording: boolean;
   isPaused: boolean;
@@ -26,7 +24,6 @@ export interface VoiceRecorderExposedState {
   cancelRecording: () => void;
 }
 
-/** Feature flags / limits for the built-in recorder. */
 export interface VoiceRecorderConfig {
   maxDuration?: number;
   enableSlideToCancel?: boolean;
@@ -34,7 +31,6 @@ export interface VoiceRecorderConfig {
   enableWaveform?: boolean;
 }
 
-/** Coarse-grained style overrides for the built-in recorder UI. */
 export interface VoiceRecorderStyleOverrides {
   container?: ViewStyle;
   bar?: ViewStyle;
@@ -46,7 +42,6 @@ export interface VoiceRecorderStyleOverrides {
   sendButton?: ViewStyle;
 }
 
-/** Color / sizing knobs for the built-in recorder UI. */
 export interface RecordingUIProps {
   iconSize?: number;
   sendIconSize?: number;
@@ -83,7 +78,6 @@ export interface MessageFileAttachment {
   name: string;
 }
 
-/** Lightweight reference to the message being replied to. */
 export interface MessageReply {
   messageId: string;
   senderName?: string;
@@ -109,16 +103,13 @@ export interface Message {
   edited?: boolean;
 }
 
-// ─── Reply ────────────────────────────────────────────────────────────────────
-
-/** Swipe-to-reply icon styling. */
+// Reply
 export interface SwipeReplyUIProps {
   iconColor?: string;
   iconBackground?: string;
   iconSize?: number;
 }
 
-/** Feature flags for slide-to-reply. */
 export interface ReplyConfig {
   enableReply?: boolean;
   swipeThreshold?: number;
@@ -126,7 +117,6 @@ export interface ReplyConfig {
   swipe?: SwipeReplyUIProps;
 }
 
-/** Color / text knobs for reply UI (inline chip, input preview, recording bar). */
 export interface ReplyUIProps {
   accentColor?: string;
   closeIconColor?: string;
@@ -146,7 +136,6 @@ export interface ReplyUIProps {
   thumbnailSize?: number;
 }
 
-/** Style overrides for the reply chip + reply preview row. */
 export interface ReplyStyleOverrides {
   container?: ViewStyle;
   replyBar?: ViewStyle;
@@ -160,7 +149,7 @@ export interface ReplyStyleOverrides {
   closeButton?: ViewStyle;
 }
 
-// ─── Long-press message actions ───────────────────────────────────────────────
+  // Long-press message actions
 
 export interface MessageActionFlags {
   enableReply?: boolean;
@@ -222,7 +211,7 @@ export interface MessageActionUIProps {
   scrimColor?: string;
 }
 
-// ─── Selection mode (multi-select after pressing "Select") ──────────────────
+// Selection mode (multi-select after pressing "Select")
 
 export interface SelectionUIProps {
   overlayColor?: string;
@@ -247,7 +236,7 @@ export interface ChatScreenProps {
   onFileAttachmentPress?: (file: MessageFileAttachment) => void;
   CustomVoiceRecorder?: (state: VoiceRecorderExposedState) => React.ReactNode;
 
-  // ── Reply (slide-to-reply + reply preview) ────────────────────────────────
+  // Reply (slide-to-reply + reply preview)
   onReplyMessage?: (message: Message) => void;
   replyProps?: ReplyConfig;
   replyUI?: ReplyUIProps;
@@ -261,7 +250,7 @@ export interface ChatScreenProps {
     isCurrentUser: boolean
   ) => React.ReactNode;
 
-  // ── Long-press message actions ────────────────────────────────────────────
+  // Long-press message actions
   messageActionProps?: MessageActionFlags;
   messageActionUI?: MessageActionUIProps;
   messageActionLabels?: MessageActionLabels;
@@ -276,14 +265,14 @@ export interface ChatScreenProps {
   onDeleteMessage?: (message: Message) => void;
   onForwardMessage?: (message: Message) => void;
 
-  // ── Multi-select mode ─────────────────────────────────────────────────────
+  // Multi-select mode
   selectionUI?: SelectionUIProps;
   onSelectionChange?: (selectedIds: string[]) => void;
   onDeleteSelected?: (messages: Message[]) => void;
   onForwardSelected?: (messages: Message[]) => void;
   onCopySelected?: (messages: Message[]) => void;
 
-  // ── "edited" indicator ────────────────────────────────────────────────────
+  // "edited" indicator
   editedLabel?: string;
   editedTextStyle?: TextStyle;
 
@@ -379,7 +368,6 @@ export interface ChatScreenProps {
       audioDurationStyle?: TextStyle;
       audioSpeedButtonStyle?: ViewStyle;
       audioSpeedTextStyle?: TextStyle;
-      /** Style for the small italic "edited" indicator. */
       editedTextStyle?: TextStyle;
     };
     inputStyles?: {

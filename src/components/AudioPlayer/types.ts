@@ -6,7 +6,6 @@ export interface AudioPlayerProps {
   senderAvatar?: string;
   senderName?: string;
   reserveStatusSpace?: boolean;
-  /** Long-press forwarded from the bubble; opens the action menu. */
   onLongPress?: () => void;
 }
 
