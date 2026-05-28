@@ -67,7 +67,8 @@ export function buildMessageActions(
   message: Message,
   flags: MessageActionFlags | undefined,
   labels?: MessageActionLabels,
-  icons?: MessageActionIconComponents
+  icons?: MessageActionIconComponents,
+  isCurrentUser?: boolean
 ): MessageActionItem[] {
   const mergedLabels = { ...DEFAULT_LABELS, ...labels };
   const mergedIcons = mergeMessageActionIcons(undefined, icons);
@@ -112,9 +113,11 @@ export function buildMessageActions(
       case 'reply':
         return flags?.enableReply !== false;
       case 'copy':
-        return flags?.enableCopy !== false;
+        return flags?.enableCopy !== false && hasEditableText;
       case 'edit':
-        return flags?.enableEdit !== false && hasEditableText;
+        return (
+          flags?.enableEdit !== false && hasEditableText && !!isCurrentUser
+        );
       case 'delete':
         return flags?.enableDelete !== false;
       case 'forward':

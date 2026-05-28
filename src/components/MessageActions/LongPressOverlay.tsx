@@ -92,9 +92,15 @@ export const LongPressOverlay: React.FC<LongPressOverlayProps> = ({
   const actions = useMemo(
     () =>
       message
-        ? buildMessageActions(message, flags, mergedLabels, mergedIcons)
+        ? buildMessageActions(
+            message,
+            flags,
+            mergedLabels,
+            mergedIcons,
+            anchor?.isCurrentUser
+          )
         : [],
-    [message, flags, mergedLabels, mergedIcons]
+    [message, flags, mergedLabels, mergedIcons, anchor]
   );
 
   const width = mergedUI.width ?? 200;
