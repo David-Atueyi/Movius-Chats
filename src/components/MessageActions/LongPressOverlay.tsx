@@ -128,7 +128,7 @@ export const LongPressOverlay: React.FC<LongPressOverlayProps> = ({
       <Pressable
         onPress={onClose}
         style={[
-          tw`flex-1 pt-10`,
+          tw`flex-1`,
           { backgroundColor: scrim },
           mergedUI.scrimPressableStyle,
         ]}

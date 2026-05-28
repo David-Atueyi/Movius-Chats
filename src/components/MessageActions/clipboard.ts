@@ -1,10 +1,7 @@
 import type { Message } from '../../types';
 
 export const tryCopyMessage = (message: Message): boolean => {
-  const text =
-    message.text ??
-    message.fileAttachments?.[0]?.name ??
-    '';
+  const text = message.text ?? message.fileAttachments?.[0]?.name ?? '';
   if (!text) return false;
 
   try {
@@ -17,8 +14,6 @@ export const tryCopyMessage = (message: Message): boolean => {
   } catch {
     // ignore — no fallback
   }
-
-
 
   return false;
 };

@@ -217,25 +217,13 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
       />
 
       {!staticMode && selectionMode && selected && (
-        (() => {
-          const TAIL_OFFSET = 14; // matches -3.5 (Tail negative offset in px)
-          const TOP_OFFSET = -6; // small upward expansion to cover top nudges
-          const sideExpand = isCurrentUser
-            ? { right: -TAIL_OFFSET }
-            : { left: -TAIL_OFFSET };
-
-          return (
-            <View
-              pointerEvents="none"
-              style={[
-                tw`absolute inset-0`,
-                { backgroundColor: resolvedOverlay, borderRadius: 8 },
-                { top: TOP_OFFSET },
-                sideExpand,
-              ]}
-            />
-          );
-        })()
+        <View
+          pointerEvents="none"
+          style={[
+            tw`absolute inset-0`,
+            { backgroundColor: resolvedOverlay, borderRadius: 8 },
+          ]}
+        />
       )}
     </>
   );
@@ -279,7 +267,13 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
       delayLongPress={250}
       style={[
         tw`w-full`,
-        selectionMode && selected ? { backgroundColor: resolvedRowBg } : null,
+        selectionMode && selected
+          ? {
+              backgroundColor: resolvedRowBg,
+              paddingRight: isCurrentUser && isFirstInSequence ? 14 : 0,
+              paddingLeft: !isCurrentUser && isFirstInSequence ? 14 : 0,
+            }
+          : null,
       ]}
     >
       {swipeWrapped}
