@@ -6,6 +6,7 @@ import { PauseIcon } from '../../assets/Icons/PauseIcon';
 import { PlayIcon } from '../../assets/Icons/PlayIcon';
 import { useAudio } from '../../context/AudioContext';
 import { useChatContext } from '../../context/ChatContext';
+import type { ChatScreenProps } from '../../types';
 import {
   getAudioDurationColor,
   getAudioPauseIconColor,
@@ -15,7 +16,6 @@ import {
 } from '../../utils/bubbleTheme';
 import { formatDuration } from '../../utils/datefunc';
 import { withFontFamily } from '../../utils/theme';
-import type { ChatScreenProps } from '../../types';
 import { AudioPlayerProps, PLAYBACK_RATES, PlaybackRate } from './types';
 
 type ChatTheme = ChatScreenProps['theme'];
@@ -146,10 +146,10 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [playbackRate, setPlaybackRate] = useState<PlaybackRate>(1);
-  const [waveformW, setWaveformW] = useState(0);
   const seekPendingRef = useRef<number | null>(null);
   const isDraggingRef = useRef(false);
-  const lastSeekTargetRef = useRef<number | null>(null);
+  const waveformWRef = useRef(0);
+  const seekBlockedUntilRef = useRef(0);
 
   const waveform = useMemo(
     () => generateWaveform(audioUrl, WAVEFORM_BARS),
@@ -177,14 +177,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const handleProgress = useCallback(
     ({ currentTime: t }: { currentTime: number }) => {
       if (isDraggingRef.current) return;
-      if (lastSeekTargetRef.current !== null) {
-        if (Math.abs(t - lastSeekTargetRef.current) < 0.5) {
-          lastSeekTargetRef.current = null;
-        } else {
-          return;
-        }
-      }
-
+      if (Date.now() < seekBlockedUntilRef.current) return;
       setCurrentTime(t);
     },
     []
@@ -217,18 +210,18 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   const seekTo = useCallback(
     (x: number) => {
-      const w = waveformW;
+      const w = waveformWRef.current;
       if (w <= 0 || duration <= 0) return;
       const t = Math.max(0, Math.min(x / w, 1)) * duration;
       setCurrentTime(t);
-      lastSeekTargetRef.current = t;
+      seekBlockedUntilRef.current = Date.now() + 1200;
       if (duration > 0) {
         videoRef.current?.seek(t);
       } else {
         seekPendingRef.current = t;
       }
     },
-    [duration, waveformW]
+    [duration]
   );
 
   const panResponder = useMemo(
@@ -288,7 +281,9 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const waveformBars = (
     <View
       style={[tw`flex-1 min-w-0`, { height: WAVEFORM_H }]}
-      onLayout={(e) => setWaveformW(e.nativeEvent.layout.width)}
+      onLayout={(e) => {
+        waveformWRef.current = e.nativeEvent.layout.width;
+      }}
     >
       <View
         style={[
