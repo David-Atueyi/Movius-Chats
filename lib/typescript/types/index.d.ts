@@ -1,13 +1,11 @@
 import type { ComponentType, ReactNode } from 'react';
 import { ImageStyle, TextStyle, ViewStyle } from 'react-native';
-/** Returned by the recorder when a recording successfully completes. */
 export interface RecordingResult {
     uri: string;
     duration: number;
     size?: number;
     mimeType?: string;
 }
-/** Passed to `CustomVoiceRecorder` so a custom UI has full control. */
 export interface VoiceRecorderExposedState {
     isRecording: boolean;
     isPaused: boolean;
@@ -24,14 +22,12 @@ export interface VoiceRecorderExposedState {
     resumeRecording: () => void;
     cancelRecording: () => void;
 }
-/** Feature flags / limits for the built-in recorder. */
 export interface VoiceRecorderConfig {
     maxDuration?: number;
     enableSlideToCancel?: boolean;
     enableLockRecording?: boolean;
     enableWaveform?: boolean;
 }
-/** Coarse-grained style overrides for the built-in recorder UI. */
 export interface VoiceRecorderStyleOverrides {
     container?: ViewStyle;
     bar?: ViewStyle;
@@ -42,7 +38,6 @@ export interface VoiceRecorderStyleOverrides {
     trashButton?: ViewStyle;
     sendButton?: ViewStyle;
 }
-/** Color / sizing knobs for the built-in recorder UI. */
 export interface RecordingUIProps {
     iconSize?: number;
     sendIconSize?: number;
@@ -76,7 +71,6 @@ export interface MessageFileAttachment {
     type: string;
     name: string;
 }
-/** Lightweight reference to the message being replied to. */
 export interface MessageReply {
     messageId: string;
     senderName?: string;
@@ -100,20 +94,17 @@ export interface Message {
     replyTo?: MessageReply;
     edited?: boolean;
 }
-/** Swipe-to-reply icon styling. */
 export interface SwipeReplyUIProps {
     iconColor?: string;
     iconBackground?: string;
     iconSize?: number;
 }
-/** Feature flags for slide-to-reply. */
 export interface ReplyConfig {
     enableReply?: boolean;
     swipeThreshold?: number;
     previewMaxLines?: number;
     swipe?: SwipeReplyUIProps;
 }
-/** Color / text knobs for reply UI (inline chip, input preview, recording bar). */
 export interface ReplyUIProps {
     accentColor?: string;
     closeIconColor?: string;
@@ -132,7 +123,6 @@ export interface ReplyUIProps {
     defaultReplySenderName?: string;
     thumbnailSize?: number;
 }
-/** Style overrides for the reply chip + reply preview row. */
 export interface ReplyStyleOverrides {
     container?: ViewStyle;
     replyBar?: ViewStyle;
@@ -331,7 +321,6 @@ export interface ChatScreenProps {
             audioDurationStyle?: TextStyle;
             audioSpeedButtonStyle?: ViewStyle;
             audioSpeedTextStyle?: TextStyle;
-            /** Style for the small italic "edited" indicator. */
             editedTextStyle?: TextStyle;
         };
         inputStyles?: {

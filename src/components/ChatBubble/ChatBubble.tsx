@@ -237,7 +237,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     </>
   );
 
-  // ── Static mode (used inside the long-press overlay) ───────────────────
+  // Static mode (used inside the long-press overlay)
   if (staticMode) {
     return <View style={bubbleStyle}>{bubbleInner}</View>;
   }

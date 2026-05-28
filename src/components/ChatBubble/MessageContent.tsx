@@ -45,7 +45,7 @@ const MessageContent: React.FC<MessageContentProps> = ({
 
   const mediaItems = useMemo(() => collectMediaItems(message), [message]);
 
-  // ── Inline reply chip ────────────────────────────────────────────────────
+  // Inline reply chip
   const replyChip = (() => {
     if (!message.replyTo) return null;
     if (renderInlineReply) {

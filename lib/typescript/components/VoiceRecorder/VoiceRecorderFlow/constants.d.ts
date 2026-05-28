@@ -1,6 +1,5 @@
 export declare const DEFAULT_INPUT_BAR_HEIGHT: number;
 export declare const DEFAULT_HOLD_SCALE = 1.18;
-/** How long the user must hold before the long-press pan gesture activates. */
 export declare const LONG_PRESS_MS = 220;
 export declare const DEFAULT_CANCEL_DISTANCE = 90;
 export declare const DEFAULT_LOCK_DISTANCE = 70;

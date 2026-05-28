@@ -8,6 +8,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import tw from 'twrnc';
+import { useChatContext } from '../../context/ChatContext';
 import { CopyIcon } from '../../assets/Icons/CopyIcon';
 import { EditIcon } from '../../assets/Icons/EditIcon';
 import { ForwardIcon } from '../../assets/Icons/ForwardIcon';
@@ -43,9 +44,12 @@ interface Action {
 
 const buildActions = (
   message: Message,
-  flags: MessageActionFlags | undefined
+  flags: MessageActionFlags | undefined,
+  currentUserId: string
 ): Action[] => {
-  const hasEditableTextOrCopyText = !!message.text?.trim();
+  const hasEditableText =
+    !!message.text?.trim() && message.senderId === currentUserId;
+  const hasCopyText = !!message.text?.trim();
 
   const all: Action[] = [
     { id: 'reply', label: 'Reply', Icon: ReplyIcon },
@@ -60,9 +64,9 @@ const buildActions = (
       case 'reply':
         return flags?.enableReply !== false;
       case 'copy':
-        return flags?.enableCopy !== false && hasEditableTextOrCopyText;
+        return flags?.enableCopy !== false && hasCopyText;
       case 'edit':
-        return flags?.enableEdit !== false && hasEditableTextOrCopyText;
+        return flags?.enableEdit !== false && hasEditableText;
       case 'delete':
         return flags?.enableDelete !== false;
       case 'forward':
@@ -120,9 +124,10 @@ export const MessageActionsPopover: React.FC<MessageActionsPopoverProps> = ({
   fontFamily,
   onAction,
 }) => {
+  const { currentUserId } = useChatContext();
   const actions = useMemo(
-    () => (message ? buildActions(message, flags) : []),
-    [message, flags]
+    () => (message ? buildActions(message, flags, currentUserId) : []),
+    [message, flags, currentUserId]
   );
 
   const width = ui?.width ?? 200;

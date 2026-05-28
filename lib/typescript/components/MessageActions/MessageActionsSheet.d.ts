@@ -7,17 +7,11 @@ interface MessageActionsSheetProps {
     onClose: () => void;
     flags?: MessageActionFlags;
     fontFamily?: string;
-    /** Background of the sheet card. */
     backgroundColor?: string;
-    /** Color for action labels. */
     textColor?: string;
-    /** Color for action icons. */
     iconColor?: string;
-    /** Color for the Delete action (label + icon). */
     destructiveColor?: string;
-    /** Optional row style override. */
     rowStyle?: ViewStyle;
-    /** Optional row text style override. */
     rowTextStyle?: TextStyle;
     onAction: (id: MessageActionId, message: Message) => void;
 }

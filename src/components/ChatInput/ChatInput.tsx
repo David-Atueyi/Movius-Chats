@@ -39,7 +39,7 @@ import { VoiceRecorderFlow } from '../VoiceRecorder/VoiceRecorderFlow';
 import FilePreview from './FilePreview';
 import { ChatInputProps, InputHeightState } from './types';
 
-// ─── Layout constants ─────────────────────────────────────────────────────────
+// Layout constants
 const MIN_INPUT_HEIGHT = Platform.OS === 'ios' ? 32 : 30;
 const MAX_INPUT_HEIGHT = 118;
 const INPUT_BAR_SHELL_HEIGHT = Platform.OS === 'ios' ? 50 : 48;
@@ -49,7 +49,7 @@ const MIC_ICON_CLASS = 'h-8 w-8';
 
 const FALLBACK_PRIMARY = '#22c55e';
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// Component
 const ChatInput: React.FC<ChatInputProps> = ({
   onSendMessage,
   onTypingStart,
@@ -130,7 +130,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, [editingMessage]);
 
-  // ── Preview list ───────────────────────────────────────────────────────────
+  // Preview list
   const previewList = useMemo(() => {
     if (previewItems?.length) return previewItems;
     if (previewData) return [previewData];
@@ -139,7 +139,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const hasPreviewAttachments = previewList.length > 0;
 
-  // ── Icon sizing ────────────────────────────────────────────────────────────
+  // Icon sizing
   const inputBarIconSize = theme?.sizes?.inputIconSize;
   const inputBarIconStyle = getInputBarIconStyle(inputBarIconSize);
   const iconPixelSize = getInputBarIconPixelSize(inputBarIconSize);
@@ -154,7 +154,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const isEditing = !!editingMessage;
 
-  // ── Text input handlers ────────────────────────────────────────────────────
+  // Text input handlers
   const resetInputLayout = useCallback(() => {
     setInputHeight({ height: MIN_INPUT_HEIGHT, isMultiline: false });
   }, []);
@@ -261,13 +261,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const showSendButton =
     !!inputText.trim() || hasPreviewAttachments || isEditing;
 
-  // ── Voice recorder theming / config (theme.voiceRecorder) ────────────────
+  // Voice recorder theming / config (theme.voiceRecorder)
   const voiceRecorderTheme = theme?.voiceRecorder;
   const mergedRecordingUIProps = voiceRecorderTheme?.ui ?? {};
   const mergedRecorderStyles = voiceRecorderTheme?.styles;
   const mergedRecorderConfig = voiceRecorderTheme?.config;
 
-  // ── Voice recorder (audio engine) ──────────────────────────────────────────
+  // Voice recorder (audio engine)
   const onRecordEnd = useCallback(
     (result: RecordingResult) => {
       onAudioRecordEnd?.(result);
@@ -331,7 +331,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const recordingWaveformColor =
     mergedRecordingUIProps.waveformColor ?? themeOnPrimary;
 
-  // ── Custom voice UI override ──────────────────────────────────────────────
+  // Custom voice UI override
   const exposedState: VoiceRecorderExposedState = {
     isRecording: recorder.isRecording,
     isPaused: recorder.isPaused,
@@ -350,7 +350,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     ? CustomVoiceRecorder(exposedState)
     : null;
 
-  // ── Inline render helpers ──────────────────────────────────────────────────
+  // Inline render helpers
   const replyEnabledPill = replyProps?.enableReply ?? true;
   const showInPillReply =
     !!replyTarget && replyEnabledPill && !isEditing && !renderReplyPreview;
@@ -849,7 +849,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       ? renderReplyPreview(replyTarget, cancelReply)
       : null;
 
-  // ── Voice flow props (typed for safety) ──────────────────────────────────
+  // Voice flow props (typed for safety)
   const voiceFlowProps: VoiceRecorderFlowProps = {
     inputBarHeight: INPUT_BAR_SHELL_HEIGHT,
     primaryColor: recordingPrimary,
@@ -898,7 +898,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     onResumeRecording: handleFlowResume,
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // Render
   return (
     <View style={tw`w-full px-2`}>
       {customReplyPreviewNode}

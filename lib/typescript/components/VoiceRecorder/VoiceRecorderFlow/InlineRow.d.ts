@@ -27,7 +27,6 @@ interface InlineRowProps {
     onSendPress?: () => void;
     sendButtonBackgroundColor?: string;
     sendButtonIconColor?: string;
-    /** Rendered above the timer / slide-to-cancel row while holding to record. */
     headerSlot?: ReactNode;
     renderInputPill?: () => ReactNode;
     renderMicIcon?: () => ReactNode;
