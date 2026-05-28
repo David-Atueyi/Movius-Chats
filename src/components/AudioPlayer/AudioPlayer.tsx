@@ -145,10 +145,11 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
   const [playbackRate, setPlaybackRate] = useState<PlaybackRate>(1);
   const [waveformW, setWaveformW] = useState(0);
   const seekPendingRef = useRef<number | null>(null);
+  const isDraggingRef = useRef(false);
+  const lastSeekTargetRef = useRef<number | null>(null);
 
   const waveform = useMemo(
     () => generateWaveform(audioUrl, WAVEFORM_BARS),
@@ -175,9 +176,18 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   const handleProgress = useCallback(
     ({ currentTime: t }: { currentTime: number }) => {
-      if (!isDragging) setCurrentTime(t);
+      if (isDraggingRef.current) return;
+      if (lastSeekTargetRef.current !== null) {
+        if (Math.abs(t - lastSeekTargetRef.current) < 0.5) {
+          lastSeekTargetRef.current = null;
+        } else {
+          return;
+        }
+      }
+
+      setCurrentTime(t);
     },
-    [isDragging]
+    []
   );
 
   const handleEnd = useCallback(() => {
@@ -211,6 +221,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       if (w <= 0 || duration <= 0) return;
       const t = Math.max(0, Math.min(x / w, 1)) * duration;
       setCurrentTime(t);
+      lastSeekTargetRef.current = t;
       if (duration > 0) {
         videoRef.current?.seek(t);
       } else {
@@ -226,12 +237,16 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
         onPanResponderGrant: (evt) => {
-          setIsDragging(true);
+          isDraggingRef.current = true;
           seekTo(evt.nativeEvent.locationX);
         },
         onPanResponderMove: (evt) => seekTo(evt.nativeEvent.locationX),
-        onPanResponderRelease: () => setIsDragging(false),
-        onPanResponderTerminate: () => setIsDragging(false),
+        onPanResponderRelease: () => {
+          isDraggingRef.current = false;
+        },
+        onPanResponderTerminate: () => {
+          isDraggingRef.current = false;
+        },
       }),
     [seekTo]
   );
@@ -300,7 +315,9 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
                   borderRadius: 2,
                   backgroundColor: active ? activeBarColor : inactiveBarColor,
                 },
-                active ? theme?.messageStyle?.activeProgressBarStyle : undefined,
+                active
+                  ? theme?.messageStyle?.activeProgressBarStyle
+                  : undefined,
               ]}
             />
           );
@@ -351,9 +368,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             tw`text-[11px] mt-1`,
             {
               color: durationColor,
-              paddingLeft: isCurrentUser
-                ? AVATAR_SIZE + 6 + 28 + 6
-                : 28 + 6,
+              paddingLeft: isCurrentUser ? AVATAR_SIZE + 6 + 28 + 6 : 28 + 6,
             },
             theme?.messageStyle?.audioDurationStyle,
           ],

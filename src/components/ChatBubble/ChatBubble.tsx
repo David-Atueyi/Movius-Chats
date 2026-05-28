@@ -215,16 +215,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         hasGalleryMedia={mediaItems.length > 0 && !message.text}
         hasFileAttachments={hasFilesOnly}
       />
-
-      {!staticMode && selectionMode && selected && (
-        <View
-          pointerEvents="none"
-          style={[
-            tw`absolute inset-0`,
-            { backgroundColor: resolvedOverlay, borderRadius: 8 },
-          ]}
-        />
-      )}
     </>
   );
 
