@@ -149,6 +149,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const seekPendingRef = useRef<number | null>(null);
   const isDraggingRef = useRef(false);
   const waveformWRef = useRef(0);
+  const waveformViewRef = useRef<View>(null);
+  const waveformPageXRef = useRef(0);
   const seekBlockedUntilRef = useRef(0);
 
   const waveform = useMemo(
@@ -228,28 +230,29 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     [duration]
   );
 
- const panResponder = useMemo(
-   () =>
-     PanResponder.create({
-       onStartShouldSetPanResponder: () => true,
-       onStartShouldSetPanResponderCapture: () => true, // ← claim tap immediately
-       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > Math.abs(g.dy), // ← only horizontal drags
-       onMoveShouldSetPanResponderCapture: (_, g) =>
-         Math.abs(g.dx) > Math.abs(g.dy),
-       onPanResponderGrant: (evt) => {
-         isDraggingRef.current = true;
-         seekTo(evt.nativeEvent.locationX);
-       },
-       onPanResponderMove: (evt) => seekTo(evt.nativeEvent.locationX),
-       onPanResponderRelease: () => {
-         isDraggingRef.current = false;
-       },
-       onPanResponderTerminate: () => {
-         isDraggingRef.current = false;
-       },
-     }),
-   [seekTo]
- );
+const panResponder = useMemo(
+  () =>
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+      onPanResponderGrant: (_evt, gestureState) => {
+        isDraggingRef.current = true;
+        seekTo(gestureState.x0 - waveformPageXRef.current);
+      },
+      onPanResponderMove: (_evt, gestureState) => {
+        seekTo(gestureState.moveX - waveformPageXRef.current);
+      },
+      onPanResponderRelease: () => {
+        isDraggingRef.current = false;
+      },
+      onPanResponderTerminate: () => {
+        isDraggingRef.current = false;
+      },
+    }),
+  [seekTo]
+);
 
   const playPause = (
     <Pressable
@@ -287,9 +290,13 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   const waveformBars = (
     <View
+      ref={waveformViewRef}
       style={[tw`flex-1 min-w-0`, { height: WAVEFORM_H }]}
-      onLayout={(e) => {
-        waveformWRef.current = e.nativeEvent.layout.width;
+      onLayout={() => {
+        waveformViewRef.current?.measure((_x, _y, width, _h, pageX) => {
+          waveformPageXRef.current = pageX;
+          waveformWRef.current = width;
+        });
       }}
     >
       <View
