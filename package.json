@@ -1,6 +1,6 @@
 {
   "name": "movius-chats",
-  "version": "1.4.4",
+  "version": "1.6.0",
   "description": "A highly customizable, feature-rich chat interface component for React Native applications",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
@@ -46,13 +46,18 @@
   },
   "homepage": "https://github.com/David-Atueyi/Movius-Chats#readme",
   "peerDependencies": {
+    "@react-native-clipboard/clipboard": "*",
     "react": ">=16.8.0",
     "react-native": "*",
-    "react-native-reanimated": "*",
     "react-native-audio-record": "*",
-    "react-native-fs": "*"
+    "react-native-fs": "*",
+    "react-native-gesture-handler": ">=2.0.0",
+    "react-native-reanimated": "*"
   },
   "peerDependenciesMeta": {
+    "@react-native-clipboard/clipboard": {
+      "optional": true
+    },
     "react-native-audio-record": {
       "optional": true
     },
@@ -90,6 +95,7 @@
     "jest": "^29.7.0",
     "metro-react-native-babel-preset": "^0.77.0",
     "prettier": "^3.2.0",
+    "react-native-gesture-handler": "^2.31.2",
     "react-native-reanimated": "^3.0.0",
     "rimraf": "^6.0.1",
     "rollup": "^4.34.9",

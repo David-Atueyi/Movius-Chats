@@ -1,8 +1,8 @@
+import type { ComponentType, ReactNode } from 'react';
 import { ImageStyle, TextStyle, ViewStyle } from 'react-native';
 
-// ─── Voice recording ──────────────────────────────────────────────────────────
+// Voice recording
 
-/** Returned by the recorder when a recording successfully completes. */
 export interface RecordingResult {
   uri: string;
   duration: number;
@@ -10,7 +10,6 @@ export interface RecordingResult {
   mimeType?: string;
 }
 
-/** Passed to `renderVoiceRecorder` so a custom UI has full control. */
 export interface VoiceRecorderExposedState {
   isRecording: boolean;
   isPaused: boolean;
@@ -25,49 +24,36 @@ export interface VoiceRecorderExposedState {
   cancelRecording: () => void;
 }
 
-/** Feature flags / limits for the built-in recorder. */
 export interface VoiceRecorderConfig {
   maxDuration?: number;
   enableSlideToCancel?: boolean;
   enableLockRecording?: boolean;
   enableWaveform?: boolean;
-  autoSendOnRelease?: boolean;
-  enablePauseResume?: boolean;
-  recordingFormat?: string;
-  recordingQuality?: string;
-  animationDuration?: number;
 }
 
 export interface VoiceRecorderStyleOverrides {
   container?: ViewStyle;
-  normalBar?: ViewStyle;
-  longPressBar?: ViewStyle;
+  bar?: ViewStyle;
   timer?: TextStyle;
   waveform?: ViewStyle;
   slideText?: TextStyle;
-  lockContainer?: ViewStyle;
   lockPill?: ViewStyle;
   trashButton?: ViewStyle;
-  playPauseButton?: ViewStyle;
   sendButton?: ViewStyle;
-  holdMicButton?: ViewStyle;
 }
 
 export interface RecordingUIProps {
   iconSize?: number;
-  recordingIconSize?: number;
   sendIconSize?: number;
   timerTextStyle?: TextStyle;
   timerColor?: string;
   waveformColor?: string;
   recordingBackground?: string;
+  holdPillBackground?: string;
   cancelTextColor?: string;
   longPressMicColor?: string;
   containerBorderTopColor?: string;
   containerBorderTopWidth?: number;
-  playPauseIconColor?: string;
-  playPauseIconSize?: number;
-  playPauseButtonBackground?: string;
   lockPillBackground?: string;
   lockIconColor?: string;
   chevronIconColor?: string;
@@ -76,19 +62,28 @@ export interface RecordingUIProps {
   lockPillMarginBottom?: number;
   lockSlideDistance?: number;
   recordingSendButtonBackground?: string;
+  deleteIconColor?: string;
+  pauseIconColor?: string;
+  waveformBarCount?: number;
 }
 
-/** Single image or video inside a message bubble (use `mediaItems` for albums). */
 export interface MessageMediaItem {
   uri: string;
   kind: 'image' | 'video';
 }
 
-/** PDFs, docs, etc. — shown as file rows in the bubble (not the image grid). */
 export interface MessageFileAttachment {
   uri: string;
   type: string;
   name: string;
+}
+
+export interface MessageReply {
+  messageId: string;
+  senderName?: string;
+  preview?: string;
+  mediaKind?: 'image' | 'video' | 'audio' | 'file';
+  thumbnailUri?: string;
 }
 
 export interface Message {
@@ -104,6 +99,123 @@ export interface Message {
   senderAvatar?: string;
   mediaItems?: MessageMediaItem[];
   fileAttachments?: MessageFileAttachment[];
+  replyTo?: MessageReply;
+  edited?: boolean;
+}
+
+// Reply
+export interface SwipeReplyUIProps {
+  iconColor?: string;
+  iconBackground?: string;
+  iconSize?: number;
+}
+
+export interface ReplyConfig {
+  enableReply?: boolean;
+  swipeThreshold?: number;
+  previewMaxLines?: number;
+  swipe?: SwipeReplyUIProps;
+}
+
+export interface ReplyUIProps {
+  accentColor?: string;
+  closeIconColor?: string;
+  inputPreviewBackground?: string;
+  recordingPreviewBackground?: string;
+  previewCardBackground?: string;
+  previewSenderNameColor?: string;
+  previewTextColor?: string;
+  sentInlineBackground?: string;
+  receivedInlineBackground?: string;
+  sentSenderNameColor?: string;
+  receivedSenderNameColor?: string;
+  sentPreviewTextColor?: string;
+  receivedPreviewTextColor?: string;
+  editChipTitle?: string;
+  defaultReplySenderName?: string;
+  thumbnailSize?: number;
+}
+
+export interface ReplyStyleOverrides {
+  container?: ViewStyle;
+  replyBar?: ViewStyle;
+  senderName?: TextStyle;
+  previewText?: TextStyle;
+  thumbnail?: ImageStyle;
+  inlineContainer?: ViewStyle;
+  inputPreviewContainer?: ViewStyle;
+  recordingPreviewContainer?: ViewStyle;
+  editPreviewContainer?: ViewStyle;
+  closeButton?: ViewStyle;
+}
+
+  // Long-press message actions
+
+export interface MessageActionFlags {
+  enableReply?: boolean;
+  enableCopy?: boolean;
+  enableEdit?: boolean;
+  enableDelete?: boolean;
+  enableForward?: boolean;
+  enableSelect?: boolean;
+}
+
+export type MessageActionId =
+  | 'reply'
+  | 'copy'
+  | 'edit'
+  | 'delete'
+  | 'forward'
+  | 'select';
+
+export interface MessageActionAnchor {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  isCurrentUser: boolean;
+  isFirstInSequence: boolean;
+}
+
+export interface MessageActionLabels {
+  reply?: string;
+  copy?: string;
+  edit?: string;
+  delete?: string;
+  forward?: string;
+  select?: string;
+}
+
+export type MessageActionIconComponents = Partial<
+  Record<
+    MessageActionId,
+    ComponentType<{ style?: ViewStyle; color?: string }>
+  >
+>;
+
+export interface MessageActionUIProps {
+  backgroundColor?: string;
+  textColor?: string;
+  iconColor?: string;
+  destructiveColor?: string;
+  width?: number;
+  borderRadius?: number;
+  rowHeight?: number;
+  iconSize?: number;
+  rowStyle?: ViewStyle;
+  rowTextStyle?: TextStyle;
+  menuStyle?: ViewStyle;
+  scrimPressableStyle?: ViewStyle;
+  liftedBubblePaddingHorizontal?: number;
+  backdropColor?: string;
+  scrimColor?: string;
+}
+
+// Selection mode (multi-select after pressing "Select")
+
+export interface SelectionUIProps {
+  overlayColor?: string;
+  rowBackgroundColor?: string;
 }
 
 export interface PreviewAttachment {
@@ -113,7 +225,6 @@ export interface PreviewAttachment {
 }
 
 export interface ChatScreenProps {
-  // Message handling
   messages: Message[];
   currentUserId: string;
   onSendMessage: (message: Omit<Message, 'id' | 'time' | 'status'>) => void;
@@ -123,16 +234,54 @@ export interface ChatScreenProps {
   onAudioRecordStart?: () => void;
   onCameraPress?: () => void;
   onFileAttachmentPress?: (file: MessageFileAttachment) => void;
-  renderVoiceRecorder?: (state: VoiceRecorderExposedState) => React.ReactNode;
-  voiceRecorderProps?: VoiceRecorderConfig;
-  voiceRecorderStyles?: VoiceRecorderStyleOverrides;
-  recordingUIProps?: RecordingUIProps;
+  CustomVoiceRecorder?: (state: VoiceRecorderExposedState) => React.ReactNode;
+
+  // Reply (slide-to-reply + reply preview)
+  onReplyMessage?: (message: Message) => void;
+  replyProps?: ReplyConfig;
+  replyUI?: ReplyUIProps;
+  replyStyle?: ReplyStyleOverrides;
+  renderReplyPreview?: (
+    message: Message,
+    cancel: () => void
+  ) => React.ReactNode;
+  renderInlineReply?: (
+    reply: MessageReply,
+    isCurrentUser: boolean
+  ) => React.ReactNode;
+
+  // Long-press message actions
+  messageActionProps?: MessageActionFlags;
+  messageActionUI?: MessageActionUIProps;
+  messageActionLabels?: MessageActionLabels;
+  messageActionIcons?: MessageActionIconComponents;
+  renderMessageActions?: (
+    message: Message,
+    close: () => void,
+    anchor?: MessageActionAnchor
+  ) => React.ReactNode;
+  onCopyMessage?: (message: Message) => void;
+  onEditMessage?: (message: Message, newText: string) => void;
+  onDeleteMessage?: (message: Message) => void;
+  onForwardMessage?: (message: Message) => void;
+
+  // Multi-select mode
+  selectionUI?: SelectionUIProps;
+  onSelectionChange?: (selectedIds: string[]) => void;
+  onDeleteSelected?: (messages: Message[]) => void;
+  onForwardSelected?: (messages: Message[]) => void;
+  onCopySelected?: (messages: Message[]) => void;
+
+  // "edited" indicator
+  editedLabel?: string;
+  editedTextStyle?: TextStyle;
 
   keyboardVerticalOffset?: number;
   disableKeyboardAvoiding?: boolean;
 
   // Typing indicators and input
   typingUsers?: Array<{ id: string; avatar: string; name: string }>;
+  typingText?: string;
   onTypingStart?: () => void;
   onTypingEnd?: () => void;
   placeholder?: string;
@@ -199,6 +348,7 @@ export interface ChatScreenProps {
       typingContainerStyle?: ViewStyle;
       additionalTypingUsersContainerStyle?: ViewStyle;
       additionalTypingUsersTextStyle?: TextStyle;
+      typingTextStyle?: TextStyle;
     };
     messageStyle?: {
       sentTextStyle?: TextStyle;
@@ -218,6 +368,7 @@ export interface ChatScreenProps {
       audioDurationStyle?: TextStyle;
       audioSpeedButtonStyle?: ViewStyle;
       audioSpeedTextStyle?: TextStyle;
+      editedTextStyle?: TextStyle;
     };
     inputStyles?: {
       inputSectionContainerStyle?: ViewStyle;
@@ -231,6 +382,21 @@ export interface ChatScreenProps {
       nameContainer?: ViewStyle;
       text?: TextStyle;
     };
+    voiceRecorder?: {
+      ui?: RecordingUIProps;
+      styles?: VoiceRecorderStyleOverrides;
+      config?: VoiceRecorderConfig;
+    };
+    reply?: {
+      ui?: ReplyUIProps;
+      styles?: ReplyStyleOverrides;
+    };
+    messageActions?: {
+      ui?: MessageActionUIProps;
+      labels?: MessageActionLabels;
+      icons?: MessageActionIconComponents;
+    };
+    selection?: SelectionUIProps;
   };
 
   // Feature flags
@@ -256,4 +422,10 @@ export interface ChatScreenProps {
   CustomMicrophoneIcon?: () => React.ReactNode;
   CustomPlayIcon?: () => React.ReactNode;
   CustomPauseIcon?: () => React.ReactNode;
+  CustomClosePreviewIcon?: () => ReactNode;
+  CustomEditPreviewIcon?: () => ReactNode;
+  renderEditPreview?: (
+    message: Message,
+    cancel: () => void
+  ) => ReactNode;
 }

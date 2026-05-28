@@ -19,7 +19,7 @@ export const TypingIndicator = ({
   typingUsers,
   currentUserId,
 }: TypingIndicatorProps) => {
-  const { theme, showAvatars, renderCustomTyping, showBubbleTail } =
+  const { theme, showAvatars, renderCustomTyping, showBubbleTail, typingText } =
     useChatContext();
 
   const otherTypingUsers = typingUsers.filter(
@@ -31,10 +31,39 @@ export const TypingIndicator = ({
   const displayedUsers = otherTypingUsers.slice(0, 2);
   const additionalUsers = otherTypingUsers.length - 2;
 
+  // Number of visible circles (up to 2 user avatars + optional "+N")
+  const numCircles = showAvatars
+    ? displayedUsers.length + (additionalUsers > 0 ? 1 : 0)
+    : 0;
+
+  // Width of avatar group: first is 24px, each extra adds 14px (24 - 10px overlap)
+  const avatarGroupW = numCircles > 0 ? 24 + Math.max(0, numCircles - 1) * 14 : 0;
+
+  // marginLeft = avatarGroupW + 12 keeps the same 4px visual gap as regular
+  // received chat bubbles (px-2 = 8px padding + 4px gap). For 1 avatar this
+  // equals exactly 36px = ml-9, matching ChatBubble.tsx perfectly.
+  const bubbleMarginLeft = numCircles > 0 ? avatarGroupW + 12 : 8;
+
+  // Avatar group left from content area (inside px-2 padding = 8px)
+  const avatarLeft = -(avatarGroupW + 12);
+
   return (
-    <View style={tw`my-1 max-w-[75%] self-start flex-row`}>
-      {showAvatars && (
-        <View style={tw`flex-row`}>
+    <View
+      style={[
+        tw`px-2 my-1 bg-white rounded-tl-none rounded-lg relative max-w-[75%] self-start`,
+        { marginLeft: bubbleMarginLeft },
+        theme?.bubbleStyle?.typingContainerStyle,
+      ]}
+    >
+      {showAvatars && numCircles > 0 && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: avatarLeft,
+            flexDirection: 'row',
+          }}
+        >
           {displayedUsers.map((user, index) => (
             <View
               key={user.id}
@@ -73,10 +102,7 @@ export const TypingIndicator = ({
             <View
               style={[
                 tw`bg-gray-400 w-6 h-6 rounded-full items-center justify-center`,
-                {
-                  marginLeft: -10,
-                  zIndex: 3,
-                },
+                { marginLeft: -10, zIndex: 3 },
                 { ...theme?.bubbleStyle?.additionalTypingUsersContainerStyle },
               ]}
             >
@@ -95,31 +121,28 @@ export const TypingIndicator = ({
           )}
         </View>
       )}
+
       {showBubbleTail && (
         <ArrowBack2RoundedIcon
-          style={tw.style(
-            'w-6 h-6 rotate-180 fill-white mt-[1.25px] translate-x-1.5'
-          )}
+          style={tw.style('absolute -top-[3px] w-6 h-6 rotate-180 -left-3.5 mt-[1.5px]')}
           color={theme?.colors?.receivedMessageTailColor || 'white'}
         />
       )}
 
-      <View
-        style={[
-          tw`px-2 my-1 bg-white rounded-tl-none rounded-lg`,
-          theme?.bubbleStyle?.typingContainerStyle,
-        ]}
-      >
-        {renderCustomTyping ? (
-          renderCustomTyping()
-        ) : (
-          <View style={tw`flex-row items-center py-3 px-2 justify-center`}>
-            <Text style={withFontFamily(tw`text-gray-600`, theme?.fontFamily)}>
-              Typing...
-            </Text>
-          </View>
-        )}
-      </View>
+      {renderCustomTyping ? (
+        renderCustomTyping()
+      ) : (
+        <View style={tw`flex-row items-center py-3 px-2 justify-center`}>
+          <Text
+            style={withFontFamily(
+              [tw`text-gray-600`, theme?.bubbleStyle?.typingTextStyle],
+              theme?.fontFamily
+            )}
+          >
+            {typingText ?? 'Typing...'}
+          </Text>
+        </View>
+      )}
     </View>
   );
 };

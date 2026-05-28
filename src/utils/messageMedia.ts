@@ -1,6 +1,5 @@
 import type { Message, MessageMediaItem } from '../types';
 
-/** Merge legacy `image` / `video` with `mediaItems` (array wins when non-empty). */
 export function collectMediaItems(message: Message): MessageMediaItem[] {
   if (message.mediaItems && message.mediaItems.length > 0) {
     return message.mediaItems;

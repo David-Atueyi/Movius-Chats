@@ -6,6 +6,7 @@ export interface AudioPlayerProps {
   senderAvatar?: string;
   senderName?: string;
   reserveStatusSpace?: boolean;
+  onLongPress?: () => void;
 }
 
 export const PLAYBACK_RATES = [1, 1.5, 2] as const;

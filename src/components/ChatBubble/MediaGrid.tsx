@@ -28,6 +28,7 @@ const FOUR_CELL_H = Math.round((MULTI_HEIGHT - ROW_GAP) / 2);
 interface MediaGridProps {
   items: MessageMediaItem[];
   onOpenGallery: (items: MessageMediaItem[], index: number) => void;
+  onLongPress?: () => void;
 }
 
 const VideoThumbCell: React.FC<{
@@ -123,6 +124,7 @@ function formatShortDuration(sec: number): string {
 export const MediaGrid: React.FC<MediaGridProps> = ({
   items,
   onOpenGallery,
+  onLongPress,
 }) => {
   const { width: windowW } = useWindowDimensions();
   const maxW = Math.min(GRID_WIDTH, windowW * 0.72);
@@ -136,6 +138,8 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
     return (
       <Pressable
         onPress={() => onOpenGallery(items, 0)}
+        onLongPress={onLongPress}
+        delayLongPress={250}
         style={{ width: maxW, height: SINGLE_HEIGHT, marginVertical: 8 }}
       >
         {item.kind === 'image' ? (
@@ -175,6 +179,8 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
           <Pressable
             key={`${item.uri}-${idx}`}
             onPress={() => onOpenGallery(items, idx)}
+            onLongPress={onLongPress}
+            delayLongPress={250}
             style={{ width: half, height: TWO_ROW_H }}
           >
             {item.kind === 'image' ? (
@@ -205,6 +211,8 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
       <View style={{ width: maxW, height: MULTI_HEIGHT, marginVertical: 8, gap: ROW_GAP }}>
         <Pressable
           onPress={() => onOpenGallery(items, 0)}
+          onLongPress={onLongPress}
+          delayLongPress={250}
           style={{ width: maxW, height: THREE_TOP_H }}
         >
           {top.kind === 'image' ? (
@@ -225,6 +233,8 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
           <Pressable
             key={`${left.uri}-1`}
             onPress={() => onOpenGallery(items, 1)}
+            onLongPress={onLongPress}
+            delayLongPress={250}
             style={{ width: bottomHalf, height: THREE_BOT_H }}
           >
             {left.kind === 'image' ? (
@@ -244,6 +254,8 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
           <Pressable
             key={`${right.uri}-2`}
             onPress={() => onOpenGallery(items, 2)}
+            onLongPress={onLongPress}
+            delayLongPress={250}
             style={{ width: bottomHalf, height: THREE_BOT_H }}
           >
             {right.kind === 'image' ? (
@@ -284,6 +296,8 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
         <Pressable
           key={`${cell.uri}-${idx}`}
           onPress={() => onOpenGallery(items, idx)}
+          onLongPress={onLongPress}
+          delayLongPress={250}
           style={{
             width: cellW,
             height: FOUR_CELL_H,

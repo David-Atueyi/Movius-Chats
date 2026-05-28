@@ -6,6 +6,7 @@ import { PauseIcon } from '../../assets/Icons/PauseIcon';
 import { PlayIcon } from '../../assets/Icons/PlayIcon';
 import { useAudio } from '../../context/AudioContext';
 import { useChatContext } from '../../context/ChatContext';
+import type { ChatScreenProps } from '../../types';
 import {
   getAudioDurationColor,
   getAudioPauseIconColor,
@@ -15,14 +16,12 @@ import {
 } from '../../utils/bubbleTheme';
 import { formatDuration } from '../../utils/datefunc';
 import { withFontFamily } from '../../utils/theme';
-import type { ChatScreenProps } from '../../types';
 import { AudioPlayerProps, PLAYBACK_RATES, PlaybackRate } from './types';
 
 type ChatTheme = ChatScreenProps['theme'];
 
-const WAVEFORM_BARS = 40;
-const WAVEFORM_H = 28;
-const KNOB_SIZE = 10;
+const WAVEFORM_BARS = 50;
+const WAVEFORM_H = 36;
 const AVATAR_SIZE = 42;
 
 function generateWaveform(url: string, count: number): number[] {
@@ -33,7 +32,7 @@ function generateWaveform(url: string, count: number): number[] {
   return Array.from({ length: count }, (_, i) => {
     h = Math.imul(h ^ (h >>> 16), 0x45d9f3b + i * 31337) | 0;
     h = h ^ (h >>> 13);
-    return 0.15 + ((Math.abs(h) % 100) / 100) * 0.85;
+    return 0.18 + ((Math.abs(h) % 100) / 100) * 0.82;
   });
 }
 
@@ -136,6 +135,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   senderAvatar,
   senderName,
   reserveStatusSpace = true,
+  onLongPress,
 }) => {
   const { theme, CustomPlayIcon, CustomPauseIcon, showMessageStatus } =
     useChatContext();
@@ -145,10 +145,12 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
   const [playbackRate, setPlaybackRate] = useState<PlaybackRate>(1);
-  const [waveformW, setWaveformW] = useState(0);
-  const seekPendingRef = useRef<number | null>(null);
+  const isDraggingRef = useRef(false);
+  const waveformWRef = useRef(0);
+  const waveformViewRef = useRef<View>(null);
+  const waveformPageXRef = useRef(0);
+  const seekBlockedUntilRef = useRef(0);
 
   const waveform = useMemo(
     () => generateWaveform(audioUrl, WAVEFORM_BARS),
@@ -160,8 +162,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const durationColor = getAudioDurationColor(theme, isCurrentUser);
   const playIconColor = getAudioPlayIconColor(theme, isCurrentUser);
   const pauseIconColor = getAudioPauseIconColor(theme, isCurrentUser);
-  const scrubberColor = activeBarColor;
-
   const shouldPause =
     isVideoPlaying || (!!currentlyPlayingId && currentlyPlayingId !== audioId);
   const effectivePlaying = isPlaying && !shouldPause;
@@ -169,17 +169,15 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   const handleLoad = useCallback((data: { duration: number }) => {
     setDuration(data.duration);
-    if (seekPendingRef.current !== null) {
-      videoRef.current?.seek(seekPendingRef.current);
-      seekPendingRef.current = null;
-    }
   }, []);
 
   const handleProgress = useCallback(
     ({ currentTime: t }: { currentTime: number }) => {
-      if (!isDragging) setCurrentTime(t);
+      if (isDraggingRef.current) return;
+      if (Date.now() < seekBlockedUntilRef.current) return;
+      setCurrentTime(t);
     },
-    [isDragging]
+    []
   );
 
   const handleEnd = useCallback(() => {
@@ -188,6 +186,10 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     videoRef.current?.seek(0);
     setCurrentlyPlayingId(null);
   }, [setCurrentlyPlayingId]);
+
+  const handleSeek = useCallback(() => {
+    seekBlockedUntilRef.current = 0;
+  }, []);
 
   const togglePlay = useCallback(() => {
     if (effectivePlaying) {
@@ -209,37 +211,48 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   const seekTo = useCallback(
     (x: number) => {
-      const w = waveformW;
+      const w = waveformWRef.current;
       if (w <= 0 || duration <= 0) return;
       const t = Math.max(0, Math.min(x / w, 1)) * duration;
       setCurrentTime(t);
-      if (duration > 0) {
-        videoRef.current?.seek(t);
-      } else {
-        seekPendingRef.current = t;
-      }
+      seekBlockedUntilRef.current = Date.now() + 3000;
+      videoRef.current?.seek(t);
     },
-    [duration, waveformW]
+    [duration]
   );
 
   const panResponder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
+        onStartShouldSetPanResponderCapture: () => true,
         onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: (evt) => {
-          setIsDragging(true);
-          seekTo(evt.nativeEvent.locationX);
+        onMoveShouldSetPanResponderCapture: () => true,
+        onPanResponderGrant: (_evt, gestureState) => {
+          isDraggingRef.current = true;
+          seekTo(gestureState.x0 - waveformPageXRef.current);
         },
-        onPanResponderMove: (evt) => seekTo(evt.nativeEvent.locationX),
-        onPanResponderRelease: () => setIsDragging(false),
-        onPanResponderTerminate: () => setIsDragging(false),
+        onPanResponderMove: (_evt, gestureState) => {
+          seekTo(gestureState.moveX - waveformPageXRef.current);
+        },
+        onPanResponderRelease: () => {
+          isDraggingRef.current = false;
+        },
+        onPanResponderTerminate: () => {
+          isDraggingRef.current = false;
+        },
       }),
     [seekTo]
   );
 
   const playPause = (
-    <Pressable onPress={togglePlay} hitSlop={8} style={tw`shrink-0 px-0.5`}>
+    <Pressable
+      onPress={togglePlay}
+      onLongPress={onLongPress}
+      delayLongPress={250}
+      hitSlop={8}
+      style={tw`shrink-0 px-0.5`}
+    >
       {effectivePlaying ? (
         CustomPauseIcon ? (
           <CustomPauseIcon />
@@ -266,75 +279,50 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     />
   );
 
-  const waveformBlock = (
-    <View style={[tw`flex-1 min-w-0`, reserveStatusSpace && showMessageStatus && tw`pr-14`]}>
+  const waveformBars = (
+    <View
+      ref={waveformViewRef}
+      style={[tw`flex-1 min-w-0`, { height: WAVEFORM_H }]}
+      onLayout={() => {
+        waveformViewRef.current?.measure((_x, _y, width, _h, pageX) => {
+          waveformPageXRef.current = pageX;
+          waveformWRef.current = width;
+        });
+      }}
+    >
       <View
-        style={{ height: WAVEFORM_H + KNOB_SIZE / 2, justifyContent: 'flex-end' }}
-        onLayout={(e) => setWaveformW(e.nativeEvent.layout.width)}
+        style={[
+          {
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+          },
+          theme?.messageStyle?.progressBarStyle,
+        ]}
+        {...panResponder.panHandlers}
       >
-        <View
-          style={[
-            {
-              height: WAVEFORM_H,
-              flexDirection: 'row',
-              alignItems: 'flex-end',
-            },
-            theme?.messageStyle?.progressBarStyle,
-          ]}
-          {...panResponder.panHandlers}
-        >
-          {waveform.map((amp, i) => {
-            const barProgress = (i + 0.5) / WAVEFORM_BARS;
-            const active = barProgress <= progress;
-            return (
-              <View
-                key={i}
-                style={{
+        {waveform.map((amp, i) => {
+          const barProgress = (i + 0.5) / WAVEFORM_BARS;
+          const active = barProgress <= progress;
+          return (
+            <View
+              key={i}
+              style={[
+                {
                   flex: 1,
                   marginHorizontal: 0.5,
                   height: Math.max(3, Math.round(amp * WAVEFORM_H)),
-                  borderRadius: 1.5,
+                  borderRadius: 2,
                   backgroundColor: active ? activeBarColor : inactiveBarColor,
-                }}
-              />
-            );
-          })}
-        </View>
-        {duration > 0 && waveformW > 0 && (
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              left: Math.max(
-                0,
-                Math.min(
-                  progress * waveformW - KNOB_SIZE / 2,
-                  waveformW - KNOB_SIZE
-                )
-              ),
-              bottom: WAVEFORM_H / 2 - KNOB_SIZE / 2,
-              width: KNOB_SIZE,
-              height: KNOB_SIZE,
-              borderRadius: KNOB_SIZE / 2,
-              backgroundColor: scrubberColor,
-            }}
-          />
-        )}
+                },
+                active
+                  ? theme?.messageStyle?.activeProgressBarStyle
+                  : undefined,
+              ]}
+            />
+          );
+        })}
       </View>
-      <Text
-        style={withFontFamily(
-          [
-            tw`text-[11px] mt-0.5`,
-            { color: durationColor },
-            theme?.messageStyle?.audioDurationStyle,
-          ],
-          theme?.fontFamily
-        )}
-      >
-        {formatDuration(
-          effectivePlaying ? currentTime : duration > 0 ? duration : currentTime
-        )}
-      </Text>
     </View>
   );
 
@@ -355,6 +343,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         onLoad={handleLoad}
         onProgress={handleProgress}
         onEnd={handleEnd}
+        onSeek={handleSeek}
         style={{ width: 0, height: 0 }}
         progressUpdateInterval={80}
       />
@@ -364,16 +353,33 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           <>
             {avatarOrSpeed}
             {playPause}
-            {waveformBlock}
+            {waveformBars}
           </>
         ) : (
           <>
             {playPause}
-            {waveformBlock}
+            {waveformBars}
             {avatarOrSpeed}
           </>
         )}
       </View>
+      <Text
+        style={withFontFamily(
+          [
+            tw`text-[11px] mt-1`,
+            {
+              color: durationColor,
+              paddingLeft: isCurrentUser ? AVATAR_SIZE + 6 + 28 + 6 : 28 + 6,
+            },
+            theme?.messageStyle?.audioDurationStyle,
+          ],
+          theme?.fontFamily
+        )}
+      >
+        {formatDuration(
+          effectivePlaying ? currentTime : duration > 0 ? duration : currentTime
+        )}
+      </Text>
     </View>
   );
 };

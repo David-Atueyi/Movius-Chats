@@ -6,35 +6,40 @@ import React, {
   useState,
 } from 'react';
 import {
-  PanResponder,
+  Image,
   Platform,
   Pressable,
+  Text,
   TextInput,
   View,
 } from 'react-native';
 import tw from 'twrnc';
 import { CameraIcon } from '../../assets/Icons/CameraIcon';
+import { ClosePreviewIcon } from '../../assets/Icons/ClosePreviewIcon';
+import { EditIcon } from '../../assets/Icons/EditIcon';
 import { EmojiFunnySquareIcon } from '../../assets/Icons/EmojiFunnySquareIcon';
 import { MicrophoneIcon } from '../../assets/Icons/MicrophoneIcon';
 import { PaperClipIcon } from '../../assets/Icons/PaperClipIcon';
 import { PaperPlaneIcon } from '../../assets/Icons/PaperPlaneIcon';
-import { AnimatedHoldMic } from '../VoiceRecorder/AnimatedHoldMic';
-import { LockSlideColumn } from '../VoiceRecorder/LockSlideColumn';
-import { LongPressRecording } from '../VoiceRecorder/LongPressRecording';
-import { NormalRecording } from '../VoiceRecorder/NormalRecording';
-import { getRecordingContainerStyle } from '../VoiceRecorder/recordingContainerStyle';
 import { useChatContext } from '../../context/ChatContext';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import { RecordingResult, VoiceRecorderExposedState } from '../../types';
+import {
+  getInputPreviewBackground,
+  getRecordingPreviewBackground,
+  mergeReplyUI,
+} from '../../utils/replyTheme';
 import {
   getInputBarIconPixelSize,
   getInputBarIconStyle,
   withFontFamily,
 } from '../../utils/theme';
+import type { VoiceRecorderFlowProps } from '../VoiceRecorder/VoiceRecorderFlow';
+import { VoiceRecorderFlow } from '../VoiceRecorder/VoiceRecorderFlow';
 import FilePreview from './FilePreview';
 import { ChatInputProps, InputHeightState } from './types';
 
-// ─── Layout constants ─────────────────────────────────────────────────────────
+// Layout constants
 const MIN_INPUT_HEIGHT = Platform.OS === 'ios' ? 32 : 30;
 const MAX_INPUT_HEIGHT = 118;
 const INPUT_BAR_SHELL_HEIGHT = Platform.OS === 'ios' ? 50 : 48;
@@ -42,14 +47,9 @@ const INPUT_BAR_SHELL_HEIGHT = Platform.OS === 'ios' ? 50 : 48;
 const SEND_ICON_CLASS = 'h-6 w-6';
 const MIC_ICON_CLASS = 'h-8 w-8';
 
-// Long-press / swipe thresholds (px)
-const LONG_PRESS_MS = 500;
-const CANCEL_THRESHOLD_X = -70; // slide left to cancel
-const DEFAULT_LOCK_SLIDE_DISTANCE = 72; // slide up to lock (matches lock pill)
+const FALLBACK_PRIMARY = '#22c55e';
 
-type VoiceMode = 'idle' | 'normal' | 'longPress' | 'locked';
-
-// ─── Component ────────────────────────────────────────────────────────────────
+// Component
 const ChatInput: React.FC<ChatInputProps> = ({
   onSendMessage,
   onTypingStart,
@@ -67,13 +67,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
   CustomImagePreview,
   CustomVideoPreview,
 }) => {
-  // ── Text input state ───────────────────────────────────────────────────────
   const [inputText, setInputText] = useState('');
-  const [inputResetKey, setInputResetKey] = useState(0);
   const [inputHeight, setInputHeight] = useState<InputHeightState>({
     height: MIN_INPUT_HEIGHT,
     isMultiline: false,
   });
+  const inputRef = useRef<TextInput>(null);
 
   const {
     theme,
@@ -87,15 +86,51 @@ const ChatInput: React.FC<ChatInputProps> = ({
     previewItems,
     closePreview,
     onRemovePreviewItem,
-    voiceRecorderProps,
-    voiceRecorderStyles,
-    recordingUIProps,
-    renderVoiceRecorder,
-    CustomPlayIcon,
-    CustomPauseIcon,
+    CustomVoiceRecorder,
+    // reply state
+    replyTarget,
+    cancelReply,
+    replyProps,
+    replyUI,
+    replyStyle,
+    renderReplyPreview,
+    renderEditPreview,
+    CustomClosePreviewIcon,
+    CustomEditPreviewIcon,
+    // edit state
+    editingMessage,
+    cancelEdit,
+    onEditMessage,
   } = useChatContext();
 
-  // ── Preview list ───────────────────────────────────────────────────────────
+  const resolvedReplyUI = mergeReplyUI(theme, replyUI);
+  const mergedReplyStyle = { ...theme?.reply?.styles, ...replyStyle };
+  const inputPreviewBg = getInputPreviewBackground(theme, resolvedReplyUI);
+  const recordingPreviewBg = getRecordingPreviewBackground(
+    theme,
+    resolvedReplyUI
+  );
+  const closePreviewColor =
+    resolvedReplyUI.closeIconColor ??
+    theme?.colors?.inputsIconsColor ??
+    'rgba(0,0,0,0.5)';
+  const previewTextColor =
+    resolvedReplyUI.previewTextColor || 'rgba(0,0,0,0.55)';
+  const thumbSize = resolvedReplyUI.thumbnailSize ?? 32;
+
+  const lastEditingIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (editingMessage && editingMessage.id !== lastEditingIdRef.current) {
+      lastEditingIdRef.current = editingMessage.id;
+      setInputText(editingMessage.text ?? '');
+      setInputHeight({ height: MIN_INPUT_HEIGHT, isMultiline: false });
+      requestAnimationFrame(() => inputRef.current?.focus());
+    } else if (!editingMessage) {
+      lastEditingIdRef.current = null;
+    }
+  }, [editingMessage]);
+
+  // Preview list
   const previewList = useMemo(() => {
     if (previewItems?.length) return previewItems;
     if (previewData) return [previewData];
@@ -104,7 +139,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const hasPreviewAttachments = previewList.length > 0;
 
-  // ── Icon sizing ────────────────────────────────────────────────────────────
+  // Icon sizing
   const inputBarIconSize = theme?.sizes?.inputIconSize;
   const inputBarIconStyle = getInputBarIconStyle(inputBarIconSize);
   const iconPixelSize = getInputBarIconPixelSize(inputBarIconSize);
@@ -117,10 +152,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
     ? { paddingTop: iconInset, paddingBottom: iconInset }
     : { paddingBottom: iconInset };
 
-  // ── Text input handlers ────────────────────────────────────────────────────
+  const isEditing = !!editingMessage;
+
+  // Text input handlers
   const resetInputLayout = useCallback(() => {
     setInputHeight({ height: MIN_INPUT_HEIGHT, isMultiline: false });
-    setInputResetKey((k) => k + 1);
   }, []);
 
   const handleChangeText = useCallback(
@@ -146,40 +182,92 @@ const ChatInput: React.FC<ChatInputProps> = ({
     []
   );
 
+  const buildReplyTo = useCallback(() => {
+    if (!replyTarget) return undefined;
+    const firstMedia = replyTarget.mediaItems?.[0];
+    return {
+      messageId: replyTarget.id,
+      senderName: replyTarget.senderName,
+      preview:
+        replyTarget.text ??
+        (replyTarget.audio
+          ? '🎤 Audio message'
+          : replyTarget.image
+            ? '📷 Photo'
+            : replyTarget.video
+              ? '🎥 Video'
+              : replyTarget.fileAttachments?.[0]?.name
+                ? `📎 ${replyTarget.fileAttachments[0].name}`
+                : ''),
+      mediaKind: replyTarget.audio
+        ? ('audio' as const)
+        : replyTarget.video
+          ? ('video' as const)
+          : replyTarget.image ||
+              (replyTarget.mediaItems ?? []).some((m) => m.kind === 'image')
+            ? ('image' as const)
+            : (replyTarget.fileAttachments ?? []).length
+              ? ('file' as const)
+              : undefined,
+      thumbnailUri:
+        replyTarget.image ??
+        (firstMedia?.kind === 'image' || firstMedia?.kind === 'video'
+          ? firstMedia.uri
+          : undefined),
+    };
+  }, [replyTarget]);
+
   const handleSendMessage = useCallback(() => {
     const trimmedText = inputText.trim();
+
+    // Edit flow takes precedence: commit the edit instead of sending a new message.
+    if (editingMessage) {
+      if (!trimmedText) return;
+      onEditMessage?.(editingMessage, trimmedText);
+      setInputText('');
+      resetInputLayout();
+      cancelEdit();
+      return;
+    }
+
     if (!trimmedText && !hasPreviewAttachments) return;
-    onSendMessage({ text: trimmedText, senderId: currentUserId });
+    onSendMessage({
+      text: trimmedText,
+      senderId: currentUserId,
+      ...(replyTarget ? { replyTo: buildReplyTo() } : {}),
+    });
     setInputText('');
     resetInputLayout();
-  }, [inputText, onSendMessage, currentUserId, hasPreviewAttachments, resetInputLayout]);
+    if (replyTarget) cancelReply();
+  }, [
+    inputText,
+    onSendMessage,
+    currentUserId,
+    hasPreviewAttachments,
+    resetInputLayout,
+    replyTarget,
+    buildReplyTo,
+    cancelReply,
+    editingMessage,
+    onEditMessage,
+    cancelEdit,
+  ]);
 
   useEffect(() => {
     if (inputText.trim()) onTypingStart?.();
     else onTypingEnd?.();
   }, [inputText, onTypingStart, onTypingEnd]);
 
-  const showSendButton = !!inputText.trim() || hasPreviewAttachments;
+  const showSendButton =
+    !!inputText.trim() || hasPreviewAttachments || isEditing;
 
-  // ── Voice recorder ─────────────────────────────────────────────────────────
-  const [voiceMode, setVoiceModeState] = useState<VoiceMode>('idle');
-  const voiceModeRef = useRef<VoiceMode>('idle');
-  const setVoiceMode = useCallback((mode: VoiceMode) => {
-    voiceModeRef.current = mode;
-    setVoiceModeState(mode);
-  }, []);
+  // Voice recorder theming / config (theme.voiceRecorder)
+  const voiceRecorderTheme = theme?.voiceRecorder;
+  const mergedRecordingUIProps = voiceRecorderTheme?.ui ?? {};
+  const mergedRecorderStyles = voiceRecorderTheme?.styles;
+  const mergedRecorderConfig = voiceRecorderTheme?.config;
 
-  const lockSlideDistance =
-    recordingUIProps?.lockSlideDistance ?? DEFAULT_LOCK_SLIDE_DISTANCE;
-  const lockSlideDistanceRef = useRef(lockSlideDistance);
-  lockSlideDistanceRef.current = lockSlideDistance;
-
-  // Track finger position for long-press UI feedback
-  const [slideX, setSlideX] = useState(0);
-  const [slideY, setSlideY] = useState(0);
-  const slideXRef = useRef(0);
-  const slideYRef = useRef(0);
-
+  // Voice recorder (audio engine)
   const onRecordEnd = useCallback(
     (result: RecordingResult) => {
       onAudioRecordEnd?.(result);
@@ -188,269 +276,422 @@ const ChatInput: React.FC<ChatInputProps> = ({
   );
 
   const recorder = useVoiceRecorder({
-    maxDuration: voiceRecorderProps?.maxDuration ?? 300,
+    maxDuration: mergedRecorderConfig?.maxDuration ?? 300,
     onRecordStart: onAudioRecordStart,
     onRecordEnd,
   });
 
-  // Keep a stable ref to the recorder so the PanResponder closure never stales
   const recorderRef = useRef(recorder);
   recorderRef.current = recorder;
 
-  // ── Send / cancel helpers ──────────────────────────────────────────────────
-  const handleSendVoice = useCallback(async () => {
+  const handleFlowRecordingStart = useCallback(() => {
+    recorderRef.current.startRecording();
+  }, []);
+
+  const handleFlowSend = useCallback(async () => {
     const result = await recorderRef.current.stopRecording();
-    setVoiceMode('idle');
     if (result) {
-      onSendMessage({ audio: result.uri, senderId: currentUserId });
+      onSendMessage({
+        audio: result.uri,
+        senderId: currentUserId,
+        ...(replyTarget ? { replyTo: buildReplyTo() } : {}),
+      });
+      if (replyTarget) cancelReply();
     }
-  }, [onSendMessage, currentUserId, setVoiceMode]);
+  }, [onSendMessage, currentUserId, replyTarget, buildReplyTo, cancelReply]);
 
-  const handleCancelVoice = useCallback(() => {
+  const handleFlowCancel = useCallback(() => {
     recorderRef.current.cancelRecording();
-    setVoiceMode('idle');
-    setSlideX(0);
-    setSlideY(0);
-    slideXRef.current = 0;
-    slideYRef.current = 0;
-  }, [setVoiceMode]);
+  }, []);
 
-  // Stable refs for PanResponder closures
-  const handleSendVoiceRef = useRef(handleSendVoice);
-  handleSendVoiceRef.current = handleSendVoice;
-  const handleCancelVoiceRef = useRef(handleCancelVoice);
-  handleCancelVoiceRef.current = handleCancelVoice;
+  const handleFlowPause = useCallback(() => {
+    recorderRef.current.pauseRecording();
+  }, []);
 
-  // ── PanResponder for the mic button ───────────────────────────────────────
-  // Created once; uses refs for all mutable values to avoid stale closures.
-  const longPressTimerRef = useRef<ReturnType<typeof setTimeout>>();
-  const isLongPressActiveRef = useRef(false);
+  const handleFlowResume = useCallback(() => {
+    recorderRef.current.resumeRecording();
+  }, []);
 
-  const micPanResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => isLongPressActiveRef.current,
+  const themePrimary =
+    (theme?.inputStyles?.sendButtonStyle?.backgroundColor as
+      | string
+      | undefined) ||
+    theme?.colors?.sentBubbleBackgroundColor ||
+    theme?.colors?.sentMessageTailColor ||
+    FALLBACK_PRIMARY;
+  const themeOnPrimary = theme?.colors?.sendIconsColor || themePrimary;
 
-        onPanResponderGrant: () => {
-          isLongPressActiveRef.current = false;
-          slideXRef.current = 0;
-          slideYRef.current = 0;
-          setSlideX(0);
-          setSlideY(0);
+  const recordingPrimary =
+    mergedRecordingUIProps.recordingSendButtonBackground ?? themePrimary;
+  const recordingBackground = mergedRecordingUIProps.recordingBackground;
+  const recordingTimerColor =
+    mergedRecordingUIProps.timerColor ?? themeOnPrimary;
+  const recordingMicColor =
+    mergedRecordingUIProps.longPressMicColor ?? themeOnPrimary;
+  const recordingWaveformColor =
+    mergedRecordingUIProps.waveformColor ?? themeOnPrimary;
 
-          longPressTimerRef.current = setTimeout(async () => {
-            isLongPressActiveRef.current = true;
-            await recorderRef.current.startRecording();
-            setVoiceMode('longPress');
-          }, LONG_PRESS_MS);
-        },
+  // Custom voice UI override
+  const exposedState: VoiceRecorderExposedState = {
+    isRecording: recorder.isRecording,
+    isPaused: recorder.isPaused,
+    duration: recorder.duration,
+    isLocked: false,
+    slideOffset: { x: 0, y: 0 },
+    waveformData: [],
+    startRecording: recorder.startRecording,
+    stopRecording: recorder.stopRecording,
+    pauseRecording: recorder.pauseRecording,
+    resumeRecording: recorder.resumeRecording,
+    cancelRecording: recorder.cancelRecording,
+  };
 
-        onPanResponderMove: (_, gestureState) => {
-          if (!isLongPressActiveRef.current) return;
+  const customVoiceUI = CustomVoiceRecorder
+    ? CustomVoiceRecorder(exposedState)
+    : null;
 
-          slideXRef.current = gestureState.dx;
-          slideYRef.current = gestureState.dy;
-          setSlideX(gestureState.dx);
-          setSlideY(gestureState.dy);
+  // Inline render helpers
+  const replyEnabledPill = replyProps?.enableReply ?? true;
+  const showInPillReply =
+    !!replyTarget && replyEnabledPill && !isEditing && !renderReplyPreview;
+  const showInPillEdit = isEditing;
+  const hasInPillTopSection = showInPillReply || showInPillEdit;
 
-          const enableLock =
-            voiceRecorderProps?.enableLockRecording !== false;
+  const inPillReplyPreview = useMemo(() => {
+    if (!showInPillReply || !replyTarget) return null;
+    const firstMedia = replyTarget.mediaItems?.[0];
+    const thumbnail =
+      replyTarget.image ??
+      (firstMedia?.kind === 'image' || firstMedia?.kind === 'video'
+        ? firstMedia.uri
+        : undefined);
 
-          // Lock only after sliding up to the lock pill (not on tiny movements)
-          if (
-            enableLock &&
-            gestureState.dy <= -lockSlideDistanceRef.current &&
-            voiceModeRef.current === 'longPress'
-          ) {
-            setVoiceMode('locked');
-            slideYRef.current = -lockSlideDistanceRef.current;
-            setSlideY(-lockSlideDistanceRef.current);
-          }
-        },
-
-        onPanResponderRelease: async (_, gestureState) => {
-          clearTimeout(longPressTimerRef.current);
-          const wasLongPress = isLongPressActiveRef.current;
-          isLongPressActiveRef.current = false;
-
-          if (!wasLongPress) {
-            // Quick tap → start normal recording mode
-            await recorderRef.current.startRecording();
-            setVoiceMode('normal');
-            return;
-          }
-
-          // Long press released
-          if (voiceModeRef.current === 'locked') {
-            // Locked → stay in recording, user taps send/cancel manually
-            return;
-          }
-
-          if (gestureState.dx < CANCEL_THRESHOLD_X) {
-            handleCancelVoiceRef.current();
-          } else {
-            // Auto-send on release (WhatsApp behaviour)
-            handleSendVoiceRef.current();
-          }
-        },
-
-        onPanResponderTerminate: () => {
-          clearTimeout(longPressTimerRef.current);
-          isLongPressActiveRef.current = false;
-        },
-      }),
-    [] // Intentional: all values accessed via refs
-  );
-
-  const recordingSendBg =
-    recordingUIProps?.recordingSendButtonBackground ??
-    (theme?.inputStyles?.sendButtonStyle?.backgroundColor as string) ??
-    '#16a34a';
-  const recordingSendFg = theme?.colors?.sendIconsColor ?? '#ffffff';
-  const holdMicColor = recordingUIProps?.longPressMicColor ?? '#ef4444';
-
-  const recordingContainerStyle = getRecordingContainerStyle(
-    voiceRecorderStyles,
-    recordingUIProps
-  );
-
-  // ── Render recording UI ───────────────────────────────────────────────────
-  if (voiceMode !== 'idle') {
-    const exposedState: VoiceRecorderExposedState = {
-      isRecording: recorder.isRecording,
-      isPaused: recorder.isPaused,
-      duration: recorder.duration,
-      isLocked: voiceMode === 'locked',
-      slideOffset: { x: slideX, y: slideY },
-      waveformData: [],
-      startRecording: recorder.startRecording,
-      stopRecording: recorder.stopRecording,
-      pauseRecording: recorder.pauseRecording,
-      resumeRecording: recorder.resumeRecording,
-      cancelRecording: handleCancelVoice,
-    };
+    let preview = '';
+    if (replyTarget.text) preview = replyTarget.text;
+    else if (replyTarget.audio) preview = '🎤 Audio message';
+    else if (replyTarget.video || firstMedia?.kind === 'video')
+      preview = '🎥 Video';
+    else if (replyTarget.image || firstMedia?.kind === 'image')
+      preview = '📷 Photo';
+    else if ((replyTarget.fileAttachments ?? []).length)
+      preview = `📎 ${replyTarget.fileAttachments?.[0]?.name ?? 'File'}`;
 
     return (
-      <View style={tw`w-full px-2`}>
-        {hasPreviewAttachments && (
-          <FilePreview
-            previews={previewList}
-            closePreview={closePreview}
-            onRemoveItem={onRemovePreviewItem}
-            CustomFileIcon={CustomFileIcon}
-            CustomImagePreview={CustomImagePreview}
-            CustomVideoPreview={CustomVideoPreview}
-            inputHeight={inputHeight.height}
+      <View
+        style={[
+          tw`flex-row items-center m-2 rounded-md px-3 py-2`,
+          {
+            backgroundColor: inputPreviewBg || 'rgba(0, 0, 0, 0.08)',
+            minHeight: 40,
+          },
+          mergedReplyStyle?.inputPreviewContainer,
+          mergedReplyStyle?.container,
+        ]}
+      >
+        <View style={tw`flex-1 mr-2`}>
+          <Text
+            numberOfLines={1}
+            style={withFontFamily(
+              [
+                tw`text-[13px] font-semibold`,
+                {
+                  color: resolvedReplyUI.previewSenderNameColor || themePrimary,
+                },
+                mergedReplyStyle?.senderName,
+              ],
+              theme?.fontFamily
+            )}
+          >
+            {replyTarget.senderName ||
+              resolvedReplyUI.defaultReplySenderName ||
+              'You'}
+          </Text>
+          <Text
+            numberOfLines={replyProps?.previewMaxLines ?? 1}
+            style={withFontFamily(
+              [
+                tw`text-[12.5px] mt-0.5`,
+                { color: previewTextColor || 'rgba(0, 0, 0, 0.55)' },
+                mergedReplyStyle?.previewText,
+              ],
+              theme?.fontFamily
+            )}
+          >
+            {preview}
+          </Text>
+        </View>
+
+        {thumbnail && (
+          <Image
+            source={{ uri: thumbnail }}
+            style={[
+              {
+                width: thumbSize,
+                height: thumbSize,
+                borderRadius: 4,
+                marginRight: 6,
+              },
+              mergedReplyStyle?.thumbnail,
+            ]}
+            resizeMode="cover"
           />
         )}
 
-        <View style={recordingContainerStyle}>
-          {renderVoiceRecorder ? (
-            renderVoiceRecorder(exposedState)
-          ) : voiceMode === 'longPress' ? (
-            <View
-              style={[
-                tw`flex-row items-end gap-2`,
-                theme?.inputStyles?.inputSectionContainerStyle,
-              ]}
-            >
-              <LongPressRecording
-                duration={recorder.duration}
-                slideX={slideX}
-                containerHeight={INPUT_BAR_SHELL_HEIGHT}
-                fontFamily={theme?.fontFamily}
-                voiceRecorderStyles={voiceRecorderStyles}
-                recordingUIProps={recordingUIProps}
-              />
-
-              <View style={{ alignItems: 'center' }}>
-                <LockSlideColumn
-                  slideY={slideY}
-                  lockSlideDistance={lockSlideDistance}
-                  recordingUIProps={recordingUIProps}
-                  voiceRecorderStyles={voiceRecorderStyles}
-                />
-                <View
-                  {...micPanResponder.panHandlers}
-                  style={[
-                    tw`rounded-full justify-center items-center`,
-                    {
-                      height: INPUT_BAR_SHELL_HEIGHT,
-                      width: INPUT_BAR_SHELL_HEIGHT,
-                      backgroundColor: recordingSendBg,
-                    },
-                    voiceRecorderStyles?.holdMicButton,
-                    theme?.inputStyles?.sendButtonStyle,
-                  ]}
-                >
-                  <AnimatedHoldMic
-                    color={holdMicColor}
-                    size={
-                      recordingUIProps?.recordingIconSize ??
-                      recordingUIProps?.iconSize ??
-                      28
-                    }
-                  />
-                </View>
-              </View>
-            </View>
+        <Pressable
+          onPress={cancelReply}
+          hitSlop={10}
+          style={[
+            tw`w-7 h-7 items-center justify-center`,
+            mergedReplyStyle?.closeButton,
+          ]}
+        >
+          {CustomClosePreviewIcon ? (
+            <CustomClosePreviewIcon />
           ) : (
-            <NormalRecording
-              isRecording={recorder.isRecording}
-              isPaused={recorder.isPaused}
-              duration={recorder.duration}
-              onCancel={handleCancelVoice}
-              onSend={handleSendVoice}
-              onPause={recorder.pauseRecording}
-              onResume={recorder.resumeRecording}
-              enablePauseResume={voiceRecorderProps?.enablePauseResume ?? true}
-              containerHeight={INPUT_BAR_SHELL_HEIGHT}
-              fontFamily={theme?.fontFamily}
-              sendButtonColor={recordingSendBg}
-              sendIconColor={recordingSendFg}
-              voiceRecorderStyles={voiceRecorderStyles}
-              recordingUIProps={recordingUIProps}
-              CustomPlayIcon={CustomPlayIcon}
-              CustomPauseIcon={CustomPauseIcon}
-            />
+            <ClosePreviewIcon color={closePreviewColor} />
           )}
-        </View>
+        </Pressable>
       </View>
     );
-  }
+  }, [
+    showInPillReply,
+    replyTarget,
+    replyProps?.previewMaxLines,
+    mergedReplyStyle,
+    resolvedReplyUI,
+    theme?.fontFamily,
+    themePrimary,
+    inputPreviewBg,
+    previewTextColor,
+    thumbSize,
+    closePreviewColor,
+    CustomClosePreviewIcon,
+    cancelReply,
+  ]);
 
-  // ── Normal input UI ───────────────────────────────────────────────────────
-  return (
-    <View style={tw`w-full px-2`}>
-      {hasPreviewAttachments && (
-        <FilePreview
-          previews={previewList}
-          closePreview={closePreview}
-          onRemoveItem={onRemovePreviewItem}
-          CustomFileIcon={CustomFileIcon}
-          CustomImagePreview={CustomImagePreview}
-          CustomVideoPreview={CustomVideoPreview}
-          inputHeight={inputHeight.height}
-        />
-      )}
+  const inBarReplyPreview = useMemo(() => {
+    if (!showInPillReply || !replyTarget) return null;
+    const firstMedia = replyTarget.mediaItems?.[0];
+    const thumbnail =
+      replyTarget.image ??
+      (firstMedia?.kind === 'image' || firstMedia?.kind === 'video'
+        ? firstMedia.uri
+        : undefined);
 
+    let preview = '';
+    if (replyTarget.text) preview = replyTarget.text;
+    else if (replyTarget.audio) preview = '🎤 Audio message';
+    else if (replyTarget.video || firstMedia?.kind === 'video')
+      preview = '🎥 Video';
+    else if (replyTarget.image || firstMedia?.kind === 'image')
+      preview = '📷 Photo';
+    else if ((replyTarget.fileAttachments ?? []).length)
+      preview = `📎 ${replyTarget.fileAttachments?.[0]?.name ?? 'File'}`;
+
+    return (
       <View
         style={[
-          tw`flex-row items-end gap-2`,
-          theme?.inputStyles?.inputSectionContainerStyle,
+          tw`flex-row items-center m-2 rounded-md px-3 py-2`,
+          {
+            backgroundColor: recordingPreviewBg || 'rgba(0, 0, 0, 0.08)',
+            minHeight: 40,
+          },
+          mergedReplyStyle?.recordingPreviewContainer,
         ]}
       >
-        {/* ── Text input pill ── */}
+        <View style={tw`flex-1 mr-2`}>
+          <Text
+            numberOfLines={1}
+            style={withFontFamily(
+              [
+                tw`text-[13px] font-semibold`,
+                {
+                  color:
+                    resolvedReplyUI.previewSenderNameColor || themePrimary,
+                },
+              ],
+              theme?.fontFamily
+            )}
+          >
+            {replyTarget.senderName ||
+              resolvedReplyUI.defaultReplySenderName ||
+              'You'}
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={withFontFamily(
+              [
+                tw`text-[12.5px] mt-0.5`,
+                {
+                  color: resolvedReplyUI.previewTextColor || 'rgba(0,0,0,0.55)',
+                },
+                mergedReplyStyle?.previewText,
+              ],
+              theme?.fontFamily
+            )}
+          >
+            {preview}
+          </Text>
+        </View>
+
+        {thumbnail && (
+          <Image
+            source={{ uri: thumbnail }}
+            style={[
+              {
+                width: thumbSize - 2,
+                height: thumbSize - 2,
+                borderRadius: 4,
+                marginRight: 6,
+              },
+              mergedReplyStyle?.thumbnail,
+            ]}
+            resizeMode="cover"
+          />
+        )}
+
+        <Pressable
+          onPress={cancelReply}
+          hitSlop={10}
+          style={[
+            tw`w-7 h-7 items-center justify-center`,
+            mergedReplyStyle?.closeButton,
+          ]}
+        >
+          {CustomClosePreviewIcon ? (
+            <CustomClosePreviewIcon />
+          ) : (
+            <ClosePreviewIcon color={closePreviewColor} />
+          )}
+        </Pressable>
+      </View>
+    );
+  }, [
+    showInPillReply,
+    replyTarget,
+    themeOnPrimary,
+    theme?.fontFamily,
+    recordingPreviewBg,
+    mergedReplyStyle,
+    resolvedReplyUI,
+    thumbSize,
+    closePreviewColor,
+    CustomClosePreviewIcon,
+    cancelReply,
+  ]);
+
+  const inPillEditPreview = useMemo(() => {
+    if (!showInPillEdit || !editingMessage) return null;
+    if (renderEditPreview) {
+      return renderEditPreview(editingMessage, () => {
+        cancelEdit();
+        setInputText('');
+        resetInputLayout();
+      });
+    }
+    return (
+      <View
+        style={[
+          tw`flex-row items-center m-2 rounded-md px-3 py-2`,
+          {
+            backgroundColor: inputPreviewBg || 'rgba(0, 0, 0, 0.08)',
+            minHeight: 40,
+          },
+          mergedReplyStyle?.editPreviewContainer,
+        ]}
+      >
+        <View style={tw`mr-2.5`}>
+          {CustomEditPreviewIcon ? (
+            <CustomEditPreviewIcon />
+          ) : (
+            <EditIcon style={{ width: 16, height: 16 }} color={themePrimary} />
+          )}
+        </View>
+        <View style={tw`flex-1 mr-2`}>
+          <Text
+            numberOfLines={1}
+            style={withFontFamily(
+              [tw`text-[13px] font-semibold`, { color: themePrimary }],
+              theme?.fontFamily
+            )}
+          >
+            {resolvedReplyUI.editChipTitle || 'Edit message'}
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={withFontFamily(
+              [
+                tw`text-[12.5px] mt-0.5`,
+                { color: previewTextColor },
+                mergedReplyStyle?.previewText,
+              ],
+              theme?.fontFamily
+            )}
+          >
+            {editingMessage.text}
+          </Text>
+        </View>
+        <Pressable
+          onPress={() => {
+            cancelEdit();
+            setInputText('');
+            resetInputLayout();
+          }}
+          hitSlop={10}
+          style={[
+            tw`w-7 h-7 items-center justify-center`,
+            mergedReplyStyle?.closeButton,
+          ]}
+        >
+          {CustomClosePreviewIcon ? (
+            <CustomClosePreviewIcon />
+          ) : (
+            <ClosePreviewIcon color={closePreviewColor} />
+          )}
+        </Pressable>
+      </View>
+    );
+  }, [
+    showInPillEdit,
+    editingMessage,
+    renderEditPreview,
+    mergedReplyStyle,
+    resolvedReplyUI,
+    themePrimary,
+    theme?.fontFamily,
+    inputPreviewBg,
+    previewTextColor,
+    closePreviewColor,
+    CustomClosePreviewIcon,
+    CustomEditPreviewIcon,
+    cancelEdit,
+    resetInputLayout,
+  ]);
+
+  const isPillRound = isCompactInput && !hasInPillTopSection;
+
+  const renderInputPill = useCallback(
+    () => (
+      <View
+        style={[
+          tw`flex-1 flex-col bg-white overflow-hidden`,
+          {
+            minHeight: INPUT_BAR_SHELL_HEIGHT,
+            borderRadius: isPillRound ? 9999 : 24,
+          },
+          theme?.inputStyles?.inputContainerStyle,
+        ]}
+      >
+        {inPillReplyPreview}
+        {inPillEditPreview}
+
         <View
           style={[
-            tw`flex-1 flex-row bg-white overflow-hidden px-3.5`,
+            tw`flex-row px-3.5`,
             {
               minHeight: INPUT_BAR_SHELL_HEIGHT,
-              borderRadius: isCompactInput ? 9999 : 24,
               alignItems: isCompactInput ? 'center' : 'flex-end',
             },
-            theme?.inputStyles?.inputContainerStyle,
           ]}
         >
           {showEmojiButton && (
@@ -461,9 +702,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 ) : (
                   <EmojiFunnySquareIcon
                     style={inputBarIconStyle}
-                    color={
-                      theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
-                    }
+                    color={theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'}
                   />
                 )}
               </Pressable>
@@ -471,7 +710,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           )}
 
           <TextInput
-            key={`chat-input-${inputResetKey}`}
+            ref={inputRef}
             value={inputText}
             onChangeText={handleChangeText}
             placeholder={placeholder || 'Message'}
@@ -488,8 +727,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                     : 4,
                 },
                 {
-                  color:
-                    theme?.colors?.inputTextColor || 'rgba(0, 0, 0, 0.87)',
+                  color: theme?.colors?.inputTextColor || 'rgba(0, 0, 0, 0.87)',
                 },
               ],
               theme?.fontFamily
@@ -499,115 +737,212 @@ const ChatInput: React.FC<ChatInputProps> = ({
             }
             multiline
             textAlignVertical={
-              inputHeight.isMultiline && inputText.length > 0
-                ? 'top'
-                : 'center'
+              inputHeight.isMultiline && inputText.length > 0 ? 'top' : 'center'
             }
             onContentSizeChange={handleContentSizeChange}
           />
 
-          <View style={[tw`flex-row items-center gap-4`, iconSlotStyle]}>
-            {showAttachmentsButton && (
-              <Pressable onPress={onAttachmentPress}>
-                {CustomAttachmentIcon ? (
-                  <CustomAttachmentIcon />
-                ) : (
-                  <PaperClipIcon
-                    style={inputBarIconStyle}
-                    color={
-                      theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
-                    }
-                  />
-                )}
-              </Pressable>
-            )}
-            {showCameraButton && !inputText.trim() && (
-              <Pressable onPress={onCameraPress}>
-                {CustomCameraIcon ? (
-                  <CustomCameraIcon />
-                ) : (
-                  <CameraIcon
-                    style={inputBarIconStyle}
-                    color={
-                      theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
-                    }
-                  />
-                )}
-              </Pressable>
-            )}
-          </View>
+          {!isEditing && (
+            <View style={[tw`flex-row items-center gap-4`, iconSlotStyle]}>
+              {showAttachmentsButton && (
+                <Pressable onPress={onAttachmentPress}>
+                  {CustomAttachmentIcon ? (
+                    <CustomAttachmentIcon />
+                  ) : (
+                    <PaperClipIcon
+                      style={inputBarIconStyle}
+                      color={
+                        theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
+                      }
+                    />
+                  )}
+                </Pressable>
+              )}
+              {showCameraButton && !inputText.trim() && (
+                <Pressable onPress={onCameraPress}>
+                  {CustomCameraIcon ? (
+                    <CustomCameraIcon />
+                  ) : (
+                    <CameraIcon
+                      style={inputBarIconStyle}
+                      color={
+                        theme?.colors?.inputsIconsColor || 'rgba(0,0,0,0.7)'
+                      }
+                    />
+                  )}
+                </Pressable>
+              )}
+            </View>
+          )}
         </View>
+      </View>
+    ),
+    [
+      isPillRound,
+      isCompactInput,
+      isEditing,
+      inputText,
+      inputHeight.isMultiline,
+      iconSlotStyle,
+      handleChangeText,
+      handleContentSizeChange,
+      placeholder,
+      showEmojiButton,
+      showAttachmentsButton,
+      showCameraButton,
+      onAttachmentPress,
+      onCameraPress,
+      CustomEmojiIcon,
+      CustomAttachmentIcon,
+      CustomCameraIcon,
+      inputBarIconStyle,
+      theme,
+      inPillReplyPreview,
+      inPillEditPreview,
+    ]
+  );
 
-        {/* ── Right action button (send / mic) ── */}
-        {showSendButton ? (
-          <Pressable
-            onPress={handleSendMessage}
-            style={[
-              tw`rounded-full justify-center items-center`,
-              {
-                height: INPUT_BAR_SHELL_HEIGHT,
-                width: INPUT_BAR_SHELL_HEIGHT,
-                backgroundColor: '#16a34a',
-                ...theme?.inputStyles?.sendButtonStyle,
-              },
-            ]}
-          >
-            {CustomSendIcon ? (
-              <CustomSendIcon />
+  const renderSendButton = useCallback(
+    () => (
+      <Pressable
+        onPress={handleSendMessage}
+        style={[
+          tw`rounded-full justify-center items-center`,
+          {
+            height: INPUT_BAR_SHELL_HEIGHT,
+            width: INPUT_BAR_SHELL_HEIGHT,
+            backgroundColor: themePrimary,
+            ...theme?.inputStyles?.sendButtonStyle,
+          },
+        ]}
+      >
+        {CustomSendIcon ? (
+          <CustomSendIcon />
+        ) : (
+          <PaperPlaneIcon
+            style={tw.style(SEND_ICON_CLASS)}
+            color={themeOnPrimary}
+          />
+        )}
+      </Pressable>
+    ),
+    [
+      handleSendMessage,
+      themePrimary,
+      themeOnPrimary,
+      theme?.inputStyles?.sendButtonStyle,
+      CustomSendIcon,
+    ]
+  );
+
+  const renderCustomVoiceTrigger = () =>
+    CustomMicrophoneIcon ? (
+      <CustomMicrophoneIcon />
+    ) : (
+      <MicrophoneIcon style={tw.style(MIC_ICON_CLASS)} color={themeOnPrimary} />
+    );
+
+  const useVoiceFlow = showVoiceRecordButton && !customVoiceUI && !isEditing;
+
+  const customReplyPreviewNode =
+    replyTarget && replyEnabledPill && !isEditing && renderReplyPreview
+      ? renderReplyPreview(replyTarget, cancelReply)
+      : null;
+
+  // Voice flow props (typed for safety)
+  const voiceFlowProps: VoiceRecorderFlowProps = {
+    inputBarHeight: INPUT_BAR_SHELL_HEIGHT,
+    primaryColor: recordingPrimary,
+    backgroundColor: recordingBackground,
+    timerColor: recordingTimerColor,
+    microphoneColor: recordingMicColor,
+    waveformColor: recordingWaveformColor,
+    holdPillBackground: mergedRecordingUIProps.holdPillBackground,
+    cancelTextColor: mergedRecordingUIProps.cancelTextColor,
+    chevronColor: mergedRecordingUIProps.chevronIconColor,
+    lockColor: mergedRecordingUIProps.lockIconColor,
+    lockPillBackground: mergedRecordingUIProps.lockPillBackground,
+    deleteIconColor: mergedRecordingUIProps.deleteIconColor,
+    pauseIconColor: mergedRecordingUIProps.pauseIconColor,
+    iconSize: mergedRecordingUIProps.iconSize,
+    lockSlideDistance: mergedRecordingUIProps.lockSlideDistance,
+    waveCount: mergedRecordingUIProps.waveformBarCount,
+    enableLockRecording: mergedRecorderConfig?.enableLockRecording,
+    enableSlideToCancel: mergedRecorderConfig?.enableSlideToCancel,
+    enableWaveform: mergedRecorderConfig?.enableWaveform,
+    timerTextStyle:
+      mergedRecordingUIProps.timerTextStyle ?? mergedRecorderStyles?.timer,
+    fontFamily: theme?.fontFamily,
+    containerStyle: mergedRecorderStyles?.container,
+    barStyle: mergedRecorderStyles?.bar,
+    slideTextStyle: mergedRecorderStyles?.slideText,
+    waveformStyle: mergedRecorderStyles?.waveform,
+    lockPillStyle: mergedRecorderStyles?.lockPill,
+    trashButtonStyle: mergedRecorderStyles?.trashButton,
+    sendButtonStyle: mergedRecorderStyles?.sendButton,
+    headerSlot: inBarReplyPreview,
+    showSendButton,
+    onSendPress: handleSendMessage,
+    sendButtonBackgroundColor: themePrimary,
+    sendButtonIconColor: themeOnPrimary,
+    renderInputPill,
+    renderSendIcon: CustomSendIcon ? () => <CustomSendIcon /> : undefined,
+    renderMicIcon: CustomMicrophoneIcon
+      ? () => <CustomMicrophoneIcon />
+      : undefined,
+    onRecordingStart: handleFlowRecordingStart,
+    onSend: handleFlowSend,
+    onCancel: handleFlowCancel,
+    onDelete: handleFlowCancel,
+    onPauseRecording: handleFlowPause,
+    onResumeRecording: handleFlowResume,
+  };
+
+  // Render
+  return (
+    <View style={tw`w-full px-2`}>
+      {customReplyPreviewNode}
+      {hasPreviewAttachments && (
+        <FilePreview
+          previews={previewList}
+          closePreview={closePreview}
+          onRemoveItem={onRemovePreviewItem}
+          CustomFileIcon={CustomFileIcon}
+          CustomImagePreview={CustomImagePreview}
+          CustomVideoPreview={CustomVideoPreview}
+          inputHeight={inputHeight.height}
+        />
+      )}
+
+      <View
+        style={[tw`w-full`, theme?.inputStyles?.inputSectionContainerStyle]}
+      >
+        {useVoiceFlow ? (
+          <VoiceRecorderFlow {...voiceFlowProps} />
+        ) : (
+          <View style={tw`flex-row items-end gap-2`}>
+            {renderInputPill()}
+            {showSendButton || !showVoiceRecordButton ? (
+              renderSendButton()
+            ) : customVoiceUI ? (
+              <View
+                style={{
+                  height: INPUT_BAR_SHELL_HEIGHT,
+                  width: INPUT_BAR_SHELL_HEIGHT,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                {renderCustomVoiceTrigger()}
+              </View>
             ) : (
-              <PaperPlaneIcon
-                style={tw.style(SEND_ICON_CLASS)}
-                color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
-              />
-            )}
-          </Pressable>
-        ) : showVoiceRecordButton ? (
-          // Mic button uses PanResponder for tap + long-press + drag
-          <View
-            {...micPanResponder.panHandlers}
-            style={[
-              tw`rounded-full justify-center items-center`,
-              {
-                height: INPUT_BAR_SHELL_HEIGHT,
-                width: INPUT_BAR_SHELL_HEIGHT,
-                backgroundColor: '#16a34a',
-                ...theme?.inputStyles?.sendButtonStyle,
-              },
-            ]}
-          >
-            {CustomMicrophoneIcon ? (
-              <CustomMicrophoneIcon />
-            ) : (
-              <MicrophoneIcon
-                style={tw.style(MIC_ICON_CLASS)}
-                color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
-              />
+              renderSendButton()
             )}
           </View>
-        ) : (
-          <Pressable
-            onPress={handleSendMessage}
-            style={[
-              tw`rounded-full justify-center items-center`,
-              {
-                height: INPUT_BAR_SHELL_HEIGHT,
-                width: INPUT_BAR_SHELL_HEIGHT,
-                backgroundColor: '#16a34a',
-                ...theme?.inputStyles?.sendButtonStyle,
-              },
-            ]}
-          >
-            {CustomSendIcon ? (
-              <CustomSendIcon />
-            ) : (
-              <PaperPlaneIcon
-                style={tw.style(SEND_ICON_CLASS)}
-                color={theme?.colors?.sendIconsColor || 'rgba(255,255,255,0.7)'}
-              />
-            )}
-          </Pressable>
         )}
       </View>
+
+      {customVoiceUI}
     </View>
   );
 };

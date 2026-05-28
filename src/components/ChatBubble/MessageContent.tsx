@@ -9,9 +9,16 @@ import {
   getFileAttachmentTextColor,
   getMessageTextColor,
 } from '../../utils/bubbleTheme';
+import {
+  getInlineReplyBackground,
+  getInlineReplyPreviewColor,
+  getInlineReplySenderColor,
+  mergeReplyUI,
+} from '../../utils/replyTheme';
 import { collectMediaItems } from '../../utils/messageMedia';
 import { getFontFamilyStyle, withFontFamily } from '../../utils/theme';
 import AudioPlayer from '../AudioPlayer/AudioPlayer';
+import { InlineReply } from '../Reply/InlineReply';
 import { MediaGrid } from './MediaGrid';
 import { MessageContentProps } from './types';
 
@@ -20,21 +27,75 @@ const MessageContent: React.FC<MessageContentProps> = ({
   onGalleryOpen,
   isVideoPlaying,
   isCurrentUser,
+  onLongPress,
 }) => {
-  const { theme, showMessageStatus, onFileAttachmentPress } = useChatContext();
+  const {
+    theme,
+    showMessageStatus,
+    onFileAttachmentPress,
+    replyUI,
+    replyStyle,
+    renderInlineReply,
+    selectionMode,
+    toggleSelection,
+  } = useChatContext();
+
+  const resolvedReplyUI = mergeReplyUI(theme, replyUI);
+  const mergedReplyStyle = { ...theme?.reply?.styles, ...replyStyle };
 
   const mediaItems = useMemo(() => collectMediaItems(message), [message]);
 
+  // Inline reply chip
+  const replyChip = (() => {
+    if (!message.replyTo) return null;
+    if (renderInlineReply) {
+      return renderInlineReply(message.replyTo, isCurrentUser);
+    }
+    return (
+      <InlineReply
+        reply={message.replyTo}
+        fontFamily={theme?.fontFamily}
+        replyStyle={mergedReplyStyle}
+        backgroundColor={getInlineReplyBackground(
+          theme,
+          isCurrentUser,
+          resolvedReplyUI
+        )}
+        senderNameColor={getInlineReplySenderColor(
+          theme,
+          isCurrentUser,
+          resolvedReplyUI
+        )}
+        previewTextColor={getInlineReplyPreviewColor(
+          theme,
+          isCurrentUser,
+          resolvedReplyUI
+        )}
+        thumbnailSize={resolvedReplyUI.thumbnailSize}
+        defaultSenderName={resolvedReplyUI.defaultReplySenderName}
+      />
+    );
+  })();
+
   return (
     <View>
+      {replyChip}
       {mediaItems.length > 0 && (
-        <MediaGrid items={mediaItems} onOpenGallery={onGalleryOpen} />
+        <MediaGrid
+          items={mediaItems}
+          onOpenGallery={onGalleryOpen}
+          onLongPress={onLongPress}
+        />
       )}
 
       {(message.fileAttachments ?? []).map((file, idx) => (
         <Pressable
           key={`${file.uri}-${idx}`}
           onPress={() => {
+            if (selectionMode) {
+              toggleSelection(message);
+              return;
+            }
             if (onFileAttachmentPress) {
               onFileAttachmentPress(file);
             } else {
@@ -45,6 +106,8 @@ const MessageContent: React.FC<MessageContentProps> = ({
               );
             }
           }}
+          onLongPress={onLongPress}
+          delayLongPress={250}
           style={[
             tw`my-1.5 py-2 px-3 rounded-lg max-w-[220px]`,
             {
@@ -103,6 +166,7 @@ const MessageContent: React.FC<MessageContentProps> = ({
           senderAvatar={message.senderAvatar}
           senderName={message.senderName}
           reserveStatusSpace={!message.text}
+          onLongPress={onLongPress}
         />
       )}
 
