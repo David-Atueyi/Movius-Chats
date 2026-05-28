@@ -100,13 +100,11 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   );
 
   const rowBackgroundColor = selectionUI?.rowBackgroundColor;
-  const overlayColor = selectionUI?.overlayColor;
 
   const themePrimary =
     theme?.colors?.sentBubbleBackgroundColor ||
     theme?.colors?.sentMessageTailColor ||
     '#22c55e';
-  const resolvedOverlay = overlayColor || addAlpha(themePrimary, 0.32);
   const resolvedRowBg = rowBackgroundColor || addAlpha(themePrimary, 0.12);
 
   const bubbleStyle = [
