@@ -56,7 +56,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
   const selected = isSelected(message.id);
 
- 
   const handleLongPress = useCallback(() => {
     if (staticMode) return;
     if (selectionMode) {
@@ -89,7 +88,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     }
   }, [selectionMode, toggleSelection, message]);
 
- 
   const handleGalleryOpen = useCallback(
     (items: MessageMediaItem[], index: number) => {
       if (selectionMode) {
@@ -219,20 +217,25 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
       />
 
       {!staticMode && selectionMode && selected && (
-        <View
-          pointerEvents="none"
-          style={[
-            tw`absolute`,
-            {
-              top: -4,
-              bottom: -4,
-              left: isFirstInSequence && !isCurrentUser ? -16 : -4,
-              right: isFirstInSequence && isCurrentUser ? -16 : -4,
-              backgroundColor: resolvedOverlay,
-              borderRadius: 8,
-            },
-          ]}
-        />
+        (() => {
+          const TAIL_OFFSET = 14; // matches -3.5 (Tail negative offset in px)
+          const TOP_OFFSET = -6; // small upward expansion to cover top nudges
+          const sideExpand = isCurrentUser
+            ? { right: -TAIL_OFFSET }
+            : { left: -TAIL_OFFSET };
+
+          return (
+            <View
+              pointerEvents="none"
+              style={[
+                tw`absolute inset-0`,
+                { backgroundColor: resolvedOverlay, borderRadius: 8 },
+                { top: TOP_OFFSET },
+                sideExpand,
+              ]}
+            />
+          );
+        })()
       )}
     </>
   );
@@ -276,9 +279,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
       delayLongPress={250}
       style={[
         tw`w-full`,
-        selectionMode && selected
-          ? { backgroundColor: resolvedRowBg }
-          : null,
+        selectionMode && selected ? { backgroundColor: resolvedRowBg } : null,
       ]}
     >
       {swipeWrapped}

@@ -15,18 +15,10 @@ export const tryCopyMessage = (message: Message): boolean => {
       return true;
     }
   } catch {
-    // ignore — try fallback
+    // ignore — no fallback
   }
 
-  try {
-    const RN = require('react-native');
-    if (RN?.Clipboard?.setString) {
-      RN.Clipboard.setString(text);
-      return true;
-    }
-  } catch {
-    // ignore
-  }
+
 
   return false;
 };

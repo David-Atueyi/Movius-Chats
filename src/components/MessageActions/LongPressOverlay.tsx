@@ -1,11 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  Dimensions,
-  Modal,
-  Pressable,
-  Text,
-  View,
-} from 'react-native';
+import { Dimensions, Modal, Pressable, Text, View } from 'react-native';
 import tw from 'twrnc';
 import type {
   Message,
@@ -109,7 +103,7 @@ export const LongPressOverlay: React.FC<LongPressOverlayProps> = ({
   const text = mergedUI.textColor ?? '#111827';
   const icon = mergedUI.iconColor ?? text;
   const destructive = mergedUI.destructiveColor ?? '#EF4444';
-  const scrim = mergedUI.scrimColor ?? 'rgba(0,0,0,0.55)';
+  const scrim = mergedUI.scrimColor ?? 'rgba(0,0,0,0.60)';
   const ROW_HEIGHT = mergedUI.rowHeight ?? 36;
   const ICON_SIZE = mergedUI.iconSize ?? 16;
   const liftedPadding = mergedUI.liftedBubblePaddingHorizontal ?? 8;
@@ -134,7 +128,7 @@ export const LongPressOverlay: React.FC<LongPressOverlayProps> = ({
       <Pressable
         onPress={onClose}
         style={[
-          tw`flex-1`,
+          tw`flex-1 pt-10`,
           { backgroundColor: scrim },
           mergedUI.scrimPressableStyle,
         ]}

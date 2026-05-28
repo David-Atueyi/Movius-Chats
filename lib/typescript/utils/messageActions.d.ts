@@ -13,5 +13,5 @@ export interface MessageActionItem {
 export declare function mergeMessageActionUI(theme?: Theme, ui?: MessageActionUIProps): MessageActionUIProps;
 export declare function mergeMessageActionLabels(theme?: Theme, labels?: MessageActionLabels): MessageActionLabels;
 export declare function mergeMessageActionIcons(theme?: Theme, icons?: MessageActionIconComponents): MessageActionIconComponents;
-export declare function buildMessageActions(message: Message, flags: MessageActionFlags | undefined, labels?: MessageActionLabels, icons?: MessageActionIconComponents): MessageActionItem[];
+export declare function buildMessageActions(message: Message, flags: MessageActionFlags | undefined, labels?: MessageActionLabels, icons?: MessageActionIconComponents, isCurrentUser?: boolean): MessageActionItem[];
 export {};
