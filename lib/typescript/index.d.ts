@@ -7,7 +7,5 @@ export { VoiceRecorderFlow, type RecordingState, type VoiceRecorderFlowAudio, ty
 export { LongPressOverlay, MessageActionsPopover, MessageActionsSheet, tryCopyMessage, } from './components/MessageActions';
 export { InlineReply, ReplyPreview, SwipeableMessage, } from './components/Reply';
 export { SelectIcon } from './assets/Icons/SelectIcon';
-export type { ChatScreenProps, DateSeparatorTheme, Message, MessageActionAnchor, MessageActionFlags, MessageActionIconComponents, MessageActionId, MessageActionLabels, MessageActionUIProps, MessageFileAttachment, MessageMediaItem, MessageReply, PreviewAttachment, RecordingResult, RecordingUIProps, ReplyConfig, ReplyStyleOverrides, ReplyUIProps, SelectionUIProps, SwipeReplyUIProps, VoiceRecorderConfig, VoiceRecorderExposedState, VoiceRecorderStyleOverrides, } from './types';
-export type { ChatListItem } from './utils/dateSeparator';
-export { buildChatListItems, diffCalendarDays, formatDateSeparatorLabel, getDayKey, getDefaultDateSeparatorLocale, parseMessageDate, truncateToLocalMidnight, } from './utils/dateSeparator';
+export type { ChatScreenProps, Message, MessageActionAnchor, MessageActionFlags, MessageActionIconComponents, MessageActionId, MessageActionLabels, MessageActionUIProps, MessageFileAttachment, MessageMediaItem, MessageReply, PreviewAttachment, RecordingResult, RecordingUIProps, ReplyConfig, ReplyStyleOverrides, ReplyUIProps, SelectionUIProps, SwipeReplyUIProps, VoiceRecorderConfig, VoiceRecorderExposedState, VoiceRecorderStyleOverrides, } from './types';
 export default ChatScreen;
