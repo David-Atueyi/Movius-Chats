@@ -94,6 +94,8 @@ export interface Message {
   audio?: string;
   senderId: string;
   time: string;
+  /** Raw timestamp for day-grouping; `time` is display-only. */
+  createdAt?: string | Date;
   status: 'read' | 'delivered' | 'sent';
   senderName?: string;
   senderAvatar?: string;
@@ -221,6 +223,20 @@ export interface PreviewAttachment {
   name?: string;
 }
 
+export interface DateSeparatorTheme {
+  backgroundColor?: string;
+  textColor?: string;
+  fontSize?: number;
+  borderRadius?: number;
+  paddingHorizontal?: number;
+  paddingVertical?: number;
+  marginVertical?: number;
+  stickyBackgroundColor?: string;
+  stickyTextColor?: string;
+  stickyTopOffset?: number;
+  stickyShadow?: boolean;
+}
+
 export interface ChatScreenProps {
   messages: Message[];
   currentUserId: string;
@@ -270,6 +286,16 @@ export interface ChatScreenProps {
   loadingMoreIndicatorTextStyle?: TextStyle;
   loadingMoreIndicatorColor?: string;
   loadingMoreIndicatorSize?: number | 'small' | 'large';
+
+  // Date separators (WhatsApp-style day grouping)
+  showDateSeparators?: boolean;
+  showStickyDateHeader?: boolean;
+  formatDateSeparatorLabel?: (date: Date) => string;
+  weekdayLabelMaxDays?: number;
+  dateSeparatorLocale?: string;
+  renderDateSeparator?: (label: string) => React.ReactNode;
+  renderStickyDateHeader?: (label: string) => React.ReactNode;
+  stickyHeaderVisibilityThreshold?: number;
 
   // Multi-select mode
   selectionUI?: SelectionUIProps;
@@ -403,6 +429,7 @@ export interface ChatScreenProps {
       icons?: MessageActionIconComponents;
     };
     selection?: SelectionUIProps;
+    dateSeparator?: DateSeparatorTheme;
   };
 
   // Feature flags
