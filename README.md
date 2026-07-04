@@ -399,6 +399,15 @@ interface ChatScreenProps {
   onMessageLongPress?: (message: Message) => void;
   onTypingStart?: () => void;
   onTypingEnd?: () => void;
+  onEndReached?: (info: { distanceFromEnd: number }) => void;
+  onEndReachedThreshold?: number; // Default: 0.5
+  isLoadingMoreMessages?: boolean;
+  renderLoadingMoreIndicator?: () => React.ReactNode;
+  loadingMoreIndicatorContainerStyle?: ViewStyle;
+  loadingMoreIndicatorText?: string;
+  loadingMoreIndicatorTextStyle?: TextStyle;
+  loadingMoreIndicatorColor?: string;
+  loadingMoreIndicatorSize?: number | 'small' | 'large';
 
   // UI Options
   showAvatars?: boolean; // Default: true
@@ -433,6 +442,25 @@ interface ChatScreenProps {
 ### Message Interface
 
 See [Message Data Model](#message-data-model) section above for full details.
+
+### Loading More Messages
+
+When the user reaches the top of the message list while older messages are being fetched, the component can show a loading indicator. This is controlled by the pagination props above.
+
+```tsx
+<ChatScreen
+  messages={messages}
+  currentUserId={currentUserId}
+  onSendMessage={handleSend}
+  onEndReached={() => fetchOlderMessages()}
+  onEndReachedThreshold={0.5}
+  isLoadingMoreMessages={isFetchingOlderMessages}
+  loadingMoreIndicatorText="Loading older messages"
+  loadingMoreIndicatorColor="#4F46E5"
+  loadingMoreIndicatorSize="small"
+  renderLoadingMoreIndicator={() => <YourCustomLoader />}
+/>
+```
 
 ### Theme Configuration
 
