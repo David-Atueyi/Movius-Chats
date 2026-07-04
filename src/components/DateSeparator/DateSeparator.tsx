@@ -25,13 +25,13 @@ const DateSeparator: React.FC<DateSeparatorProps> = ({
 
   const isSticky = variant === 'sticky';
   const backgroundColor = isSticky
-    ? theme?.stickyBackgroundColor ??
+    ? (theme?.stickyBackgroundColor ??
       theme?.backgroundColor ??
-      'rgba(0, 0, 0, 0.55)'
-    : theme?.backgroundColor ?? 'rgba(0, 0, 0, 0.55)';
+      'rgba(0, 0, 0, 0.55)')
+    : (theme?.backgroundColor ?? 'rgba(0, 0, 0, 0.55)');
   const textColor = isSticky
-    ? theme?.stickyTextColor ?? theme?.textColor ?? '#FFFFFF'
-    : theme?.textColor ?? '#FFFFFF';
+    ? (theme?.stickyTextColor ?? theme?.textColor ?? '#FFFFFF')
+    : (theme?.textColor ?? '#FFFFFF');
   const fontSize = theme?.fontSize ?? 12;
   const borderRadius = theme?.borderRadius ?? 8;
   const paddingHorizontal = theme?.paddingHorizontal ?? 12;
@@ -85,10 +85,7 @@ const DateSeparator: React.FC<DateSeparatorProps> = ({
 
   return (
     <View
-      style={[
-        tw`items-center justify-center w-full`,
-        { marginVertical },
-      ]}
+      style={[tw`items-center justify-center w-full`, { marginVertical }]}
       pointerEvents="none"
     >
       {content}
