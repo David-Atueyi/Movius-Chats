@@ -1,28 +1,32 @@
 import React, { useCallback, useMemo } from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Text,
+  View,
+} from 'react-native';
 import tw from 'twrnc';
 import ChatBubble from './components/ChatBubble/ChatBubble';
 import ChatInput from './components/ChatInput/ChatInput';
-import {
-  LongPressOverlay,
-  tryCopyMessage,
-} from './components/MessageActions';
 import MediaViewer from './components/MediaViewer/MediaViewer';
+import { LongPressOverlay, tryCopyMessage } from './components/MessageActions';
 import { TypingIndicator } from './components/TypingComponent/TypingIndicator';
 import { AudioProvider } from './context/AudioContext';
 import { ChatProvider, useChatContext } from './context/ChatContext';
 import { useKeyboardInset } from './hooks/useKeyboardInset';
-import {
-  mergeMessageActionIcons,
-  mergeMessageActionLabels,
-  mergeMessageActionUI,
-} from './utils/messageActions';
 import {
   ChatScreenProps,
   Message,
   MessageActionAnchor,
   MessageActionId,
 } from './types';
+import {
+  mergeMessageActionIcons,
+  mergeMessageActionLabels,
+  mergeMessageActionUI,
+} from './utils/messageActions';
 
 const ChatScreenContent = () => {
   const {
@@ -65,6 +69,15 @@ const ChatScreenContent = () => {
     onCopyMessage,
     onDeleteMessage,
     onForwardMessage,
+    onEndReached,
+    onEndReachedThreshold = 0.5,
+    isLoadingMoreMessages = false,
+    renderLoadingMoreIndicator,
+    loadingMoreIndicatorContainerStyle,
+    loadingMoreIndicatorText,
+    loadingMoreIndicatorTextStyle,
+    loadingMoreIndicatorColor,
+    loadingMoreIndicatorSize = 'small',
 
     startEdit,
     enterSelectionMode,
@@ -181,6 +194,27 @@ const ChatScreenContent = () => {
     );
   })();
 
+  const loadingMoreIndicatorNode = renderLoadingMoreIndicator ? (
+    renderLoadingMoreIndicator()
+  ) : isLoadingMoreMessages ? (
+    <View
+      style={[
+        tw`items-center justify-center py-3`,
+        loadingMoreIndicatorContainerStyle,
+      ]}
+    >
+      <ActivityIndicator
+        size={loadingMoreIndicatorSize}
+        color={loadingMoreIndicatorColor}
+      />
+      {loadingMoreIndicatorText ? (
+        <Text style={[tw`mt-2 text-xs`, loadingMoreIndicatorTextStyle]}>
+          {loadingMoreIndicatorText}
+        </Text>
+      ) : null}
+    </View>
+  ) : null;
+
   const content = (
     <View style={tw`flex-1 px-2 pb-4 gap-2 relative`}>
       <FlatList
@@ -208,6 +242,11 @@ const ChatScreenContent = () => {
         inverted
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
+        onEndReached={onEndReached}
+        onEndReachedThreshold={onEndReachedThreshold}
+        ListFooterComponent={
+          loadingMoreIndicatorNode ? <>{loadingMoreIndicatorNode}</> : null
+        }
       />
 
       <View
@@ -270,9 +309,9 @@ export {
 
 export {
   VoiceRecorderFlow,
-  type VoiceRecorderFlowProps,
-  type VoiceRecorderFlowAudio,
   type RecordingState,
+  type VoiceRecorderFlowAudio,
+  type VoiceRecorderFlowProps,
 } from './components/VoiceRecorder/VoiceRecorderFlow';
 
 export {

@@ -149,7 +149,7 @@ export interface ReplyStyleOverrides {
   closeButton?: ViewStyle;
 }
 
-  // Long-press message actions
+// Long-press message actions
 
 export interface MessageActionFlags {
   enableReply?: boolean;
@@ -187,10 +187,7 @@ export interface MessageActionLabels {
 }
 
 export type MessageActionIconComponents = Partial<
-  Record<
-    MessageActionId,
-    ComponentType<{ style?: ViewStyle; color?: string }>
-  >
+  Record<MessageActionId, ComponentType<{ style?: ViewStyle; color?: string }>>
 >;
 
 export interface MessageActionUIProps {
@@ -264,6 +261,15 @@ export interface ChatScreenProps {
   onEditMessage?: (message: Message, newText: string) => void;
   onDeleteMessage?: (message: Message) => void;
   onForwardMessage?: (message: Message) => void;
+  onEndReached?: (info: { distanceFromEnd: number }) => void;
+  onEndReachedThreshold?: number;
+  isLoadingMoreMessages?: boolean;
+  renderLoadingMoreIndicator?: () => React.ReactNode;
+  loadingMoreIndicatorContainerStyle?: ViewStyle;
+  loadingMoreIndicatorText?: string;
+  loadingMoreIndicatorTextStyle?: TextStyle;
+  loadingMoreIndicatorColor?: string;
+  loadingMoreIndicatorSize?: number | 'small' | 'large';
 
   // Multi-select mode
   selectionUI?: SelectionUIProps;
@@ -424,8 +430,5 @@ export interface ChatScreenProps {
   CustomPauseIcon?: () => React.ReactNode;
   CustomClosePreviewIcon?: () => ReactNode;
   CustomEditPreviewIcon?: () => ReactNode;
-  renderEditPreview?: (
-    message: Message,
-    cancel: () => void
-  ) => ReactNode;
+  renderEditPreview?: (message: Message, cancel: () => void) => ReactNode;
 }
