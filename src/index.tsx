@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -12,12 +6,10 @@ import {
   Platform,
   Text,
   View,
-  ViewToken,
 } from 'react-native';
 import tw from 'twrnc';
 import ChatBubble from './components/ChatBubble/ChatBubble';
 import ChatInput from './components/ChatInput/ChatInput';
-import DateSeparator from './components/DateSeparator/DateSeparator';
 import MediaViewer from './components/MediaViewer/MediaViewer';
 import { LongPressOverlay, tryCopyMessage } from './components/MessageActions';
 import { TypingIndicator } from './components/TypingComponent/TypingIndicator';
@@ -30,12 +22,6 @@ import {
   MessageActionAnchor,
   MessageActionId,
 } from './types';
-import {
-  buildChatListItems,
-  getDefaultDateSeparatorLocale,
-  isFirstMessageInSequence,
-  resolveStickyDateLabel,
-} from './utils/dateSeparator';
 import {
   mergeMessageActionIcons,
   mergeMessageActionLabels,
@@ -93,15 +79,6 @@ const ChatScreenContent = () => {
     loadingMoreIndicatorColor,
     loadingMoreIndicatorSize = 'small',
 
-    showDateSeparators = true,
-    showStickyDateHeader = true,
-    formatDateSeparatorLabel,
-    weekdayLabelMaxDays = 6,
-    dateSeparatorLocale,
-    renderDateSeparator,
-    renderStickyDateHeader,
-    stickyHeaderVisibilityThreshold = 20,
-
     startEdit,
     enterSelectionMode,
 
@@ -122,77 +99,6 @@ const ChatScreenContent = () => {
     () => mergeMessageActionIcons(theme, messageActionIcons),
     [theme, messageActionIcons]
   );
-
-  const resolvedLocale = dateSeparatorLocale ?? getDefaultDateSeparatorLocale();
-
-  const dateLabelOptions = useMemo(
-    () => ({
-      locale: resolvedLocale,
-      weekdayLabelMaxDays,
-      formatDateSeparatorLabel,
-    }),
-    [resolvedLocale, weekdayLabelMaxDays, formatDateSeparatorLabel]
-  );
-
-  const listItems = useMemo(
-    () =>
-      buildChatListItems(messages, {
-        showDateSeparators,
-        ...dateLabelOptions,
-      }),
-    [messages, showDateSeparators, dateLabelOptions]
-  );
-
-  const listItemsRef = useRef(listItems);
-  listItemsRef.current = listItems;
-
-  const dateLabelOptionsRef = useRef(dateLabelOptions);
-  dateLabelOptionsRef.current = dateLabelOptions;
-
-  const stickyLabelRef = useRef<string | null>(null);
-  const [stickyLabel, setStickyLabel] = useState<string | null>(null);
-
-  const showDateSeparatorsRef = useRef(showDateSeparators);
-  showDateSeparatorsRef.current = showDateSeparators;
-  const showStickyDateHeaderRef = useRef(showStickyDateHeader);
-  showStickyDateHeaderRef.current = showStickyDateHeader;
-
-  const viewabilityConfig = useMemo(
-    () => ({
-      itemVisiblePercentThreshold: stickyHeaderVisibilityThreshold,
-    }),
-    [stickyHeaderVisibilityThreshold]
-  );
-
-  const onViewableItemsChanged = useRef(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (!showDateSeparatorsRef.current || !showStickyDateHeaderRef.current) {
-        return;
-      }
-
-      const label = resolveStickyDateLabel(
-        viewableItems.map((token) => ({
-          index: token.index,
-          item: token.item,
-          isViewable: token.isViewable,
-        })),
-        listItemsRef.current,
-        dateLabelOptionsRef.current
-      );
-
-      if (label !== stickyLabelRef.current) {
-        stickyLabelRef.current = label;
-        setStickyLabel(label);
-      }
-    }
-  ).current;
-
-  useEffect(() => {
-    if (!showDateSeparators || !showStickyDateHeader) {
-      stickyLabelRef.current = null;
-      setStickyLabel(null);
-    }
-  }, [showDateSeparators, showStickyDateHeader]);
 
   const handleLongPress = useCallback(
     (message: Message, anchor: MessageActionAnchor) => {
@@ -313,30 +219,19 @@ const ChatScreenContent = () => {
     <View style={tw`flex-1 px-2 pb-4 gap-2 relative`}>
       <FlatList
         style={tw`flex-1`}
-        data={listItems}
+        data={messages}
         keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => {
-          if (item.type === 'dateSeparator') {
-            return (
-              <DateSeparator
-                label={item.label}
-                variant="inline"
-                theme={theme?.dateSeparator}
-                fontFamily={theme?.fontFamily}
-                renderCustom={renderDateSeparator}
-              />
-            );
-          }
-
-          return (
-            <ChatBubble
-              message={item.message}
-              isCurrentUser={item.message.senderId === currentUserId}
-              onLongPress={(anchor) => handleLongPress(item.message, anchor)}
-              isFirstInSequence={isFirstMessageInSequence(listItems, index)}
-            />
-          );
-        }}
+        renderItem={({ item, index }) => (
+          <ChatBubble
+            message={item}
+            isCurrentUser={item.senderId === currentUserId}
+            onLongPress={(anchor) => handleLongPress(item, anchor)}
+            isFirstInSequence={
+              index === messages.length - 1 ||
+              messages[index + 1]?.senderId !== item.senderId
+            }
+          />
+        )}
         ListHeaderComponent={
           <TypingIndicator
             typingUsers={typingUsers || []}
@@ -349,32 +244,10 @@ const ChatScreenContent = () => {
         keyboardDismissMode="interactive"
         onEndReached={onEndReached}
         onEndReachedThreshold={onEndReachedThreshold}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
         ListFooterComponent={
           loadingMoreIndicatorNode ? <>{loadingMoreIndicatorNode}</> : null
         }
       />
-
-      {showDateSeparators && showStickyDateHeader && stickyLabel ? (
-        <View
-          pointerEvents="none"
-          style={[
-            tw`absolute left-0 right-0 items-center z-10`,
-            {
-              top: theme?.dateSeparator?.stickyTopOffset ?? 8,
-            },
-          ]}
-        >
-          <DateSeparator
-            label={stickyLabel}
-            variant="sticky"
-            theme={theme?.dateSeparator}
-            fontFamily={theme?.fontFamily}
-            renderCustom={renderStickyDateHeader ?? renderDateSeparator}
-          />
-        </View>
-      ) : null}
 
       <View
         style={
@@ -458,7 +331,6 @@ export { SelectIcon } from './assets/Icons/SelectIcon';
 
 export type {
   ChatScreenProps,
-  DateSeparatorTheme,
   Message,
   MessageActionAnchor,
   MessageActionFlags,
@@ -481,17 +353,5 @@ export type {
   VoiceRecorderExposedState,
   VoiceRecorderStyleOverrides,
 } from './types';
-
-export type { ChatListItem } from './utils/dateSeparator';
-
-export {
-  buildChatListItems,
-  diffCalendarDays,
-  formatDateSeparatorLabel,
-  getDayKey,
-  getDefaultDateSeparatorLocale,
-  parseMessageDate,
-  truncateToLocalMidnight,
-} from './utils/dateSeparator';
 
 export default ChatScreen;
