@@ -1,15 +1,33 @@
 import type { Message, MessageMediaItem } from '../types';
 
+export function isGalleryMediaItem(
+  item: MessageMediaItem
+): item is MessageMediaItem & { kind: 'image' | 'video' } {
+  return item.kind === 'image' || item.kind === 'video';
+}
+
+export function isAudioMediaItem(
+  item: MessageMediaItem
+): item is MessageMediaItem & { kind: 'audio' } {
+  return item.kind === 'audio';
+}
+
 export function collectMediaItems(message: Message): MessageMediaItem[] {
-  if (message.mediaItems && message.mediaItems.length > 0) {
-    return message.mediaItems;
-  }
-  const out: MessageMediaItem[] = [];
-  if (message.image) {
-    out.push({ uri: message.image, kind: 'image' });
-  }
-  if (message.video) {
-    out.push({ uri: message.video, kind: 'video' });
-  }
-  return out;
+  return message.mediaItems ?? [];
+}
+
+export interface SplitMediaResult {
+  galleryItems: (MessageMediaItem & { kind: 'image' | 'video' })[];
+  primaryAudio: MessageMediaItem | null;
+  extraAudios: MessageMediaItem[];
+}
+
+export function splitMediaForRender(message: Message): SplitMediaResult {
+  const items = collectMediaItems(message);
+  const galleryItems = items.filter(isGalleryMediaItem);
+  const audioItems = items.filter(isAudioMediaItem);
+
+  const [primaryAudio = null, ...extraAudios] = audioItems;
+
+  return { galleryItems, primaryAudio, extraAudios };
 }

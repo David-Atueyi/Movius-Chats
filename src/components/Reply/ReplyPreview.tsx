@@ -1,7 +1,7 @@
 import React from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
-import { ClosePreviewIcon } from '../../assets/Icons/ClosePreviewIcon';
 import tw from 'twrnc';
+import { ClosePreviewIcon } from '../../assets/Icons/ClosePreviewIcon';
 import type { Message, ReplyStyleOverrides } from '../../types';
 import { withFontFamily } from '../../utils/theme';
 
@@ -29,21 +29,21 @@ const buildPreview = (message: Message): PreviewParts => {
     return {
       text: message.text,
       thumbnail:
-        message.image ??
-        (firstMedia?.kind === 'image' || firstMedia?.kind === 'video'
+        firstMedia?.kind === 'image' || firstMedia?.kind === 'video'
           ? firstMedia.uri
-          : undefined),
+          : undefined,
     };
   }
-  if (message.audio) return { text: '🎤 Audio message' };
-  if (message.video) return { text: '🎥 Video', thumbnail: message.video };
+  if (firstMedia?.kind === 'audio') {
+    return { text: '🎤 Audio message' };
+  }
   if (firstMedia?.kind === 'video') {
     return { text: '🎥 Video', thumbnail: firstMedia.uri };
   }
-  if (message.image || firstMedia?.kind === 'image') {
+  if (firstMedia?.kind === 'image') {
     return {
       text: '📷 Photo',
-      thumbnail: message.image ?? firstMedia?.uri,
+      thumbnail: firstMedia?.uri,
     };
   }
   if ((message.fileAttachments ?? []).length) {

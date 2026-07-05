@@ -16,6 +16,7 @@ import { LoadingIcon } from '../../assets/Icons/LoadingIcon';
 import { XIcon } from '../../assets/Icons/XIcon';
 import { useChatContext } from '../../context/ChatContext';
 import type { MessageMediaItem } from '../../types';
+import { isGalleryMediaItem } from '../../utils/messageMedia';
 import { withFontFamily } from '../../utils/theme';
 
 export interface MediaViewerProps {
@@ -26,15 +27,16 @@ export interface MediaViewerProps {
 const MediaViewer: React.FC<MediaViewerProps> = ({ gallery, onClose }) => {
   const { theme, setIsVideoPlaying } = useChatContext();
   const listRef = useRef<FlatList<MessageMediaItem>>(null);
+  const { width, height: windowHeight } = useWindowDimensions();
   const initialIndex = gallery?.initialIndex ?? 0;
   const [pageIndex, setPageIndex] = useState(initialIndex);
-  const { width, height: windowHeight } = useWindowDimensions();
+  const galleryItems = gallery?.items.filter(isGalleryMediaItem) ?? [];
 
   useEffect(() => {
-    if (!gallery?.items.length) return;
-    const idx = gallery.initialIndex;
+    if (!galleryItems.length) return;
+    const idx = Math.min(initialIndex, galleryItems.length - 1);
     setPageIndex(idx);
-    const item = gallery.items[idx];
+    const item = galleryItems[idx];
     setIsVideoPlaying(item?.kind === 'video');
 
     requestAnimationFrame(() => {
@@ -47,7 +49,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({ gallery, onClose }) => {
         /* layout not ready */
       }
     });
-  }, [gallery?.initialIndex, gallery?.items, setIsVideoPlaying]);
+  }, [initialIndex, galleryItems, setIsVideoPlaying]);
 
   const handleClose = useCallback(() => {
     setIsVideoPlaying(false);
@@ -58,13 +60,13 @@ const MediaViewer: React.FC<MediaViewerProps> = ({ gallery, onClose }) => {
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       const idx = Math.round(e.nativeEvent.contentOffset.x / width);
       setPageIndex(idx);
-      const item = gallery?.items[idx];
+      const item = galleryItems[idx];
       setIsVideoPlaying(item?.kind === 'video');
     },
-    [gallery?.items, width, setIsVideoPlaying]
+    [galleryItems, width, setIsVideoPlaying]
   );
 
-  if (!gallery || gallery.items.length === 0) return null;
+  if (!gallery || galleryItems.length === 0) return null;
 
   return (
     <Modal
@@ -82,7 +84,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({ gallery, onClose }) => {
           <XIcon style={tw`h-8 w-8`} />
         </Pressable>
 
-        {gallery.items.length > 1 && (
+        {galleryItems.length > 1 && (
           <View style={tw`absolute top-14 left-0 right-0 z-10 items-center`}>
             <Text
               style={withFontFamily(
@@ -90,19 +92,19 @@ const MediaViewer: React.FC<MediaViewerProps> = ({ gallery, onClose }) => {
                 theme?.fontFamily
               )}
             >
-              {pageIndex + 1} / {gallery.items.length}
+              {pageIndex + 1} / {galleryItems.length}
             </Text>
           </View>
         )}
 
         <FlatList
           ref={listRef}
-          data={gallery.items}
+          data={galleryItems}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item, i) => `${item.uri}-${i}`}
-          initialScrollIndex={gallery.initialIndex}
+          initialScrollIndex={Math.min(initialIndex, galleryItems.length - 1)}
           extraData={pageIndex}
           getItemLayout={(_, index) => ({
             length: width,
@@ -143,8 +145,7 @@ const ViewerPage: React.FC<{
   const [loading, setLoading] = useState(item.kind === 'video');
   const [error, setError] = useState(false);
 
-  const shouldPlayVideo =
-    item.kind === 'video' && isActive && autoPlayVideo;
+  const shouldPlayVideo = item.kind === 'video' && isActive && autoPlayVideo;
 
   if (item.kind === 'image') {
     return (

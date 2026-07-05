@@ -13,6 +13,8 @@ export interface MessageContentProps extends ChatBubbleProps {
   onGalleryOpen: (items: MessageMediaItem[], index: number) => void;
   isVideoPlaying?: boolean;
   onLongPress?: () => void;
+  galleryMediaItems?: (MessageMediaItem & { kind: 'image' | 'video' })[];
+  primaryAudio?: MessageMediaItem | null;
 }
 
 export interface MessageStatusProps {

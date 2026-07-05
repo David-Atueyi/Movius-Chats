@@ -4,9 +4,10 @@ import tw from 'twrnc';
 import { ArrowBack2RoundedIcon } from '../../assets/Icons/ArrowBack2RoundedIcon';
 import { useChatContext } from '../../context/ChatContext';
 import { getBubbleBackgroundColor } from '../../utils/bubbleTheme';
-import { collectMediaItems } from '../../utils/messageMedia';
+import { splitMediaForRender } from '../../utils/messageMedia';
 import { withFontFamily } from '../../utils/theme';
 import { SwipeableMessage } from '../Reply/SwipeableMessage';
+import AudioPlayer from '../AudioPlayer/AudioPlayer';
 import MessageContent from './MessageContent';
 import MessageStatus from './MessageStatus';
 import { ChatBubbleProps } from './types';
@@ -46,13 +47,16 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     (replyProps?.enableReply ?? true) && !selectionMode && !staticMode;
   const swipeThreshold = replyProps?.swipeThreshold ?? 60;
 
-  const mediaItems = collectMediaItems(message);
+  const { galleryItems, primaryAudio, extraAudios } =
+    splitMediaForRender(message);
+  const hasAudioMedia = !!primaryAudio;
+  const galleryMediaItems = galleryItems;
 
   const hasFilesOnly =
     (message.fileAttachments?.length ?? 0) > 0 &&
-    mediaItems.length === 0 &&
+    galleryMediaItems.length === 0 &&
     !message.text &&
-    !message.audio;
+    !hasAudioMedia;
 
   const selected = isSelected(message.id);
 
@@ -131,9 +135,23 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     },
   ];
 
+  const extraAudioBubbleStyle = [
+    tw`px-2 mb-1 max-w-[75%] relative`,
+    isCurrentUser ? tw`self-end mr-3` : tw`self-start ml-9`,
+    isCurrentUser ? tw`bg-green-500` : tw`bg-white`,
+    {
+      borderRadius: 8,
+      ...(getBubbleBackgroundColor(theme, isCurrentUser)
+        ? { backgroundColor: getBubbleBackgroundColor(theme, isCurrentUser) }
+        : {}),
+      ...(isCurrentUser
+        ? theme?.bubbleStyle?.sent
+        : theme?.bubbleStyle?.received),
+    },
+  ];
+
   const bubbleInner = (
     <>
-      {/* Avatar & Sender Name for Group Chat */}
       {!isCurrentUser && isFirstInSequence && showAvatars && (
         <>
           <View
@@ -201,6 +219,8 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         onGalleryOpen={handleGalleryOpen}
         isVideoPlaying={isVideoPlaying}
         onLongPress={!staticMode ? handleLongPress : undefined}
+        galleryMediaItems={galleryItems}
+        primaryAudio={primaryAudio}
       />
 
       <MessageStatus
@@ -209,8 +229,8 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         status={isCurrentUser ? message.status : undefined}
         isCurrentUser={isCurrentUser}
         hasText={!!message.text}
-        hasAudio={!!message.audio}
-        hasGalleryMedia={mediaItems.length > 0 && !message.text}
+        hasAudio={hasAudioMedia}
+        hasGalleryMedia={galleryMediaItems.length > 0 && !message.text}
         hasFileAttachments={hasFilesOnly}
       />
     </>
@@ -248,24 +268,53 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     </SwipeableMessage>
   );
 
-  return (
-    <Pressable
-      onPress={handlePress}
-      onLongPress={handleLongPress}
-      delayLongPress={250}
-      style={tw`w-full`}
+  const extraAudioBubbles = extraAudios.map((audioItem, idx) => (
+    <View
+      key={`${message.id}-extra-audio-${idx}`}
+      style={extraAudioBubbleStyle}
     >
-      {selectionMode && selected && (
-        <View
-          pointerEvents="none"
-          style={[
-            tw`absolute inset-0`,
-            { backgroundColor: resolvedRowBg, zIndex: 10 },
-          ]}
-        />
-      )}
-      {swipeWrapped}
-    </Pressable>
+      <AudioPlayer
+        audioUrl={audioItem.uri}
+        audioId={`${message.id}-extra-${idx}`}
+        isVideoPlaying={isVideoPlaying}
+        isCurrentUser={isCurrentUser}
+        senderAvatar={message.senderAvatar}
+        senderName={message.senderName}
+        reserveStatusSpace={false}
+      />
+      <MessageStatus
+        time={message.time}
+        status={isCurrentUser ? message.status : undefined}
+        isCurrentUser={isCurrentUser}
+        hasText={false}
+        hasAudio={true}
+        hasGalleryMedia={false}
+        hasFileAttachments={false}
+      />
+    </View>
+  ));
+
+  return (
+    <View style={tw`w-full`}>
+      <Pressable
+        onPress={handlePress}
+        onLongPress={handleLongPress}
+        delayLongPress={250}
+        style={tw`w-full`}
+      >
+        {selectionMode && selected && (
+          <View
+            pointerEvents="none"
+            style={[
+              tw`absolute inset-0`,
+              { backgroundColor: resolvedRowBg, zIndex: 10 },
+            ]}
+          />
+        )}
+        {swipeWrapped}
+      </Pressable>
+      {extraAudioBubbles}
+    </View>
   );
 };
 

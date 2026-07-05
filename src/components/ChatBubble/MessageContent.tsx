@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 import ParsedText from 'react-native-parsed-text';
 import tw from 'twrnc';
@@ -15,12 +15,12 @@ import {
   getInlineReplySenderColor,
   mergeReplyUI,
 } from '../../utils/replyTheme';
-import { collectMediaItems } from '../../utils/messageMedia';
 import { getFontFamilyStyle, withFontFamily } from '../../utils/theme';
 import AudioPlayer from '../AudioPlayer/AudioPlayer';
 import { InlineReply } from '../Reply/InlineReply';
 import { MediaGrid } from './MediaGrid';
 import { MessageContentProps } from './types';
+import { isGalleryMediaItem } from '../../utils/messageMedia';
 
 const MessageContent: React.FC<MessageContentProps> = ({
   message,
@@ -28,6 +28,8 @@ const MessageContent: React.FC<MessageContentProps> = ({
   isVideoPlaying,
   isCurrentUser,
   onLongPress,
+  galleryMediaItems,
+  primaryAudio,
 }) => {
   const {
     theme,
@@ -43,7 +45,8 @@ const MessageContent: React.FC<MessageContentProps> = ({
   const resolvedReplyUI = mergeReplyUI(theme, replyUI);
   const mergedReplyStyle = { ...theme?.reply?.styles, ...replyStyle };
 
-  const mediaItems = useMemo(() => collectMediaItems(message), [message]);
+  const gridItems =
+    galleryMediaItems ?? (message.mediaItems ?? []).filter(isGalleryMediaItem);
 
   // Inline reply chip
   const replyChip = (() => {
@@ -80,12 +83,35 @@ const MessageContent: React.FC<MessageContentProps> = ({
   return (
     <View>
       {replyChip}
-      {mediaItems.length > 0 && (
+
+      {gridItems.length > 0 && (
         <MediaGrid
-          items={mediaItems}
+          items={gridItems}
           onOpenGallery={onGalleryOpen}
           onLongPress={onLongPress}
+          messageId={message.id}
+          isCurrentUser={isCurrentUser}
+          senderAvatar={message.senderAvatar}
+          senderName={message.senderName}
+          isVideoPlaying={isVideoPlaying as boolean}
         />
+      )}
+
+      {/* ✅ The one audio that attaches to this bubble — renders right under
+          the media grid, same position the legacy `audio` field used to use */}
+      {primaryAudio && (
+        <View style={tw`my-1`}>
+          <AudioPlayer
+            audioUrl={primaryAudio.uri}
+            audioId={message.id}
+            isVideoPlaying={isVideoPlaying as boolean}
+            isCurrentUser={isCurrentUser}
+            senderAvatar={message.senderAvatar}
+            senderName={message.senderName}
+            reserveStatusSpace={false}
+            onLongPress={onLongPress}
+          />
+        </View>
       )}
 
       {(message.fileAttachments ?? []).map((file, idx) => (
@@ -156,19 +182,6 @@ const MessageContent: React.FC<MessageContentProps> = ({
           </Text>
         </Pressable>
       ))}
-
-      {message.audio && (
-        <AudioPlayer
-          audioUrl={message.audio}
-          audioId={message.id}
-          isVideoPlaying={isVideoPlaying as boolean}
-          isCurrentUser={isCurrentUser}
-          senderAvatar={message.senderAvatar}
-          senderName={message.senderName}
-          reserveStatusSpace={!message.text}
-          onLongPress={onLongPress}
-        />
-      )}
 
       {message.text && (
         <ParsedText
