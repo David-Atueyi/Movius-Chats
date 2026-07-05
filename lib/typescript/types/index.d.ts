@@ -5,6 +5,7 @@ export interface RecordingResult {
     duration: number;
     size?: number;
     mimeType?: string;
+    name?: string;
 }
 export interface VoiceRecorderExposedState {
     isRecording: boolean;
@@ -65,6 +66,8 @@ export interface RecordingUIProps {
 export interface MessageMediaItem {
     uri: string;
     kind: 'image' | 'video' | 'audio';
+    name?: string;
+    type?: string;
 }
 export interface MessageFileAttachment {
     uri: string;
