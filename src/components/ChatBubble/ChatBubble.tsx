@@ -47,8 +47,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     (replyProps?.enableReply ?? true) && !selectionMode && !staticMode;
   const swipeThreshold = replyProps?.swipeThreshold ?? 60;
 
-  // ✅ Split media: grid items, the ONE audio that attaches to this bubble,
-  // and any extra audios that need their own standalone bubbles
   const { galleryItems, primaryAudio, extraAudios } =
     splitMediaForRender(message);
   const hasAudioMedia = !!primaryAudio;
@@ -139,7 +137,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
   // ✅ Standalone bubble style for extra audios (no avatar/tail — those stay on the main bubble)
   const extraAudioBubbleStyle = [
-    tw`px-2 mt-1 max-w-[75%] relative`,
+    tw`px-2 mt-1 pb-1 max-w-[75%] relative`,
     isCurrentUser ? tw`self-end mr-3` : tw`self-start ml-9`,
     isCurrentUser ? tw`bg-green-500` : tw`bg-white`,
     {
@@ -155,7 +153,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
   const bubbleInner = (
     <>
-      {/* Avatar & Sender Name for Group Chat */}
       {!isCurrentUser && isFirstInSequence && showAvatars && (
         <>
           <View
@@ -223,7 +220,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         onGalleryOpen={handleGalleryOpen}
         isVideoPlaying={isVideoPlaying}
         onLongPress={!staticMode ? handleLongPress : undefined}
-        // ✅ Pass the pre-split data down instead of letting MessageContent re-derive it
         galleryMediaItems={galleryItems}
         primaryAudio={primaryAudio}
       />
@@ -273,8 +269,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     </SwipeableMessage>
   );
 
-  // ✅ Render extra standalone audio bubbles — one per additional audio item,
-  // stacked right after the main bubble, same message.id but visually separate
   const extraAudioBubbles = extraAudios.map((audioItem, idx) => (
     <View
       key={`${message.id}-extra-audio-${idx}`}
@@ -288,6 +282,15 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         senderAvatar={message.senderAvatar}
         senderName={message.senderName}
         reserveStatusSpace={false}
+      />
+      <MessageStatus
+        time={message.time}
+        status={isCurrentUser ? message.status : undefined}
+        isCurrentUser={isCurrentUser}
+        hasText={false}
+        hasAudio={true}
+        hasGalleryMedia={false}
+        hasFileAttachments={false}
       />
     </View>
   ));

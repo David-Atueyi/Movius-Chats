@@ -26,7 +26,6 @@ const THREE_BOT_H = MULTI_HEIGHT - THREE_TOP_H - ROW_GAP;
 const FOUR_CELL_H = Math.round((MULTI_HEIGHT - ROW_GAP) / 2);
 
 interface MediaGridProps {
-  // ✅ Now strictly images/videos — audio is split out before reaching here
   items: (MessageMediaItem & { kind: 'image' | 'video' })[];
   onOpenGallery: (items: MessageMediaItem[], index: number) => void;
   onLongPress?: () => void;
