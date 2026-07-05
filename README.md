@@ -313,7 +313,7 @@ export interface Message {
   status: 'read' | 'delivered' | 'sent'; // Message status
   senderName?: string; // Sender display name
   senderAvatar?: string; // Sender avatar URI
-  mediaItems?: MessageMediaItem[]; // Array of images/videos
+  mediaItems?: MessageMediaItem[]; // Array of images, videos, or audio
   fileAttachments?: MessageFileAttachment[]; // Array of file attachments
   replyTo?: MessageReply; // Reply context
   edited?: boolean; // Whether message was edited
@@ -322,7 +322,7 @@ export interface Message {
 // Media item in album
 export interface MessageMediaItem {
   uri: string;
-  kind: 'image' | 'video';
+  kind: 'image' | 'video' | 'audio';
 }
 
 // File attachment
@@ -588,7 +588,7 @@ Play audio messages with professional waveform visualization and playback speed 
 // Add audio to a message
 const audioMessage: Message = {
   id: '123',
-  audio: 'file:///path/to/audio.m4a',
+  mediaItems: [{ uri: 'file:///path/to/audio.m4a', kind: 'audio' }],
   senderId: 'user-1',
   time: '10:45 AM',
   status: 'sent',
@@ -1282,12 +1282,12 @@ const handleScroll = (offset: number) => {
    ```tsx
    // Correct
    {
-     audio: 'file:///documents/voice.m4a';
+     mediaItems: [{ uri: 'file:///documents/voice.m4a', kind: 'audio' }],
    }
 
    // Wrong
    {
-     audio: 'file://documents/voice.m4a';
+     mediaItems: [{ uri: 'file://documents/voice.m4a', kind: 'audio' }],
    } // Missing /
    ```
 
@@ -1670,7 +1670,7 @@ Wrap the screen in `flex: 1`. Load custom fonts in **your** app before passing `
 ```ts
 {
   uri: string;
-  kind: 'image' | 'video';
+  kind: 'image' | 'video' | 'audio';
 }
 ```
 
@@ -1794,7 +1794,7 @@ Requires **`react-native-audio-record`** and **`react-native-fs`** in the host a
       {
         id: String(Date.now()),
         senderId: currentUserId,
-        audio: result.uri,
+        mediaItems: [{ uri: result.uri, kind: 'audio' }],
         time: '10:56 PM',
         status: 'sent',
         senderAvatar: myAvatarUri,
@@ -1845,7 +1845,7 @@ WhatsApp-style row inside the bubble:
 {
   id: 'a1',
   senderId: '2',
-  audio: 'file:///data/user/0/.../voice.wav',
+  mediaItems: [{ uri: 'file:///data/user/0/.../voice.wav', kind: 'audio' }],
   senderAvatar: 'https://cdn.example.com/u2.jpg',
   senderName: 'Alex',
   time: '10:23 pm',
@@ -1877,7 +1877,7 @@ Tap opens `MediaViewer`. Thumbnail `Video` uses `pointerEvents="none"` so presse
 
 ### Legacy single fields
 
-`image` and `video` on `Message` are merged into `mediaItems` internally via `collectMediaItems()`.
+Legacy `image`, `video`, and `audio` fields on `Message` are normalized into `mediaItems` internally via `collectMediaItems()`.
 
 ---
 

@@ -17,7 +17,6 @@ import {
 } from '../../utils/replyTheme';
 import { collectMediaItems } from '../../utils/messageMedia';
 import { getFontFamilyStyle, withFontFamily } from '../../utils/theme';
-import AudioPlayer from '../AudioPlayer/AudioPlayer';
 import { InlineReply } from '../Reply/InlineReply';
 import { MediaGrid } from './MediaGrid';
 import { MessageContentProps } from './types';
@@ -85,6 +84,11 @@ const MessageContent: React.FC<MessageContentProps> = ({
           items={mediaItems}
           onOpenGallery={onGalleryOpen}
           onLongPress={onLongPress}
+          messageId={message.id}
+          isCurrentUser={isCurrentUser}
+          senderAvatar={message.senderAvatar}
+          senderName={message.senderName}
+          isVideoPlaying={isVideoPlaying as boolean}
         />
       )}
 
@@ -156,19 +160,6 @@ const MessageContent: React.FC<MessageContentProps> = ({
           </Text>
         </Pressable>
       ))}
-
-      {message.audio && (
-        <AudioPlayer
-          audioUrl={message.audio}
-          audioId={message.id}
-          isVideoPlaying={isVideoPlaying as boolean}
-          isCurrentUser={isCurrentUser}
-          senderAvatar={message.senderAvatar}
-          senderName={message.senderName}
-          reserveStatusSpace={!message.text}
-          onLongPress={onLongPress}
-        />
-      )}
 
       {message.text && (
         <ParsedText

@@ -185,35 +185,43 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const buildReplyTo = useCallback(() => {
     if (!replyTarget) return undefined;
     const firstMedia = replyTarget.mediaItems?.[0];
+    const hasAudioMedia = (replyTarget.mediaItems ?? []).some(
+      (m) => m.kind === 'audio'
+    );
+    const hasVideoMedia = (replyTarget.mediaItems ?? []).some(
+      (m) => m.kind === 'video'
+    );
+    const hasImageMedia = (replyTarget.mediaItems ?? []).some(
+      (m) => m.kind === 'image'
+    );
+
     return {
       messageId: replyTarget.id,
       senderName: replyTarget.senderName,
       preview:
         replyTarget.text ??
-        (replyTarget.audio
+        (hasAudioMedia
           ? '🎤 Audio message'
-          : replyTarget.image
+          : hasImageMedia
             ? '📷 Photo'
-            : replyTarget.video
+            : hasVideoMedia
               ? '🎥 Video'
               : replyTarget.fileAttachments?.[0]?.name
                 ? `📎 ${replyTarget.fileAttachments[0].name}`
                 : ''),
-      mediaKind: replyTarget.audio
+      mediaKind: hasAudioMedia
         ? ('audio' as const)
-        : replyTarget.video
+        : hasVideoMedia
           ? ('video' as const)
-          : replyTarget.image ||
-              (replyTarget.mediaItems ?? []).some((m) => m.kind === 'image')
+          : hasImageMedia
             ? ('image' as const)
             : (replyTarget.fileAttachments ?? []).length
               ? ('file' as const)
               : undefined,
       thumbnailUri:
-        replyTarget.image ??
-        (firstMedia?.kind === 'image' || firstMedia?.kind === 'video'
+        firstMedia?.kind === 'image' || firstMedia?.kind === 'video'
           ? firstMedia.uri
-          : undefined),
+          : undefined,
     };
   }, [replyTarget]);
 
@@ -292,7 +300,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     const result = await recorderRef.current.stopRecording();
     if (result) {
       onSendMessage({
-        audio: result.uri,
+        mediaItems: [{ uri: result.uri, kind: 'audio' }],
         senderId: currentUserId,
         ...(replyTarget ? { replyTo: buildReplyTo() } : {}),
       });
@@ -361,18 +369,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
     if (!showInPillReply || !replyTarget) return null;
     const firstMedia = replyTarget.mediaItems?.[0];
     const thumbnail =
-      replyTarget.image ??
-      (firstMedia?.kind === 'image' || firstMedia?.kind === 'video'
+      firstMedia?.kind === 'image' || firstMedia?.kind === 'video'
         ? firstMedia.uri
-        : undefined);
+        : undefined;
 
     let preview = '';
     if (replyTarget.text) preview = replyTarget.text;
-    else if (replyTarget.audio) preview = '🎤 Audio message';
-    else if (replyTarget.video || firstMedia?.kind === 'video')
-      preview = '🎥 Video';
-    else if (replyTarget.image || firstMedia?.kind === 'image')
-      preview = '📷 Photo';
+    else if (firstMedia?.kind === 'audio') preview = '🎤 Audio message';
+    else if (firstMedia?.kind === 'video') preview = '🎥 Video';
+    else if (firstMedia?.kind === 'image') preview = '📷 Photo';
     else if ((replyTarget.fileAttachments ?? []).length)
       preview = `📎 ${replyTarget.fileAttachments?.[0]?.name ?? 'File'}`;
 
@@ -473,18 +478,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
     if (!showInPillReply || !replyTarget) return null;
     const firstMedia = replyTarget.mediaItems?.[0];
     const thumbnail =
-      replyTarget.image ??
-      (firstMedia?.kind === 'image' || firstMedia?.kind === 'video'
+      firstMedia?.kind === 'image' || firstMedia?.kind === 'video'
         ? firstMedia.uri
-        : undefined);
+        : undefined;
 
     let preview = '';
     if (replyTarget.text) preview = replyTarget.text;
-    else if (replyTarget.audio) preview = '🎤 Audio message';
-    else if (replyTarget.video || firstMedia?.kind === 'video')
-      preview = '🎥 Video';
-    else if (replyTarget.image || firstMedia?.kind === 'image')
-      preview = '📷 Photo';
+    else if (firstMedia?.kind === 'audio') preview = '🎤 Audio message';
+    else if (firstMedia?.kind === 'video') preview = '🎥 Video';
+    else if (firstMedia?.kind === 'image') preview = '📷 Photo';
     else if ((replyTarget.fileAttachments ?? []).length)
       preview = `📎 ${replyTarget.fileAttachments?.[0]?.name ?? 'File'}`;
 

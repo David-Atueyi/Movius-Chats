@@ -69,7 +69,7 @@ export interface RecordingUIProps {
 
 export interface MessageMediaItem {
   uri: string;
-  kind: 'image' | 'video';
+  kind: 'image' | 'video' | 'audio';
 }
 
 export interface MessageFileAttachment {
@@ -89,9 +89,6 @@ export interface MessageReply {
 export interface Message {
   id: string;
   text?: string;
-  image?: string;
-  video?: string;
-  audio?: string;
   senderId: string;
   time: string;
   status: 'read' | 'delivered' | 'sent';

@@ -4,7 +4,7 @@ import tw from 'twrnc';
 import { ArrowBack2RoundedIcon } from '../../assets/Icons/ArrowBack2RoundedIcon';
 import { useChatContext } from '../../context/ChatContext';
 import { getBubbleBackgroundColor } from '../../utils/bubbleTheme';
-import { collectMediaItems } from '../../utils/messageMedia';
+import { collectMediaItems, isGalleryMediaItem } from '../../utils/messageMedia';
 import { withFontFamily } from '../../utils/theme';
 import { SwipeableMessage } from '../Reply/SwipeableMessage';
 import MessageContent from './MessageContent';
@@ -47,12 +47,14 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   const swipeThreshold = replyProps?.swipeThreshold ?? 60;
 
   const mediaItems = collectMediaItems(message);
+  const hasAudioMedia = mediaItems.some((item) => item.kind === 'audio');
+  const galleryMediaItems = mediaItems.filter(isGalleryMediaItem);
 
   const hasFilesOnly =
     (message.fileAttachments?.length ?? 0) > 0 &&
-    mediaItems.length === 0 &&
+    galleryMediaItems.length === 0 &&
     !message.text &&
-    !message.audio;
+    !hasAudioMedia;
 
   const selected = isSelected(message.id);
 
@@ -209,8 +211,8 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         status={isCurrentUser ? message.status : undefined}
         isCurrentUser={isCurrentUser}
         hasText={!!message.text}
-        hasAudio={!!message.audio}
-        hasGalleryMedia={mediaItems.length > 0 && !message.text}
+        hasAudio={hasAudioMedia}
+        hasGalleryMedia={galleryMediaItems.length > 0 && !message.text}
         hasFileAttachments={hasFilesOnly}
       />
     </>

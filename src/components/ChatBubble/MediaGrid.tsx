@@ -12,7 +12,9 @@ import { LoadingIcon } from '../../assets/Icons/LoadingIcon';
 import { PlayIcon } from '../../assets/Icons/PlayIcon';
 import { useChatContext } from '../../context/ChatContext';
 import type { MessageMediaItem } from '../../types';
+import { isGalleryMediaItem } from '../../utils/messageMedia';
 import { withFontFamily } from '../../utils/theme';
+import AudioPlayer from '../AudioPlayer/AudioPlayer';
 
 const GRID_WIDTH = 240;
 const SINGLE_HEIGHT = 320;
@@ -29,6 +31,11 @@ interface MediaGridProps {
   items: MessageMediaItem[];
   onOpenGallery: (items: MessageMediaItem[], index: number) => void;
   onLongPress?: () => void;
+  messageId?: string;
+  isCurrentUser?: boolean;
+  senderAvatar?: string;
+  senderName?: string;
+  isVideoPlaying?: boolean;
 }
 
 const VideoThumbCell: React.FC<{
@@ -125,6 +132,11 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
   items,
   onOpenGallery,
   onLongPress,
+  messageId,
+  isCurrentUser = false,
+  senderAvatar,
+  senderName,
+  isVideoPlaying = false,
 }) => {
   const { width: windowW } = useWindowDimensions();
   const maxW = Math.min(GRID_WIDTH, windowW * 0.72);
@@ -133,33 +145,73 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
 
   const roundedSmall = { borderRadius: 6, overflow: 'hidden' as const };
 
-  if (items.length === 1) {
-    const item = items[0]!;
-    return (
-      <Pressable
-        onPress={() => onOpenGallery(items, 0)}
-        onLongPress={onLongPress}
-        delayLongPress={250}
-        style={{ width: maxW, height: SINGLE_HEIGHT, marginVertical: 8 }}
-      >
-        {item.kind === 'image' ? (
+  const renderMediaContent = (
+    item: MessageMediaItem,
+    width: number,
+    height: number,
+    roundedStyle: object
+  ) => {
+    switch (item.kind) {
+      case 'image':
+        return (
           <Image
             source={{ uri: item.uri }}
-            style={{
-              width: '100%',
-              height: '100%',
-              borderRadius: 8,
-            }}
+            style={[roundedStyle, { width: '100%', height: '100%' }]}
             resizeMode="cover"
           />
-        ) : (
+        );
+      case 'video':
+        return (
           <VideoThumbCell
             uri={item.uri}
-            cellStyle={{ width: maxW, height: SINGLE_HEIGHT }}
-            roundedStyle={{ borderRadius: 8 }}
+            cellStyle={{ width, height }}
+            roundedStyle={roundedStyle}
           />
+        );
+      case 'audio':
+        return (
+          <View
+            style={[roundedStyle, { width: '100%', height: '100%', backgroundColor: '#f3f4f6' }]}
+          >
+            <AudioPlayer
+              audioUrl={item.uri}
+              audioId={messageId ?? item.uri}
+              isVideoPlaying={isVideoPlaying}
+              isCurrentUser={isCurrentUser}
+              senderAvatar={senderAvatar}
+              senderName={senderName}
+              reserveStatusSpace={false}
+              onLongPress={onLongPress}
+            />
+          </View>
+        );
+      default:
+        return null;
+    }
+  };
+
+  if (items.length === 1) {
+    const item = items[0]!;
+    const canOpenGallery = isGalleryMediaItem(item);
+    const mediaContent = renderMediaContent(item, maxW, SINGLE_HEIGHT, {
+      borderRadius: 8,
+    });
+
+    return (
+      <View style={{ width: maxW, height: SINGLE_HEIGHT, marginVertical: 8 }}>
+        {canOpenGallery ? (
+          <Pressable
+            onPress={() => onOpenGallery(items, 0)}
+            onLongPress={onLongPress}
+            delayLongPress={250}
+            style={{ width: '100%', height: '100%' }}
+          >
+            {mediaContent}
+          </Pressable>
+        ) : (
+          <View style={{ width: '100%', height: '100%' }}>{mediaContent}</View>
         )}
-      </Pressable>
+      </View>
     );
   }
 
@@ -175,29 +227,25 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
           marginVertical: 8,
         }}
       >
-        {items.slice(0, 2).map((item, idx) => (
-          <Pressable
-            key={`${item.uri}-${idx}`}
-            onPress={() => onOpenGallery(items, idx)}
-            onLongPress={onLongPress}
-            delayLongPress={250}
-            style={{ width: half, height: TWO_ROW_H }}
-          >
-            {item.kind === 'image' ? (
-              <Image
-                source={{ uri: item.uri }}
-                style={[roundedSmall, { width: '100%', height: '100%' }]}
-                resizeMode="cover"
-              />
-            ) : (
-              <VideoThumbCell
-                uri={item.uri}
-                cellStyle={{ width: half, height: TWO_ROW_H }}
-                roundedStyle={roundedSmall}
-              />
-            )}
-          </Pressable>
-        ))}
+        {items.slice(0, 2).map((item, idx) => {
+          const canOpenGallery = isGalleryMediaItem(item);
+          const content = renderMediaContent(item, half, TWO_ROW_H, roundedSmall);
+          return canOpenGallery ? (
+            <Pressable
+              key={`${item.uri}-${idx}`}
+              onPress={() => onOpenGallery(items, idx)}
+              onLongPress={onLongPress}
+              delayLongPress={250}
+              style={{ width: half, height: TWO_ROW_H }}
+            >
+              {content}
+            </Pressable>
+          ) : (
+            <View key={`${item.uri}-${idx}`} style={{ width: half, height: TWO_ROW_H }}>
+              {content}
+            </View>
+          );
+        })}
       </View>
     );
   }
@@ -209,69 +257,51 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
     const bottomHalf = (maxW - ROW_GAP) / 2;
     return (
       <View style={{ width: maxW, height: MULTI_HEIGHT, marginVertical: 8, gap: ROW_GAP }}>
-        <Pressable
-          onPress={() => onOpenGallery(items, 0)}
-          onLongPress={onLongPress}
-          delayLongPress={250}
-          style={{ width: maxW, height: THREE_TOP_H }}
-        >
-          {top.kind === 'image' ? (
-            <Image
-              source={{ uri: top.uri }}
-              style={[roundedSmall, { width: '100%', height: '100%' }]}
-              resizeMode="cover"
-            />
-          ) : (
-            <VideoThumbCell
-              uri={top.uri}
-              cellStyle={{ width: maxW, height: THREE_TOP_H }}
-              roundedStyle={roundedSmall}
-            />
-          )}
-        </Pressable>
+        {isGalleryMediaItem(top) ? (
+          <Pressable
+            onPress={() => onOpenGallery(items, 0)}
+            onLongPress={onLongPress}
+            delayLongPress={250}
+            style={{ width: maxW, height: THREE_TOP_H }}
+          >
+            {renderMediaContent(top, maxW, THREE_TOP_H, roundedSmall)}
+          </Pressable>
+        ) : (
+          <View style={{ width: maxW, height: THREE_TOP_H }}>
+            {renderMediaContent(top, maxW, THREE_TOP_H, roundedSmall)}
+          </View>
+        )}
         <View style={{ flexDirection: 'row', gap: ROW_GAP, height: THREE_BOT_H }}>
-          <Pressable
-            key={`${left.uri}-1`}
-            onPress={() => onOpenGallery(items, 1)}
-            onLongPress={onLongPress}
-            delayLongPress={250}
-            style={{ width: bottomHalf, height: THREE_BOT_H }}
-          >
-            {left.kind === 'image' ? (
-              <Image
-                source={{ uri: left.uri }}
-                style={[roundedSmall, { width: '100%', height: '100%' }]}
-                resizeMode="cover"
-              />
-            ) : (
-              <VideoThumbCell
-                uri={left.uri}
-                cellStyle={{ width: bottomHalf, height: THREE_BOT_H }}
-                roundedStyle={roundedSmall}
-              />
-            )}
-          </Pressable>
-          <Pressable
-            key={`${right.uri}-2`}
-            onPress={() => onOpenGallery(items, 2)}
-            onLongPress={onLongPress}
-            delayLongPress={250}
-            style={{ width: bottomHalf, height: THREE_BOT_H }}
-          >
-            {right.kind === 'image' ? (
-              <Image
-                source={{ uri: right.uri }}
-                style={[roundedSmall, { width: '100%', height: '100%' }]}
-                resizeMode="cover"
-              />
-            ) : (
-              <VideoThumbCell
-                uri={right.uri}
-                cellStyle={{ width: bottomHalf, height: THREE_BOT_H }}
-                roundedStyle={roundedSmall}
-              />
-            )}
-          </Pressable>
+          {isGalleryMediaItem(left) ? (
+            <Pressable
+              key={`${left.uri}-1`}
+              onPress={() => onOpenGallery(items, 1)}
+              onLongPress={onLongPress}
+              delayLongPress={250}
+              style={{ width: bottomHalf, height: THREE_BOT_H }}
+            >
+              {renderMediaContent(left, bottomHalf, THREE_BOT_H, roundedSmall)}
+            </Pressable>
+          ) : (
+            <View key={`${left.uri}-1`} style={{ width: bottomHalf, height: THREE_BOT_H }}>
+              {renderMediaContent(left, bottomHalf, THREE_BOT_H, roundedSmall)}
+            </View>
+          )}
+          {isGalleryMediaItem(right) ? (
+            <Pressable
+              key={`${right.uri}-2`}
+              onPress={() => onOpenGallery(items, 2)}
+              onLongPress={onLongPress}
+              delayLongPress={250}
+              style={{ width: bottomHalf, height: THREE_BOT_H }}
+            >
+              {renderMediaContent(right, bottomHalf, THREE_BOT_H, roundedSmall)}
+            </Pressable>
+          ) : (
+            <View key={`${right.uri}-2`} style={{ width: bottomHalf, height: THREE_BOT_H }}>
+              {renderMediaContent(right, bottomHalf, THREE_BOT_H, roundedSmall)}
+            </View>
+          )}
         </View>
       </View>
     );
@@ -292,40 +322,50 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
         marginVertical: 8,
       }}
     >
-      {display.map((cell, idx) => (
-        <Pressable
-          key={`${cell.uri}-${idx}`}
-          onPress={() => onOpenGallery(items, idx)}
-          onLongPress={onLongPress}
-          delayLongPress={250}
-          style={{
-            width: cellW,
-            height: FOUR_CELL_H,
-            position: 'relative',
-          }}
-        >
-          {cell.kind === 'image' ? (
-            <Image
-              source={{ uri: cell.uri }}
-              style={[roundedSmall, { width: '100%', height: '100%' }]}
-              resizeMode="cover"
-            />
-          ) : (
-            <VideoThumbCell
-              uri={cell.uri}
-              cellStyle={{ width: cellW, height: FOUR_CELL_H }}
-              roundedStyle={roundedSmall}
-            />
-          )}
-          {idx === 3 && extra > 0 && (
-            <View
-              style={tw`absolute inset-0 bg-black/55 items-center justify-center`}
-            >
-              <Text style={tw`text-white text-lg font-bold`}>+{extra}</Text>
-            </View>
-          )}
-        </Pressable>
-      ))}
+      {display.map((cell, idx) => {
+        const canOpenGallery = isGalleryMediaItem(cell);
+        const content = renderMediaContent(cell, cellW, FOUR_CELL_H, roundedSmall);
+        return canOpenGallery ? (
+          <Pressable
+            key={`${cell.uri}-${idx}`}
+            onPress={() => onOpenGallery(items, idx)}
+            onLongPress={onLongPress}
+            delayLongPress={250}
+            style={{
+              width: cellW,
+              height: FOUR_CELL_H,
+              position: 'relative',
+            }}
+          >
+            {content}
+            {idx === 3 && extra > 0 && (
+              <View
+                style={tw`absolute inset-0 bg-black/55 items-center justify-center`}
+              >
+                <Text style={tw`text-white text-lg font-bold`}>+{extra}</Text>
+              </View>
+            )}
+          </Pressable>
+        ) : (
+          <View
+            key={`${cell.uri}-${idx}`}
+            style={{
+              width: cellW,
+              height: FOUR_CELL_H,
+              position: 'relative',
+            }}
+          >
+            {content}
+            {idx === 3 && extra > 0 && (
+              <View
+                style={tw`absolute inset-0 bg-black/55 items-center justify-center`}
+              >
+                <Text style={tw`text-white text-lg font-bold`}>+{extra}</Text>
+              </View>
+            )}
+          </View>
+        );
+      })}
     </View>
   );
 };
