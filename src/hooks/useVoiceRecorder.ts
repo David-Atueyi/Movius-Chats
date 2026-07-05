@@ -146,11 +146,12 @@ export function useVoiceRecorder({
       const uri: string = await rec.stop();
       if (!uri) return null;
 
-      const result: RecordingResult = {
-        uri: uri.startsWith('file://') ? uri : `file://${uri}`,
-        duration: Math.max(1, capturedDuration),
-        mimeType: 'audio/wav',
-      };
+     const result: RecordingResult = {
+       uri: uri.startsWith('file://') ? uri : `file://${uri}`,
+       duration: Math.max(1, capturedDuration),
+       mimeType: 'audio/wav',
+       name: `movius_rec_${Date.now()}.wav`,
+     };
 
       onRecordEndRef.current?.(result);
       return result;

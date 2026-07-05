@@ -300,7 +300,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
     const result = await recorderRef.current.stopRecording();
     if (result) {
       onSendMessage({
-        mediaItems: [{ uri: result.uri, kind: 'audio' }],
+        mediaItems: [
+          {
+            uri: result.uri,
+            kind: 'audio',
+            name: result.name,
+            type: result.mimeType,
+          },
+        ],
         senderId: currentUserId,
         ...(replyTarget ? { replyTo: buildReplyTo() } : {}),
       });

@@ -135,9 +135,8 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     },
   ];
 
-  // ✅ Standalone bubble style for extra audios (no avatar/tail — those stay on the main bubble)
   const extraAudioBubbleStyle = [
-    tw`px-2 mt-1 pb-1 max-w-[75%] relative`,
+    tw`px-2 mb-1 max-w-[75%] relative`,
     isCurrentUser ? tw`self-end mr-3` : tw`self-start ml-9`,
     isCurrentUser ? tw`bg-green-500` : tw`bg-white`,
     {
