@@ -1,7 +1,7 @@
 import React from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
-import { ClosePreviewIcon } from '../../assets/Icons/ClosePreviewIcon';
 import tw from 'twrnc';
+import { ClosePreviewIcon } from '../../assets/Icons/ClosePreviewIcon';
 import type { Message, ReplyStyleOverrides } from '../../types';
 import { withFontFamily } from '../../utils/theme';
 

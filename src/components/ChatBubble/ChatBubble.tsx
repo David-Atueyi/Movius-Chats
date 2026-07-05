@@ -4,9 +4,10 @@ import tw from 'twrnc';
 import { ArrowBack2RoundedIcon } from '../../assets/Icons/ArrowBack2RoundedIcon';
 import { useChatContext } from '../../context/ChatContext';
 import { getBubbleBackgroundColor } from '../../utils/bubbleTheme';
-import { collectMediaItems, isGalleryMediaItem } from '../../utils/messageMedia';
+import { splitMediaForRender } from '../../utils/messageMedia';
 import { withFontFamily } from '../../utils/theme';
 import { SwipeableMessage } from '../Reply/SwipeableMessage';
+import AudioPlayer from '../AudioPlayer/AudioPlayer';
 import MessageContent from './MessageContent';
 import MessageStatus from './MessageStatus';
 import { ChatBubbleProps } from './types';
@@ -46,9 +47,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     (replyProps?.enableReply ?? true) && !selectionMode && !staticMode;
   const swipeThreshold = replyProps?.swipeThreshold ?? 60;
 
-  const mediaItems = collectMediaItems(message);
-  const hasAudioMedia = mediaItems.some((item) => item.kind === 'audio');
-  const galleryMediaItems = mediaItems.filter(isGalleryMediaItem);
+  // ✅ Split media: grid items, the ONE audio that attaches to this bubble,
+  // and any extra audios that need their own standalone bubbles
+  const { galleryItems, primaryAudio, extraAudios } =
+    splitMediaForRender(message);
+  const hasAudioMedia = !!primaryAudio;
+  const galleryMediaItems = galleryItems;
 
   const hasFilesOnly =
     (message.fileAttachments?.length ?? 0) > 0 &&
@@ -133,6 +137,22 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     },
   ];
 
+  // ✅ Standalone bubble style for extra audios (no avatar/tail — those stay on the main bubble)
+  const extraAudioBubbleStyle = [
+    tw`px-2 mt-1 max-w-[75%] relative`,
+    isCurrentUser ? tw`self-end mr-3` : tw`self-start ml-9`,
+    isCurrentUser ? tw`bg-green-500` : tw`bg-white`,
+    {
+      borderRadius: 8,
+      ...(getBubbleBackgroundColor(theme, isCurrentUser)
+        ? { backgroundColor: getBubbleBackgroundColor(theme, isCurrentUser) }
+        : {}),
+      ...(isCurrentUser
+        ? theme?.bubbleStyle?.sent
+        : theme?.bubbleStyle?.received),
+    },
+  ];
+
   const bubbleInner = (
     <>
       {/* Avatar & Sender Name for Group Chat */}
@@ -203,6 +223,9 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         onGalleryOpen={handleGalleryOpen}
         isVideoPlaying={isVideoPlaying}
         onLongPress={!staticMode ? handleLongPress : undefined}
+        // ✅ Pass the pre-split data down instead of letting MessageContent re-derive it
+        galleryMediaItems={galleryItems}
+        primaryAudio={primaryAudio}
       />
 
       <MessageStatus
@@ -250,24 +273,46 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     </SwipeableMessage>
   );
 
-  return (
-    <Pressable
-      onPress={handlePress}
-      onLongPress={handleLongPress}
-      delayLongPress={250}
-      style={tw`w-full`}
+  // ✅ Render extra standalone audio bubbles — one per additional audio item,
+  // stacked right after the main bubble, same message.id but visually separate
+  const extraAudioBubbles = extraAudios.map((audioItem, idx) => (
+    <View
+      key={`${message.id}-extra-audio-${idx}`}
+      style={extraAudioBubbleStyle}
     >
-      {selectionMode && selected && (
-        <View
-          pointerEvents="none"
-          style={[
-            tw`absolute inset-0`,
-            { backgroundColor: resolvedRowBg, zIndex: 10 },
-          ]}
-        />
-      )}
-      {swipeWrapped}
-    </Pressable>
+      <AudioPlayer
+        audioUrl={audioItem.uri}
+        audioId={`${message.id}-extra-${idx}`}
+        isVideoPlaying={isVideoPlaying}
+        isCurrentUser={isCurrentUser}
+        senderAvatar={message.senderAvatar}
+        senderName={message.senderName}
+        reserveStatusSpace={false}
+      />
+    </View>
+  ));
+
+  return (
+    <View style={tw`w-full`}>
+      <Pressable
+        onPress={handlePress}
+        onLongPress={handleLongPress}
+        delayLongPress={250}
+        style={tw`w-full`}
+      >
+        {selectionMode && selected && (
+          <View
+            pointerEvents="none"
+            style={[
+              tw`absolute inset-0`,
+              { backgroundColor: resolvedRowBg, zIndex: 10 },
+            ]}
+          />
+        )}
+        {swipeWrapped}
+      </Pressable>
+      {extraAudioBubbles}
+    </View>
   );
 };
 

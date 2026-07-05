@@ -145,8 +145,7 @@ const ViewerPage: React.FC<{
   const [loading, setLoading] = useState(item.kind === 'video');
   const [error, setError] = useState(false);
 
-  const shouldPlayVideo =
-    item.kind === 'video' && isActive && autoPlayVideo;
+  const shouldPlayVideo = item.kind === 'video' && isActive && autoPlayVideo;
 
   if (item.kind === 'image') {
     return (
