@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -30,7 +30,10 @@ const MediaViewer: React.FC<MediaViewerProps> = ({ gallery, onClose }) => {
   const { width, height: windowHeight } = useWindowDimensions();
   const initialIndex = gallery?.initialIndex ?? 0;
   const [pageIndex, setPageIndex] = useState(initialIndex);
-  const galleryItems = gallery?.items.filter(isGalleryMediaItem) ?? [];
+  const galleryItems = useMemo(
+    () => gallery?.items.filter(isGalleryMediaItem) ?? [],
+    [gallery]
+  );
 
   useEffect(() => {
     if (!galleryItems.length) return;
@@ -49,7 +52,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({ gallery, onClose }) => {
         /* layout not ready */
       }
     });
-  }, [initialIndex, galleryItems, setIsVideoPlaying]);
+  }, [gallery, initialIndex, galleryItems, setIsVideoPlaying]);
 
   const handleClose = useCallback(() => {
     setIsVideoPlaying(false);
