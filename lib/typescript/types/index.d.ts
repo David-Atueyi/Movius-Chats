@@ -294,8 +294,10 @@ export interface ChatScreenProps {
             videoPlayIconColor?: string;
             inputTextColor?: string;
             sentIconColor?: string;
+            sendingIconColor?: string;
             deliveredIconColor?: string;
             readIconColor?: string;
+            failedIconColor?: string;
             inputsIconsColor?: string;
             sendIconsColor?: string;
             placeholderTextColor?: string;
