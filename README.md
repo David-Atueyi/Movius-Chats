@@ -6,7 +6,7 @@ A production-ready React Native chat UI library providing message bubbles, Whats
 
 **npm:** [`movius-chats`](https://www.npmjs.com/package/movius-chats)
 **Repo:** [github.com/David-Atueyi/Movius-Chats](https://github.com/David-Atueyi/Movius-Chats)
-**Version:** 1.16.0 | **License:** ISC
+**Version:** 1.17.0 | **License:** ISC
 
 ---
 
@@ -53,7 +53,7 @@ A production-ready React Native chat UI library providing message bubbles, Whats
 ### Core Messaging
 
 - **Text messages** with automatic link detection and tappable URLs
-- **Sent, delivered, and read status** indicators with animated checkmarks
+- **Sent, delivered, failed, sending, and read status** indicators with animated checkmarks
 - **Avatar display** with customizable avatars and fallback initials
 - **Sender names** (optional per message or bubble)
 - **Typing indicators** with avatar stacking (up to 2 avatars + "+N" badge)
@@ -155,7 +155,7 @@ A production-ready React Native chat UI library providing message bubbles, Whats
 | **File attachments**             | Tappable rows with custom handler + default URL opener                       |
 | **Typing indicators**            | Avatar stacking with "+N" badge for multiple typers                          |
 | **Input bar**                    | Growing TextField, emoji/clip/camera/send/mic buttons                        |
-| **Status indicators**            | Sent/delivered/read animated checkmarks                                      |
+| **Status indicators**            | Sent/delivered/failed/sending/read animated checkmarks                       |
 | **Message replies**              | Swipe-to-reply, inline display, edit tracking                                |
 | **Message actions**              | Long-press menus with copy, forward, delete, edit                            |
 | **Selection mode**               | Multi-select with batch operations                                           |
@@ -340,7 +340,7 @@ export interface Message {
   text?: string; // Text content
   senderId: string; // ID of message sender
   time: string; // Timestamp (e.g., "10:30 AM")
-  status: 'read' | 'delivered' | 'sent'; // Message status
+  status: 'read' | 'delivered' | 'sending' | 'failed' | 'sent'; // Message status
   senderName?: string; // Sender display name
   senderAvatar?: string; // Sender avatar URI
   mediaItems?: MessageMediaItem[]; // Images, videos, and/or audio — preferred way to attach media
@@ -392,7 +392,7 @@ A message's `mediaItems` array can contain any mix of `image`, `video`, and `aud
   mediaItems: [{ uri: 'file:///path/to/audio.m4a', kind: 'audio' }],
   senderId: 'user-1',
   time: '10:45 AM',
-  status: 'sent',
+  status: 'sending',
 }
 
 // Images with an attached audio note — one bubble: grid on top, waveform below
@@ -607,6 +607,8 @@ interface ChatScreenTheme {
     sentTimestampColor?: string;
     sentMessageTailColor?: string;
     sentIconColor?: string;
+    sendingIconColor?: string;
+    failedIconColor?: string;
     deliveredIconColor?: string;
     readIconColor?: string;
     sentAudioWaveformColor?: string;

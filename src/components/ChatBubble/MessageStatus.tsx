@@ -11,6 +11,8 @@ import {
 } from '../../utils/bubbleTheme';
 import { withFontFamily } from '../../utils/theme';
 import { MessageStatusProps } from './types';
+import { ClockIcon } from '../../assets/Icons/ClockIcon';
+import { FailedIcon } from '../../assets/Icons/FailedIcon';
 
 const MessageStatus: React.FC<MessageStatusProps> = ({
   time,
@@ -89,6 +91,18 @@ const MessageStatus: React.FC<MessageStatusProps> = ({
           </Text>
           {isCurrentUser && (
             <View style={tw`ml-1 flex-row items-center`}>
+              {status === 'sending' && (
+                <ClockIcon
+                  style={tw.style('h-4 w-4', { opacity: 0.8 })}
+                  fill={theme?.colors?.sendingIconColor || '#6B7280'}
+                />
+              )}
+              {status === 'failed' && (
+                <FailedIcon
+                  style={tw.style('h-4 w-4')}
+                  fill={theme?.colors?.failedIconColor || '#EF4444'}
+                />
+              )}
               {status === 'sent' && (
                 <CheckIcon
                   style={tw.style('h-4 w-4', { opacity: 0.7 })}

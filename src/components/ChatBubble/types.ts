@@ -19,7 +19,7 @@ export interface MessageContentProps extends ChatBubbleProps {
 
 export interface MessageStatusProps {
   time: string;
-  status?: 'read' | 'delivered' | 'sent';
+  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
   isCurrentUser: boolean;
   hasText: boolean;
   hasAudio: boolean;
