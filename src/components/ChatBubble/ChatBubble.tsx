@@ -231,7 +231,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         hasText={!!message.text}
         hasAudio={hasAudioMedia}
         hasGalleryMedia={galleryMediaItems.length > 0 && !message.text}
-        hasFileAttachments={hasFilesOnly}
+        hasFileAttachments={false}
       />
     </>
   );

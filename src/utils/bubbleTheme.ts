@@ -33,23 +33,17 @@ export function getMediaTimestampContainerStyle(
   theme: Theme | undefined,
   isCurrentUser: boolean
 ) {
+  const base = { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 };
   const c = colors(theme);
-
-  const backgroundColor = isCurrentUser
+  const bg = isCurrentUser
     ? (c?.sentMediaTimestampBackground ?? 'rgba(0,0,0,0.45)')
-    : (c?.receivedMediaTimestampBackground ?? 'rgba(0,0,0,0.45)'); // <-- same dark background
+    : (c?.receivedMediaTimestampBackground ?? 'rgba(0,0,0,0.45)');
 
   const custom = isCurrentUser
     ? theme?.messageStyle?.sentMediaTimestampContainerStyle
     : theme?.messageStyle?.receivedMediaTimestampContainerStyle;
 
-  return {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor,
-    ...custom,
-  };
+  return { ...base, backgroundColor: bg, ...custom };
 }
 
 export function getFileAttachmentBackground(

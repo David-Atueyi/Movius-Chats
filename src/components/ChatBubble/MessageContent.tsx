@@ -20,6 +20,7 @@ import { getFontFamilyStyle, withFontFamily } from '../../utils/theme';
 import AudioPlayer from '../AudioPlayer/AudioPlayer';
 import { InlineReply } from '../Reply/InlineReply';
 import { MediaGrid } from './MediaGrid';
+import MessageStatus from './MessageStatus';
 import { MessageContentProps } from './types';
 
 const MessageContent: React.FC<MessageContentProps> = ({
@@ -47,6 +48,18 @@ const MessageContent: React.FC<MessageContentProps> = ({
 
   const gridItems =
     galleryMediaItems ?? (message.mediaItems ?? []).filter(isGalleryMediaItem);
+
+  const hasAudioMedia = !!primaryAudio;
+  const fileAttachments = message.fileAttachments ?? [];
+
+  // ✅ Only true when file attachments are the ONLY content — this is the
+  // case where the timestamp needs to embed inside the last file's own box
+  // instead of floating relative to the entire bubble's content stack.
+  const isFilesOnly =
+    !message.text &&
+    !hasAudioMedia &&
+    gridItems.length === 0 &&
+    fileAttachments.length > 0;
 
   // Inline reply chip
   const replyChip = (() => {
@@ -97,8 +110,6 @@ const MessageContent: React.FC<MessageContentProps> = ({
         />
       )}
 
-      {/* ✅ The one audio that attaches to this bubble — renders right under
-          the media grid, same position the legacy `audio` field used to use */}
       {primaryAudio && (
         <View style={tw`my-1`}>
           <AudioPlayer
@@ -114,78 +125,102 @@ const MessageContent: React.FC<MessageContentProps> = ({
         </View>
       )}
 
-      {(message.fileAttachments ?? []).map((file, idx) => (
-        <Pressable
-          key={`${file.uri}-${idx}`}
-          onPress={() => {
-            if (selectionMode) {
-              toggleSelection(message);
-              return;
-            }
-            if (onFileAttachmentPress) {
-              onFileAttachmentPress(file);
-            } else {
-              Linking.openURL(
-                file.uri.startsWith('http') || file.uri.startsWith('file:')
-                  ? file.uri
-                  : `file://${file.uri}`
-              );
-            }
-          }}
-          onLongPress={onLongPress}
-          delayLongPress={250}
-          style={[
-            tw`my-1.5 py-2 px-3 rounded-lg`,
-            (galleryMediaItems?.length ?? 0) > 0
-              ? { width: '100%' }
-              : { maxWidth: 220 },
-            {
-              backgroundColor: getFileAttachmentBackground(
-                theme,
-                isCurrentUser
-              ),
-            },
-            isCurrentUser
-              ? theme?.messageStyle?.sentFileAttachmentStyle
-              : theme?.messageStyle?.receivedFileAttachmentStyle,
-          ]}
-        >
-          <Text
-            style={withFontFamily(
-              [
-                tw`text-xs font-semibold`,
-                {
-                  color: getFileAttachmentTextColor(theme, isCurrentUser),
-                  flexShrink: 1,
-                },
-                isCurrentUser
-                  ? theme?.messageStyle?.sentFileAttachmentTextStyle
-                  : theme?.messageStyle?.receivedFileAttachmentTextStyle,
-              ],
-              theme?.fontFamily
-            )}
-            numberOfLines={2}
+      {fileAttachments.map((file, idx) => {
+        const isLastFile = idx === fileAttachments.length - 1;
+        // ✅ Only reserve space + embed the status pill on the last file
+        // box, and only when files are the sole content of this bubble
+        const embedStatusHere = isFilesOnly && isLastFile;
+
+        return (
+          <Pressable
+            key={`${file.uri}-${idx}`}
+            onPress={() => {
+              if (selectionMode) {
+                toggleSelection(message);
+                return;
+              }
+              if (onFileAttachmentPress) {
+                onFileAttachmentPress(file);
+              } else {
+                Linking.openURL(
+                  file.uri.startsWith('http') || file.uri.startsWith('file:')
+                    ? file.uri
+                    : `file://${file.uri}`
+                );
+              }
+            }}
+            onLongPress={onLongPress}
+            delayLongPress={250}
+            style={[
+              tw`my-1.5 py-2 px-3 rounded-lg`,
+              embedStatusHere ? tw`pb-6` : null, // ✅ room for the embedded pill
+              (galleryMediaItems?.length ?? 0) > 0
+                ? { width: '100%' }
+                : { maxWidth: 220 },
+              {
+                backgroundColor: getFileAttachmentBackground(
+                  theme,
+                  isCurrentUser
+                ),
+              },
+              isCurrentUser
+                ? theme?.messageStyle?.sentFileAttachmentStyle
+                : theme?.messageStyle?.receivedFileAttachmentStyle,
+            ]}
           >
-            📎 {file.name}
-          </Text>
-          <Text
-            style={withFontFamily(
-              [
-                tw`text-[10px] mt-0.5`,
-                {
-                  color: getFileAttachmentSubtitleColor(theme, isCurrentUser),
-                },
-                isCurrentUser
-                  ? theme?.messageStyle?.sentFileAttachmentSubtitleStyle
-                  : theme?.messageStyle?.receivedFileAttachmentSubtitleStyle,
-              ],
-              theme?.fontFamily
+            <Text
+              style={withFontFamily(
+                [
+                  tw`text-xs font-semibold`,
+                  {
+                    color: getFileAttachmentTextColor(theme, isCurrentUser),
+                    flexShrink: 1,
+                  },
+                  isCurrentUser
+                    ? theme?.messageStyle?.sentFileAttachmentTextStyle
+                    : theme?.messageStyle?.receivedFileAttachmentTextStyle,
+                ],
+                theme?.fontFamily
+              )}
+              numberOfLines={2}
+            >
+              📎 {file.name}
+            </Text>
+            <Text
+              style={withFontFamily(
+                [
+                  tw`text-[10px] mt-0.5`,
+                  {
+                    color: getFileAttachmentSubtitleColor(theme, isCurrentUser),
+                  },
+                  isCurrentUser
+                    ? theme?.messageStyle?.sentFileAttachmentSubtitleStyle
+                    : theme?.messageStyle?.receivedFileAttachmentSubtitleStyle,
+                ],
+                theme?.fontFamily
+              )}
+            >
+              {file.type}
+            </Text>
+
+            {/* ✅ Positioned relative to THIS Pressable, not the whole
+                bubble — RN views are position:'relative' by default, so
+                this absolute child correctly hugs this box's own corner */}
+            {embedStatusHere && showMessageStatus && (
+              <MessageStatus
+                time={message.time}
+                edited={message.edited}
+                status={isCurrentUser ? message.status : undefined}
+                isCurrentUser={isCurrentUser}
+                hasText={false}
+                hasAudio={false}
+                hasGalleryMedia={false}
+                hasFileAttachments={true}
+              />
             )}
-          >
-            {file.type}
-          </Text>
-        </Pressable>
-      ))}
+          </Pressable>
+        );
+      })}
 
       {message.text && (
         <ParsedText
