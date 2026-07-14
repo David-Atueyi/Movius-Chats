@@ -7,8 +7,6 @@ import {
   getFileAttachmentBackground,
   getFileAttachmentSubtitleColor,
   getFileAttachmentTextColor,
-  getMediaTimestampColor,
-  getMediaTimestampContainerStyle,
   getMessageTextColor,
 } from '../../utils/bubbleTheme';
 import { isGalleryMediaItem } from '../../utils/messageMedia';
@@ -186,28 +184,6 @@ const MessageContent: React.FC<MessageContentProps> = ({
           >
             {file.type}
           </Text>
-          {!message.text && (
-            <View
-              style={[
-                tw`absolute right-2 bottom-2 px-2 py-1 rounded-md`,
-                getMediaTimestampContainerStyle(theme, isCurrentUser),
-              ]}
-            >
-              <Text
-                style={withFontFamily(
-                  [
-                    tw`text-xs`,
-                    {
-                      color: getMediaTimestampColor(theme, isCurrentUser),
-                    },
-                  ],
-                  theme?.fontFamily
-                )}
-              >
-                {message.time}
-              </Text>
-            </View>
-          )}
         </Pressable>
       ))}
 
