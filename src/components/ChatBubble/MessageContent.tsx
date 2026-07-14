@@ -9,6 +9,7 @@ import {
   getFileAttachmentTextColor,
   getMessageTextColor,
 } from '../../utils/bubbleTheme';
+import { isGalleryMediaItem } from '../../utils/messageMedia';
 import {
   getInlineReplyBackground,
   getInlineReplyPreviewColor,
@@ -20,7 +21,6 @@ import AudioPlayer from '../AudioPlayer/AudioPlayer';
 import { InlineReply } from '../Reply/InlineReply';
 import { MediaGrid } from './MediaGrid';
 import { MessageContentProps } from './types';
-import { isGalleryMediaItem } from '../../utils/messageMedia';
 
 const MessageContent: React.FC<MessageContentProps> = ({
   message,
@@ -135,7 +135,10 @@ const MessageContent: React.FC<MessageContentProps> = ({
           onLongPress={onLongPress}
           delayLongPress={250}
           style={[
-            tw`my-1.5 py-2 px-3 rounded-lg max-w-[220px]`,
+            tw`my-1.5 py-2 px-3 rounded-lg`,
+            (galleryMediaItems?.length ?? 0) > 0
+              ? { width: '100%' }
+              : { maxWidth: 220 },
             {
               backgroundColor: getFileAttachmentBackground(
                 theme,
@@ -153,6 +156,7 @@ const MessageContent: React.FC<MessageContentProps> = ({
                 tw`text-xs font-semibold`,
                 {
                   color: getFileAttachmentTextColor(theme, isCurrentUser),
+                  flexShrink: 1,
                 },
                 isCurrentUser
                   ? theme?.messageStyle?.sentFileAttachmentTextStyle
