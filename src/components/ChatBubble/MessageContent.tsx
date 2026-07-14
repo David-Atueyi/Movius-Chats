@@ -14,6 +14,7 @@ import {
   getInlineReplyBackground,
   getInlineReplyPreviewColor,
   getInlineReplySenderColor,
+  getInlineReplyDescriptionColor,
   mergeReplyUI,
 } from '../../utils/replyTheme';
 import { getFontFamilyStyle, withFontFamily } from '../../utils/theme';
@@ -35,6 +36,7 @@ const MessageContent: React.FC<MessageContentProps> = ({
     theme,
     showMessageStatus,
     onFileAttachmentPress,
+    onReplyPress,
     replyUI,
     replyStyle,
     renderInlineReply,
@@ -74,8 +76,16 @@ const MessageContent: React.FC<MessageContentProps> = ({
           isCurrentUser,
           resolvedReplyUI
         )}
+        descriptionColor={getInlineReplyDescriptionColor(
+          theme,
+          isCurrentUser,
+          resolvedReplyUI
+        )} 
         thumbnailSize={resolvedReplyUI.thumbnailSize}
         defaultSenderName={resolvedReplyUI.defaultReplySenderName}
+        onPress={
+          onReplyPress ? () => onReplyPress(message.replyTo!) : undefined
+        } 
       />
     );
   })();

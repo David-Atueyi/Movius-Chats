@@ -237,7 +237,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
 
   // Each doc card: minHeight 64 + gap 8. Show at most 3 before scrolling.
   const DOC_CARD_H = 72; // 64 min + a bit of padding room
-  const docsMaxHeight = DOC_CARD_H * 3 + 8 * 2 + 8; // 3 cards + 2 gaps
+  const docsMaxHeight = DOC_CARD_H * 3 + 8 * 2; // 3 cards + 2 gaps
 
   const renderDocCard = (doc: PreviewAttachment, di: number) => (
     <View key={`${doc.uri}-${di}`} style={{ position: 'relative' }}>

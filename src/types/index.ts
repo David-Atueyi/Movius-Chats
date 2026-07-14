@@ -85,6 +85,7 @@ export interface MessageReply {
   messageId: string;
   senderName?: string;
   preview?: string;
+  description?: string;
   mediaKind?: 'image' | 'video' | 'audio' | 'file';
   thumbnailUri?: string;
 }
@@ -133,7 +134,11 @@ export interface ReplyUIProps {
   receivedPreviewTextColor?: string;
   editChipTitle?: string;
   defaultReplySenderName?: string;
+  descriptionColor?: string;
+  sentDescriptionColor?: string;
+  receivedDescriptionColor?: string;
   thumbnailSize?: number;
+  showCloseButton?: boolean;
 }
 
 export interface ReplyStyleOverrides {
@@ -142,6 +147,7 @@ export interface ReplyStyleOverrides {
   senderName?: TextStyle;
   previewText?: TextStyle;
   thumbnail?: ImageStyle;
+  description?: TextStyle;
   inlineContainer?: ViewStyle;
   inputPreviewContainer?: ViewStyle;
   recordingPreviewContainer?: ViewStyle;
@@ -230,6 +236,7 @@ export interface ChatScreenProps {
   onAudioRecordEnd?: (audio?: RecordingResult) => void;
   onAudioRecordStart?: () => void;
   onCameraPress?: () => void;
+  onReplyPress?: (reply: MessageReply) => void;
   onFileAttachmentPress?: (file: MessageFileAttachment) => void;
   CustomVoiceRecorder?: (state: VoiceRecorderExposedState) => React.ReactNode;
 
