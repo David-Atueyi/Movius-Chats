@@ -86,7 +86,7 @@ export interface Message {
     text?: string;
     senderId: string;
     time: string;
-    status: 'read' | 'delivered' | 'sent';
+    status: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
     senderName?: string;
     senderAvatar?: string;
     mediaItems?: MessageMediaItem[];

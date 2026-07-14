@@ -144,9 +144,11 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       const p = media[0];
       if (!p) return null;
       return (
-        <Pressable onPress={() => openGalleryAt(0)} style={{ position: 'relative' }}>
-          {renderMediaThumb(p)}
-          {renderCloseBtn(p.uri)}
+        <Pressable onPress={() => openGalleryAt(0)}>
+      <View style={{ position: 'relative', alignSelf: 'flex-start' }}>
+        {renderMediaThumb(p)}
+        {renderCloseBtn(p.uri)}
+      </View>
         </Pressable>
       );
     }
@@ -235,7 +237,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
 
   // Each doc card: minHeight 64 + gap 8. Show at most 3 before scrolling.
   const DOC_CARD_H = 72; // 64 min + a bit of padding room
-  const docsMaxHeight = DOC_CARD_H * 3 + 8 * 2; // 3 cards + 2 gaps
+  const docsMaxHeight = DOC_CARD_H * 3 + 8 * 2 + 8; // 3 cards + 2 gaps
 
   const renderDocCard = (doc: PreviewAttachment, di: number) => (
     <View
@@ -318,7 +320,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
             scrollEnabled={docs.length > 3}
             style={{ maxHeight: docsMaxHeight }}
             showsVerticalScrollIndicator={docs.length > 3}
-            contentContainerStyle={{ gap: 8 }}
+            contentContainerStyle={{ gap: 8, paddingTop: 8, paddingRight: 8 }}
             nestedScrollEnabled
           >
             {docs.map((doc, di) => renderDocCard(doc, di))}
