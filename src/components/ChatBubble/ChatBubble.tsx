@@ -52,11 +52,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   const hasAudioMedia = !!primaryAudio;
   const galleryMediaItems = galleryItems;
 
-  const hasFilesOnly =
-    (message.fileAttachments?.length ?? 0) > 0 &&
-    galleryMediaItems.length === 0 &&
-    !message.text &&
-    !hasAudioMedia;
+
 
   const selected = isSelected(message.id);
 
