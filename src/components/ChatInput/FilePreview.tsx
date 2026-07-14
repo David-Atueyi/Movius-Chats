@@ -320,7 +320,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
             scrollEnabled={docs.length > 3}
             style={{ maxHeight: docsMaxHeight }}
             showsVerticalScrollIndicator={docs.length > 3}
-            contentContainerStyle={{ gap: 8, paddingTop: 8, paddingRight: 8 }}
+            contentContainerStyle={{ gap: 8, paddingTop: 4, paddingRight: 4 }}
             nestedScrollEnabled
           >
             {docs.map((doc, di) => renderDocCard(doc, di))}
