@@ -11,10 +11,10 @@ interface InlineReplyProps {
   backgroundColor: string;
   senderNameColor: string;
   previewTextColor: string;
-  descriptionColor?: string; // NEW
+  descriptionColor?: string;
   thumbnailSize?: number;
   defaultSenderName?: string;
-  onPress?: () => void; // NEW
+  onPress?: () => void;
 }
 
 const previewFor = (reply: MessageReply): string => {
@@ -101,7 +101,6 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
           >
             {icon && !reply.preview ? `${icon} ${preview}` : preview}
           </Text>
-          {/* NEW — optional second line, independently styleable, 2-line clamp */}
           {reply.description ? (
             <Text
               numberOfLines={2}
@@ -138,9 +137,6 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
     </View>
   );
 
-  // NEW — only wrap in Pressable if a handler was actually given, so this
-  // stays a plain View (no touch interception) when the consumer doesn't
-  // opt in to reply-tap behavior.
   if (!onPress) return content;
 
   return (

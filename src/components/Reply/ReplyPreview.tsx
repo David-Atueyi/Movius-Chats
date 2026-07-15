@@ -8,7 +8,7 @@ import { withFontFamily } from '../../utils/theme';
 interface ReplyPreviewProps {
   message: Message;
   onCancel: () => void;
-  onPress?: () => void; // NEW
+  onPress?: () => void; 
   previewMaxLines?: number;
   replyStyle?: ReplyStyleOverrides;
   fontFamily?: string;
@@ -17,9 +17,9 @@ interface ReplyPreviewProps {
   backgroundColor?: string;
   senderNameColor?: string;
   previewTextColor?: string;
-  descriptionColor?: string; // NEW
-  description?: string; // NEW — explicit override; falls back to nothing if omitted
-  showCloseButton?: boolean; // NEW — default true
+  descriptionColor?: string; 
+  description?: string; 
+  showCloseButton?: boolean; 
 }
 
 interface PreviewParts {
