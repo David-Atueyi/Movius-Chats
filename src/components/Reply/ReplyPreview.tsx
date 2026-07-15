@@ -8,6 +8,7 @@ import { withFontFamily } from '../../utils/theme';
 interface ReplyPreviewProps {
   message: Message;
   onCancel: () => void;
+  onPress?: () => void; 
   previewMaxLines?: number;
   replyStyle?: ReplyStyleOverrides;
   fontFamily?: string;
@@ -16,6 +17,9 @@ interface ReplyPreviewProps {
   backgroundColor?: string;
   senderNameColor?: string;
   previewTextColor?: string;
+  descriptionColor?: string; 
+  description?: string; 
+  showCloseButton?: boolean; 
 }
 
 interface PreviewParts {
@@ -55,6 +59,7 @@ const buildPreview = (message: Message): PreviewParts => {
 export const ReplyPreview: React.FC<ReplyPreviewProps> = ({
   message,
   onCancel,
+  onPress,
   previewMaxLines = 1,
   replyStyle,
   fontFamily,
@@ -63,11 +68,14 @@ export const ReplyPreview: React.FC<ReplyPreviewProps> = ({
   backgroundColor = '#FFFFFF',
   senderNameColor,
   previewTextColor,
+  descriptionColor,
+  description,
+  showCloseButton = true,
 }) => {
   const senderName = message.senderName || 'You';
   const { text: preview, thumbnail } = buildPreview(message);
 
-  return (
+  const body = (
     <View
       style={[
         tw`flex-row items-stretch mx-2 mb-1 rounded-xl overflow-hidden`,
@@ -119,6 +127,27 @@ export const ReplyPreview: React.FC<ReplyPreviewProps> = ({
           >
             {preview}
           </Text>
+          {/* NEW */}
+          {description ? (
+            <Text
+              numberOfLines={2}
+              style={withFontFamily(
+                [
+                  tw`text-[12px] mt-0.5`,
+                  {
+                    color:
+                      descriptionColor ??
+                      previewTextColor ??
+                      'rgba(0,0,0,0.45)',
+                  },
+                  replyStyle?.description,
+                ],
+                fontFamily
+              )}
+            >
+              {description}
+            </Text>
+          ) : null}
         </View>
 
         {thumbnail && (
@@ -132,14 +161,25 @@ export const ReplyPreview: React.FC<ReplyPreviewProps> = ({
           />
         )}
 
-        <Pressable
-          onPress={onCancel}
-          hitSlop={10}
-          style={tw`w-7 h-7 items-center justify-center`}
-        >
-          <ClosePreviewIcon color={closeIconColor} />
-        </Pressable>
+        {/* NEW — controllable visibility */}
+        {showCloseButton && (
+          <Pressable
+            onPress={onCancel}
+            hitSlop={10}
+            style={tw`w-7 h-7 items-center justify-center`}
+          >
+            <ClosePreviewIcon color={closeIconColor} />
+          </Pressable>
+        )}
       </View>
     </View>
+  );
+
+  if (!onPress) return body;
+
+  return (
+    <Pressable onPress={onPress} hitSlop={4}>
+      {body}
+    </Pressable>
   );
 };

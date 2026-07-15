@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import tw from 'twrnc';
 import type { MessageReply, ReplyStyleOverrides } from '../../types';
 import { withFontFamily } from '../../utils/theme';
@@ -11,8 +11,10 @@ interface InlineReplyProps {
   backgroundColor: string;
   senderNameColor: string;
   previewTextColor: string;
+  descriptionColor?: string;
   thumbnailSize?: number;
   defaultSenderName?: string;
+  onPress?: () => void;
 }
 
 const previewFor = (reply: MessageReply): string => {
@@ -53,14 +55,16 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
   backgroundColor,
   senderNameColor,
   previewTextColor,
+  descriptionColor,
   thumbnailSize = 40,
   defaultSenderName = 'Reply',
+  onPress,
 }) => {
   const icon = iconFor(reply.mediaKind);
   const preview = previewFor(reply);
   const showThumb = !!reply.thumbnailUri;
 
-  return (
+  const content = (
     <View
       style={[
         tw`my-2 rounded-md overflow-hidden`,
@@ -97,6 +101,21 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
           >
             {icon && !reply.preview ? `${icon} ${preview}` : preview}
           </Text>
+          {reply.description ? (
+            <Text
+              numberOfLines={2}
+              style={withFontFamily(
+                [
+                  tw`text-[11.5px] mt-0.5`,
+                  { color: descriptionColor ?? previewTextColor },
+                  replyStyle?.description,
+                ],
+                fontFamily
+              )}
+            >
+              {reply.description}
+            </Text>
+          ) : null}
         </View>
 
         {showThumb && (
@@ -116,5 +135,13 @@ export const InlineReply: React.FC<InlineReplyProps> = ({
         )}
       </View>
     </View>
+  );
+
+  if (!onPress) return content;
+
+  return (
+    <Pressable onPress={onPress} hitSlop={4}>
+      {content}
+    </Pressable>
   );
 };

@@ -144,9 +144,11 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       const p = media[0];
       if (!p) return null;
       return (
-        <Pressable onPress={() => openGalleryAt(0)} style={{ position: 'relative' }}>
-          {renderMediaThumb(p)}
-          {renderCloseBtn(p.uri)}
+        <Pressable onPress={() => openGalleryAt(0)}>
+      <View style={{ position: 'relative', alignSelf: 'flex-start' }}>
+        {renderMediaThumb(p)}
+        {renderCloseBtn(p.uri)}
+      </View>
         </Pressable>
       );
     }
@@ -238,10 +240,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   const docsMaxHeight = DOC_CARD_H * 3 + 8 * 2; // 3 cards + 2 gaps
 
   const renderDocCard = (doc: PreviewAttachment, di: number) => (
-    <View
-      key={`${doc.uri}-${di}`}
-      style={{ position: 'relative' }}
-    >
+    <View key={`${doc.uri}-${di}`} style={{ position: 'relative' }}>
       <View
         style={[
           {
@@ -292,8 +291,37 @@ const FilePreview: React.FC<FilePreviewProps> = ({
             style={theme?.filePreviewStyle?.text}
           />
         </View>
+      <Pressable
+        onPress={() =>
+          onRemoveItem ? onRemoveItem(doc.uri) : closePreview?.()
+        }
+        style={{
+          position: 'absolute',
+          top: 6,
+          right: 6,
+          width: 18,
+          height: 18,
+          borderRadius: 9,
+          backgroundColor: 'rgba(0,0,0,0.45)',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text
+          style={withFontFamily(
+            {
+              color: '#fff',
+              fontSize: 11,
+              fontWeight: '700',
+              lineHeight: 12,
+            },
+            theme?.fontFamily
+          )}
+        >
+          ×
+        </Text>
+      </Pressable>
       </View>
-      {renderCloseBtn(doc.uri)}
     </View>
   );
 
@@ -318,7 +346,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
             scrollEnabled={docs.length > 3}
             style={{ maxHeight: docsMaxHeight }}
             showsVerticalScrollIndicator={docs.length > 3}
-            contentContainerStyle={{ gap: 8 }}
+            contentContainerStyle={{ gap: 4 }}
             nestedScrollEnabled
           >
             {docs.map((doc, di) => renderDocCard(doc, di))}

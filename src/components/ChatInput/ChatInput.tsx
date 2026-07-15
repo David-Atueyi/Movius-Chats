@@ -28,6 +28,7 @@ import {
   getInputPreviewBackground,
   getRecordingPreviewBackground,
   mergeReplyUI,
+  shouldShowReplyCloseButton,
 } from '../../utils/replyTheme';
 import {
   getInputBarIconPixelSize,
@@ -95,6 +96,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     replyStyle,
     renderReplyPreview,
     renderEditPreview,
+    onReplyPress,
     CustomClosePreviewIcon,
     CustomEditPreviewIcon,
     // edit state
@@ -372,83 +374,114 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const showInPillEdit = isEditing;
   const hasInPillTopSection = showInPillReply || showInPillEdit;
 
-  const inPillReplyPreview = useMemo(() => {
-    if (!showInPillReply || !replyTarget) return null;
-    const firstMedia = replyTarget.mediaItems?.[0];
-    const thumbnail =
-      firstMedia?.kind === 'image' || firstMedia?.kind === 'video'
-        ? firstMedia.uri
-        : undefined;
+const inPillReplyPreview = useMemo(() => {
+  if (!showInPillReply || !replyTarget) return null;
 
-    let preview = '';
-    if (replyTarget.text) preview = replyTarget.text;
-    else if (firstMedia?.kind === 'audio') preview = '🎤 Audio message';
-    else if (firstMedia?.kind === 'video') preview = '🎥 Video';
-    else if (firstMedia?.kind === 'image') preview = '📷 Photo';
-    else if ((replyTarget.fileAttachments ?? []).length)
-      preview = `📎 ${replyTarget.fileAttachments?.[0]?.name ?? 'File'}`;
+  const firstMedia = replyTarget.mediaItems?.[0];
+  const thumbnail =
+    firstMedia?.kind === 'image' || firstMedia?.kind === 'video'
+      ? firstMedia.uri
+      : undefined;
 
-    return (
-      <View
-        style={[
-          tw`flex-row items-center m-2 rounded-md px-3 py-2`,
-          {
-            backgroundColor: inputPreviewBg || 'rgba(0, 0, 0, 0.08)',
-            minHeight: 40,
-          },
-          mergedReplyStyle?.inputPreviewContainer,
-          mergedReplyStyle?.container,
-        ]}
-      >
-        <View style={tw`flex-1 mr-2`}>
-          <Text
-            numberOfLines={1}
-            style={withFontFamily(
-              [
-                tw`text-[13px] font-semibold`,
-                {
-                  color: resolvedReplyUI.previewSenderNameColor || themePrimary,
-                },
-                mergedReplyStyle?.senderName,
-              ],
-              theme?.fontFamily
-            )}
-          >
-            {replyTarget.senderName ||
-              resolvedReplyUI.defaultReplySenderName ||
-              'You'}
-          </Text>
-          <Text
-            numberOfLines={replyProps?.previewMaxLines ?? 1}
-            style={withFontFamily(
-              [
-                tw`text-[12.5px] mt-0.5`,
-                { color: previewTextColor || 'rgba(0, 0, 0, 0.55)' },
-                mergedReplyStyle?.previewText,
-              ],
-              theme?.fontFamily
-            )}
-          >
-            {preview}
-          </Text>
-        </View>
+  let preview = '';
+  if (replyTarget.text) preview = replyTarget.text;
+  else if (firstMedia?.kind === 'audio') preview = '🎤 Audio message';
+  else if (firstMedia?.kind === 'video') preview = '🎥 Video';
+  else if (firstMedia?.kind === 'image') preview = '📷 Photo';
+  else if ((replyTarget.fileAttachments ?? []).length)
+    preview = `📎 ${replyTarget.fileAttachments?.[0]?.name ?? 'File'}`;
 
-        {thumbnail && (
-          <Image
-            source={{ uri: thumbnail }}
-            style={[
+  const showClose = shouldShowReplyCloseButton(theme, replyUI);
+
+  const body = (
+    <View
+      style={[
+        tw`flex-row items-center m-2 rounded-md px-3 py-2`,
+        {
+          backgroundColor: inputPreviewBg || 'rgba(0, 0, 0, 0.08)',
+          minHeight: 40,
+        },
+        mergedReplyStyle?.inputPreviewContainer,
+        mergedReplyStyle?.container,
+      ]}
+    >
+      <View style={tw`flex-1 mr-2`}>
+        {/* Styled sender name */}
+        <Text
+          numberOfLines={1}
+          style={withFontFamily(
+            [
+              tw`text-[13px] font-semibold`,
               {
-                width: thumbSize,
-                height: thumbSize,
-                borderRadius: 4,
-                marginRight: 6,
+                color: resolvedReplyUI.previewSenderNameColor || themePrimary,
               },
-              mergedReplyStyle?.thumbnail,
-            ]}
-            resizeMode="cover"
-          />
-        )}
+              mergedReplyStyle?.senderName,
+            ],
+            theme?.fontFamily
+          )}
+        >
+          {replyTarget.senderName ||
+            resolvedReplyUI.defaultReplySenderName ||
+            'You'}
+        </Text>
 
+        {/* Styled preview text */}
+        <Text
+          numberOfLines={replyProps?.previewMaxLines ?? 1}
+          style={withFontFamily(
+            [
+              tw`text-[12.5px] mt-0.5`,
+              {
+                color: resolvedReplyUI.previewTextColor || 'rgba(0,0,0,0.55)',
+              },
+              mergedReplyStyle?.previewText,
+            ],
+            theme?.fontFamily
+          )}
+        >
+          {preview}
+        </Text>
+
+        {/* Optional description (only if present) */}
+        {replyTarget.replyTo?.description ? (
+          <Text
+            numberOfLines={2}
+            style={withFontFamily(
+              [
+                tw`text-[11.5px] mt-0.5`,
+                {
+                  color:
+                    resolvedReplyUI.descriptionColor ??
+                    resolvedReplyUI.previewTextColor ??
+                    'rgba(0,0,0,0.45)',
+                },
+                mergedReplyStyle?.description,
+              ],
+              theme?.fontFamily
+            )}
+          >
+            {replyTarget.replyTo?.description}
+          </Text>
+        ) : null}
+      </View>
+
+      {thumbnail && (
+        <Image
+          source={{ uri: thumbnail }}
+          style={[
+            {
+              width: thumbSize - 2,
+              height: thumbSize - 2,
+              borderRadius: 4,
+              marginRight: 6,
+            },
+            mergedReplyStyle?.thumbnail,
+          ]}
+          resizeMode="cover"
+        />
+      )}
+
+      {showClose && (
         <Pressable
           onPress={cancelReply}
           hitSlop={10}
@@ -463,23 +496,34 @@ const ChatInput: React.FC<ChatInputProps> = ({
             <ClosePreviewIcon color={closePreviewColor} />
           )}
         </Pressable>
-      </View>
-    );
-  }, [
-    showInPillReply,
-    replyTarget,
-    replyProps?.previewMaxLines,
-    mergedReplyStyle,
-    resolvedReplyUI,
-    theme?.fontFamily,
-    themePrimary,
-    inputPreviewBg,
-    previewTextColor,
-    thumbSize,
-    closePreviewColor,
-    CustomClosePreviewIcon,
-    cancelReply,
-  ]);
+      )}
+    </View>
+  );
+
+  if (!onReplyPress) return body;
+  return (
+    <Pressable onPress={() => onReplyPress?.(buildReplyTo()!)} hitSlop={4}>
+      {body}
+    </Pressable>
+  );
+}, [
+  showInPillReply,
+  replyTarget,
+  replyProps?.previewMaxLines,
+  mergedReplyStyle,
+  resolvedReplyUI,
+  theme,
+  themePrimary,
+  inputPreviewBg,
+  previewTextColor,
+  thumbSize,
+  closePreviewColor,
+  CustomClosePreviewIcon,
+  cancelReply,
+  onReplyPress,
+  buildReplyTo,
+  replyUI,
+]);
 
   const inBarReplyPreview = useMemo(() => {
     if (!showInPillReply || !replyTarget) return null;

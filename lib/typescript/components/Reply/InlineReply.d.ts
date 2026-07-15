@@ -7,8 +7,10 @@ interface InlineReplyProps {
     backgroundColor: string;
     senderNameColor: string;
     previewTextColor: string;
+    descriptionColor?: string;
     thumbnailSize?: number;
     defaultSenderName?: string;
+    onPress?: () => void;
 }
 export declare const InlineReply: React.FC<InlineReplyProps>;
 export {};

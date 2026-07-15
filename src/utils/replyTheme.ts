@@ -28,6 +28,34 @@ export function getInlineReplyBackground(
   );
 }
 
+export function getInlineReplyDescriptionColor(
+  theme: Theme | undefined,
+  isCurrentUser: boolean,
+  replyUI?: ReplyUIProps
+): string {
+  const ui = mergeReplyUI(theme, replyUI);
+  if (isCurrentUser) {
+    return (
+      ui.sentDescriptionColor ??
+      ui.descriptionColor ??
+      getInlineReplyPreviewColor(theme, isCurrentUser, replyUI)
+    );
+  }
+  return (
+    ui.receivedDescriptionColor ??
+    ui.descriptionColor ??
+    getInlineReplyPreviewColor(theme, isCurrentUser, replyUI)
+  );
+}
+
+export function shouldShowReplyCloseButton(
+  theme?: Theme,
+  replyUI?: ReplyUIProps
+): boolean {
+  const ui = mergeReplyUI(theme, replyUI);
+  return ui.showCloseButton ?? true;
+}
+
 export function getInlineReplySenderColor(
   theme: Theme | undefined,
   isCurrentUser: boolean,
