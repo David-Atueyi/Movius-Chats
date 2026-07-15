@@ -6,7 +6,7 @@ A production-ready React Native chat UI library providing message bubbles, Whats
 
 **npm:** [`movius-chats`](https://www.npmjs.com/package/movius-chats)
 **Repo:** [github.com/David-Atueyi/Movius-Chats](https://github.com/David-Atueyi/Movius-Chats)
-**Version:** 1.18.0 | **License:** ISC
+**Version:** 1.18.12 | **License:** ISC
 
 ---
 
